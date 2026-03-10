@@ -1,2 +1,9 @@
 @import "tailwindcss";
-@import "../tailwind.config.js";
+@plugin "daisyui";
+
+/* Nếu bạn muốn giữ các màu custom từ file config cũ */
+@theme {
+  --color-badminton-blue: #1e40af;
+  --color-badminton-yellow: #facc15;
+  --font-sans: "Inter", "sans-serif";
+}
