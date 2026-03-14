@@ -1,8 +1,11 @@
+import { cva } from 'class-variance-authority';
 import React from 'react'
+
+const buttonStyles = cva(["hover:"])
 
 const Button = () => {
   return (
-    <div className='border border-red-400 rounded-full flex justify-center'>
+    <div className=''>
         <button>Hello world</button>
     </div>
   )

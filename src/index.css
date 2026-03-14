@@ -1,9 +1,9 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* Nếu bạn muốn giữ các màu custom từ file config cũ */
 @theme {
-  --color-badminton-blue: #1e40af;
-  --color-badminton-yellow: #facc15;
-  --font-sans: "Inter", "sans-serif";
+  --color-orange-default: #ff6b00;
+  --color-orange-dark: #f66315;
+  --color-gray-bg:var(--color-gray-100);
+  --color-gray-text: var(--color-gray-800);
 }

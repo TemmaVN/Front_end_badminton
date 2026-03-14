@@ -24,3 +24,5 @@ npm install lucide-react
 npm install zustand
 npm install framer-motion swiper
 npm install -D json-server
+git checkout -b Nguyen_testing
+git push -u origin Nguyen_testing
