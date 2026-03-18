@@ -59,7 +59,7 @@ const PageHeader = () => {
         </div>}
     </div>
     {!isHideMainHeader && showMenuBar && (
-  <div className='absolute top-full left-0 z-[100] bg-white w-max-200 shadow-lg border'>
+  <div className='absolute top-full left-0 z-100 bg-white w-max-200 shadow-lg border'>
     <MenuHeader />
   </div>
 )}

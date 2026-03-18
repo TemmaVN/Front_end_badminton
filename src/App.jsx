@@ -11,6 +11,7 @@ function App() {
     <div className='bg-white relative max-h-screen w-full'>
     <PageHeader/>
     {isHideMainHeader && <MainHeader></MainHeader>}
+    <Advertisement/>
     </div>
   )
 }
