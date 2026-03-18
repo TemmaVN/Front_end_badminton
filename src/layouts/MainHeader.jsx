@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Racket from './miniproduct/Racket';
+import Racket from './ui/Racket';
 
 const MainHeader = () => {
   const [isProductHovered, setIsProductHovered] = useState(false);

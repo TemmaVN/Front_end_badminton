@@ -28,6 +28,7 @@ export const buttonStyles = cva(["transition-colors"], {
     variant: "default",
     size: "default",
   },
+  
 })
 
 const Button = ({variant, size, className, ...props}) => {

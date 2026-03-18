@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
-import { ArrowLeft, Heart, Menu, Search, ShoppingCart, User, User2 } from 'lucide-react'
+import { ArrowLeft, ClosedCaption, Heart, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
+import { div } from 'framer-motion/client'
+import MenuHeader from './MenuHeader'
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
@@ -9,10 +11,13 @@ const PageHeader = () => {
   const isPageMedium = useMediaQuery('(min-width: 768px)');
   const isChangeFindButton = useMediaQuery('(min-width: 1500)');
   const isShowFullWidthSearch = !isPageMedium && showFullWidthSearch;
+  const [showMenuBar, setShowMenuBar] = useState(false);
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
+
   return (
-    <div className='flex gap-10 justify-center lg:gap-20 pt-4  mb-6 mx-4'>
-        {!isHideMainHeader && <Button size='icon'><Menu/></Button>}
+    <div className='flex flex-col relative'>
+      <div className='flex gap-10 justify-center lg:gap-20 pt-4 mb-6 mx-4'>
+        {!isHideMainHeader && <Button size='icon' onClick={() => setShowMenuBar(!showMenuBar)}>{showMenuBar? "Close":<MenuIcon/>}</Button>}
         {!isShowFullWidthSearch && 
         <div>
           <a href="">
@@ -53,7 +58,13 @@ const PageHeader = () => {
           </Button>
         </div>}
     </div>
-  )
+    {!isHideMainHeader && showMenuBar && (
+  <div className='absolute top-full left-0 z-[100] bg-white w-max-200 shadow-lg border'>
+    <MenuHeader />
+  </div>
+)}
+      </div>
+  );
 }
 
 export default PageHeader
