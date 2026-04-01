@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { ArrowLeft, ClosedCaption, Heart, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
-import { div } from 'framer-motion/client'
 import MenuHeader from './MenuHeader'
+import { Link } from 'react-router-dom'
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
@@ -28,8 +28,9 @@ const PageHeader = () => {
           <Button size='icon' onClick={() => {setShowFullWidthSearch(false)}}>
             <ArrowLeft/>
           </Button>}
-        <form action="" className={`bg-gray-bg rounded-[10px] grow max-w-[900px] items-center ${isShowFullWidthSearch? 'flex': 'md:flex hidden'} ${isFocus? 'border border-orange-default shadow-inner': ''}`}>
-          
+        <form 
+        action="" 
+        className={`bg-gray-bg rounded-[10px] grow max-w-225 items-center ${isShowFullWidthSearch? 'flex': 'md:flex hidden'} ${isFocus? 'border border-orange-default shadow-inner': ''}`}>  
           <Button variant='ghost' size='icon' className=''><Search/></Button>
           <input 
           type="search" 
@@ -50,10 +51,14 @@ const PageHeader = () => {
           <Button size='icon'>
             <Heart/>
           </Button>
-                    <Button size='icon'>
-            <User2/>
-          </Button>
-                    <Button size='icon'>
+
+          <Link 
+            to="/login"           >
+            <Button size='icon'>
+              <User2/>
+            </Button>
+          </Link>
+          <Button size='icon'>
             <ShoppingCart />
           </Button>
         </div>}

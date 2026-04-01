@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Racket from './ui/Racket';
+import Racket from '../components/Racket';
 
 const MainHeader = () => {
   const [isProductHovered, setIsProductHovered] = useState(false);
@@ -112,7 +112,7 @@ const racketBagProducts = [
     <nav className="relative bg-white  text-gray-700 font-sans flex justify-center"
     onMouseLeave={() => setIsProductHovered(false)}
     >
-      <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-[1300px] items-center justify-center">
+      <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-325 items-center justify-center">
         {/* Main Links */}
         <div className="flex space-x-15 uppercase text-sm font-bold py-4">
           <a href="#" className="text-orange-500 border-b-2 border-orange-500 pb-3">Trang chủ</a>
@@ -159,11 +159,12 @@ const racketBagProducts = [
               onMouseEnter={() => {
               setCurrentProduct(accessoryProducts);
               setIsProductHovered(true);
+
             }}
           >
             PHỤ KIỆN <span className="text-[10px]">▼</span>
           </div>
-          <a href="#" className="hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500">Tuyển dụng</a>
+          <a href="#" className="hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500">GIẢM GIÁ</a>
           <a href="#" className="hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500">Liên hệ</a>
 
         </div>

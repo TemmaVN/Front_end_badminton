@@ -1,5 +1,5 @@
 import React from 'react'
-import TuVan from './ui/TuVan'
+import TuVan from '../components/TuVan'
 import { LocateIcon, LocationEditIcon, Mail, User, User2 } from 'lucide-react'
 
 const MenuHeader = () => {

@@ -10,6 +10,11 @@ export const buttonStyles = cva(["transition-colors"], {
         "bg-orange-default",
         "hover:bg-orange-dark"
       ],
+      flash: [
+        "bg-orange-default",
+        "text-white",
+        "font-bold",
+      ]
     },
     size: {
       default: [" rounded", "p-2"],
@@ -22,6 +27,11 @@ export const buttonStyles = cva(["transition-colors"], {
         "justify-center",
         "p-2.5",
       ],
+      flash: [
+        "rounded-full",
+        "w-36",
+        "h-12"
+      ]
     },
   },
   defaultVariants: {

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import Button from '../../components/Button'
+import Button from './Button'
 import { ArrowBigLeft, ArrowBigRight } from 'lucide-react';
-
 
 const Advertisement = () => {
   const linkAdvertisement = [
@@ -58,4 +57,4 @@ const Advertisement = () => {
   )
 }
 
-export default Advertisement
+export default Advertisement;
