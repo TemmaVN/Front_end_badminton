@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import Racket from '../components/Racket';
+import { Link } from 'react-router-dom';
 
 const MainHeader = () => {
   const [isProductHovered, setIsProductHovered] = useState(false);
   const [currentProduct, setCurrentProduct] = useState([]);
+  const [page, setPage] = useState('home');
   const racketProducts = [
     {
       brand: "VỢT CẦU LÔNG YONEX",
@@ -113,11 +115,11 @@ const racketBagProducts = [
     onMouseLeave={() => setIsProductHovered(false)}
     >
       <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-325 items-center justify-center">
-        {/* Main Links */}
         <div className="flex space-x-15 uppercase text-sm font-bold py-4">
-          <a href="#" className="text-orange-500 border-b-2 border-orange-500 pb-3">Trang chủ</a>
-          
-          {/* Dropdown Trigger */}
+          <Link
+          onClick={() => setPage('home')} 
+          to="/" 
+          className={`pb-3 ${page === 'home' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>Trang chủ</Link>          
           <div 
             className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
             onMouseEnter={() => {
@@ -164,8 +166,11 @@ const racketBagProducts = [
           >
             PHỤ KIỆN <span className="text-[10px]">▼</span>
           </div>
-          <a href="#" className="hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500">GIẢM GIÁ</a>
-          <a href="#" className="hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500">Liên hệ</a>
+          <Link 
+          to="/sale" 
+          onClick={() => setPage('sale')} 
+          className={`hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500 ${page === 'sale' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>GIẢM GIÁ</Link>
+          <Link to="/contract" onClick={() => setPage('contract')} className={`hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500 ${page === 'contract' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>Liên hệ</Link>
 
         </div>
       </div>

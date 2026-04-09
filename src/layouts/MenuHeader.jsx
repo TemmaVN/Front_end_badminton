@@ -1,20 +1,21 @@
 import React from 'react'
 import TuVan from '../components/TuVan'
 import { LocateIcon, LocationEditIcon, Mail, User, User2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const MenuHeader = () => {
   return (
     <div className='bg-gray-100 shadow-cyan-100 flex flex-col grow max-w-150 text-black gap-2.5 p-5 '>
       {/* Main content */}
       <div className='flex flex-col border-b border-b-gray-900 pb-3'>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Trang chủ</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Vợt cầu lông</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Giày</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Balo</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Bao vợt</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Phụ kiện</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Giảm giá</a>
-        <a href="" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Liên hệ</a>
+        <Link to="/" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Trang chủ</Link>
+        <Link to="/rackets" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Vợt cầu lông</Link>
+        <Link to="/shoes" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Giày</Link>
+        <Link to="/bags" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Balo</Link>
+        <Link to="/racket-bags" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Bao vợt</Link>
+        <Link to="/accessories" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Phụ kiện</Link>
+        <Link to="/sale" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Giảm giá</Link>
+        <Link to="/contract" className='font-bold px-2 pt-5 hover:border-orange-default hover:text-orange-default'>Liên hệ</Link>
       </div>
       {/* Tu van */}
       <div className='flex justify-between  border-b border-b-gray-900 pb-3'>

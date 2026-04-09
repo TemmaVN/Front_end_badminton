@@ -6,6 +6,9 @@ import Login from './layouts/Login';
 import Register from './layouts/Register';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Advertisement from './components/Advertisement';
+import Contract from './layouts/Contract';
+import { Slash } from 'lucide-react';
+import Sales from './layouts/Sales';
 
 function App() {
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
@@ -14,12 +17,14 @@ function App() {
       <div className='bg-white relative h-auto w-full'>
         <PageHeader/>
           {isHideMainHeader && <MainHeader></MainHeader>}
-        <Routes>
+          <Sales/>
+        {/* <Routes>
           <Route path='/' element={<Advertisement/>}/>
           <Route path='/login' element={<Login/>}/>
           <Route path='/register' element={<Register/>}/>
-        </Routes>
-      </div>
+          <Route path='/contract' element={<Contract/>}/>
+        </Routes> */}
+      </div> 
     </BrowserRouter>
   )
 }
