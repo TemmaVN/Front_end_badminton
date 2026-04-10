@@ -7,7 +7,7 @@ const MyCheckBox = ({ data, id, className }) => {
             <input
                 id={id}
                 type="checkbox"
-                className="peer appearance-none w-5 h-5 border border-gray-300 rounded-[4px] bg-white checked:bg-[#f15a22] checked:border-[#f15a22] transition-all duration-200 cursor-pointer"
+                className="peer appearance-none w-5 h-5 border border-gray-300 rounded-sm bg-white checked:bg-[#f15a22] checked:border-[#f15a22] transition-all duration-200 cursor-pointer"
             />
             <svg
                 className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none"

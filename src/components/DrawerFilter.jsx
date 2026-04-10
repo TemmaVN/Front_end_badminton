@@ -12,7 +12,7 @@ const FilterDrawer = ({ isOpen, setIsOpen, rangePrice, setRangePrice }) => {
       />
 
       {/* Thân Drawer trượt từ phải sang */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-[400px] bg-white z-122 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 right-0 h-full w-full max-w-100 bg-white z-122 shadow-2xl transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         

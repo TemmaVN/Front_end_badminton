@@ -9,7 +9,7 @@ const ProductCategory = ({ mainSub, items = [] }) => {
     <div className="w-full">
       <h2 className="text-[#f15a22] text-lg font-bold mb-4">{mainSub}</h2>
       
-      <div className="flex flex-col max-h-[250px] overflow-y-auto pr-2 
+      <div className="flex flex-col max-h-62.5 overflow-y-auto pr-2 
         /* Tùy chỉnh Scrollbar qua Tailwind Arbitrary Variants */
         [&::-webkit-scrollbar]:w-1.5
         [&::-webkit-scrollbar-track]:bg-gray-100
