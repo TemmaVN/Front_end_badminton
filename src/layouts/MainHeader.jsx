@@ -119,7 +119,7 @@ const racketBagProducts = [
           <Link
           onClick={() => setPage('home')} 
           to="/" 
-          className={`pb-3 ${page === 'home' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>Trang chủ</Link>          
+          className={`pb-3 border-orange-500 hover:text-orange-500 hover:border-b-2 ${page === 'home' ? 'text-orange-500 border-b-2 ' : ''}`}>Trang chủ</Link>          
           <div 
             className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
             onMouseEnter={() => {
@@ -167,7 +167,7 @@ const racketBagProducts = [
             PHỤ KIỆN <span className="text-[10px]">▼</span>
           </div>
           <Link 
-          to="/sale" 
+          to="/sales" 
           onClick={() => setPage('sale')} 
           className={`hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500 ${page === 'sale' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>GIẢM GIÁ</Link>
           <Link to="/contract" onClick={() => setPage('contract')} className={`hover:text-orange-500 pb-3 hover:border-b-2 border-orange-500 ${page === 'contract' ? 'text-orange-500 border-b-2 border-orange-500' : ''}`}>Liên hệ</Link>

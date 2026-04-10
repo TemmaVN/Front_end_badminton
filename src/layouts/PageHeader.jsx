@@ -16,7 +16,7 @@ const PageHeader = () => {
 
   return (
     <div className='flex flex-col relative'>
-      <div className='flex gap-10 justify-center lg:gap-20 pt-4 mb-6 mx-4'>
+      <div className='flex gap-10 justify-center lg:gap-20 pt-4 pb-6 px-4 z-120 bg-white'>
         {!isHideMainHeader && <Button size='icon' onClick={() => setShowMenuBar(!showMenuBar)}>{showMenuBar? "Close":<MenuIcon/>}</Button>}
         {!isShowFullWidthSearch && 
         <div>
@@ -65,7 +65,10 @@ const PageHeader = () => {
     </div>
     {!isHideMainHeader && showMenuBar && (
   <div className='absolute top-full left-0 z-100 bg-white w-max-200 shadow-lg border'>
-    <MenuHeader />
+    <MenuHeader 
+    isOpen={showMenuBar}
+    setIsOpen={setShowMenuBar}
+    />
   </div>
 )}
       </div>

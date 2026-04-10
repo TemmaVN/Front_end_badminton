@@ -15,7 +15,7 @@ const Contract = () => {
         <div className='bg-cover bg-center w-full h-auto flex flex-col gap-4 items-center justify-center relative group'>
             <img className='w-full shrink-0 object-cover' src="https://static.fbshop.vn/wp-content/uploads/2023/08/banner-page-img-1.jpg" alt="" />
             <div className='absolute z-10 flex flex-col justify-center'>
-              <h1 className={`font-bold text-5xl ${isMiddle ? 'pt-60' : 'pt-20'}`}>LIÊN HỆ</h1>
+              <h1 className={`font-bold text-white text-5xl ${isMiddle ? 'pt-60' : 'pt-20'}`}>LIÊN HỆ</h1>
               <div className='flex justify-center'>
                   <Link to="/" className='text-white'>Trang chủ</Link>
                   <span className='text-white'> / </span>
