@@ -10,6 +10,12 @@ const Information = () => {
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
 
+    const [province, setProvince] = useState('');
+    const [district, setDistrict] = useState('');
+    const [ward, setWard] = useState('');
+    const [address, setAddress] = useState('');
+
+
     const handleSaveInfo = () => {
         // Validate input fields
         if (!fullName || !email) {
@@ -17,29 +23,18 @@ const Information = () => {
             return;
         }
 
-        alert('Thông tin đã được lưu thành công!');
-    }
-
-    const [province, setProvince] = useState('');
-    const [district, setDistrict] = useState('');
-    const [ward, setWard] = useState('');
-    const [address, setAddress] = useState('');
-
-    const handleSaveAddress = () => {
-        // Validate input fields
         if (!province || !district || !ward || !address) {
             alert('Vui lòng điền đầy đủ thông tin giao hàng!');
             return;
         }
 
-        alert('Thông tin giao hàng đã được lưu thành công!');
+        alert('Thông tin đã được lưu thành công!');
     }
 
     const isCol = useMediaQuery('(min-width: 970px)');
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
-
-
+    
     return (
         <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
                 <div className='border-b-2 border-gray-300 pb-8'>

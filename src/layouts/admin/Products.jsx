@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { productApi, categoryApi } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
