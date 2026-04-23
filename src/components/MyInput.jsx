@@ -13,14 +13,16 @@ export const inputStyle = cva(["transition-colors"], {
   }
 })
 
-const MyInput = ({type, placeHolder, size, className}) => {
+const MyInput = ({type, placeHolder, size, value, onChange , className}) => {
   const [isFocus, setIsFocus] = useState(false);
   const [isHide, setIsHide] = useState(true);
   return (
     <div className={`flex justify-between border ${isFocus? 'border-orange-default': 'border-gray-200'} max-w-${size} rounded-full p-3`}>
         <input 
         type={isHide? type:'text'} 
-        placeholder={placeHolder} 
+        placeholder={placeHolder}
+        value={value} 
+        onChange={onChange}
         className={`focus:border-none outline-none text-black w-full h-auto ${className || ''}`}
         onFocus={() => setIsFocus(true)}
         onBlur={() => setIsFocus(false)}

@@ -5,21 +5,27 @@ import { useMediaQuery } from '../mystate/useMediaQuery'
 import Information from '../components/Information'
 import ChangePass from '../components/ChangePass'
 import Orders from '../components/Orders'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 const UserInfo = () => {
     const isCol = useMediaQuery('(min-width: 970px)');
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
     const [page, setPage] = useState('info');
-  return (
+    const { logout } = useAuth();
+    return (
     <div className='text-black flex justify-center '>
         <div className={`w-300 h-auto my-30 p-15 flex ${isMini? 'flex-col':''} gap-8 shadow-2xl`}>
             <div className={``}>
                 <div className='flex'>
-                <UserCircleIcon className='h-20 w-20'/>
+                <img src="https://static.fbshop.vn/template/assets/images/im-des.png" className='rounded-full h-20 w-20'/>
                     <div className='px-3 flex flex-col justify-center'>
                         <div>Hello</div>
-                        <div>kdsnlvnsdkln</div>
+                        <Link 
+                        to="/" 
+                        onClick={logout}
+                        className='text-gray-500 underline hover:text-orange-default'>Đăng xuất</Link>
                     </div>
                 </div>
                 <div className={`flex flex-col gap-8 pt-8 ${isMini? 'w-full h-auto':'w-60'}`}>

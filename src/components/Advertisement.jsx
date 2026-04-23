@@ -2,14 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Button from './Button'
 import { ArrowBigLeft, ArrowBigRight } from 'lucide-react';
 
-const Advertisement = () => {
-  const linkAdvertisement = [
-    "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
-    "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-4-min.webp",
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-6-min.webp",
-    "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg"
-  ];
+const Advertisement = ({linkAdvertisement}) => {
   const [countAd,setCountAd] = useState(0);
   const length = linkAdvertisement.length;
   useEffect(() => {
