@@ -1,18 +1,44 @@
 import React, { useState } from 'react'
-import { ArrowLeft, ClosedCaption, Heart, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
+import { ArrowLeft, ClosedCaption, Heart, LogOut, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 import MenuHeader from './MenuHeader'
 import { Link } from 'react-router-dom'
+import { FaUserCircle } from 'react-icons/fa'
+import {useAuth} from  "../contexts/AuthContext"
+import {useNavigate} from "react-router-dom"
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
+  const [showMenuBar, setShowMenuBar] = useState(false);
+
+  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   const isPageMedium = useMediaQuery('(min-width: 768px)');
   const isChangeFindButton = useMediaQuery('(min-width: 1500)');
   const isShowFullWidthSearch = !isPageMedium && showFullWidthSearch;
-  const [showMenuBar, setShowMenuBar] = useState(false);
-  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
+
+  const {isAuthenticated, logout} = useAuth();
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
+  
+  const handleLogout = async (e) => {
+    e.preventDefault();
+    setError('')
+    setLoading(true);
+    
+    const result = await logout();
+    
+    if (result.success) {
+      alert("Đăng xuất thành công");
+      navigate('/');
+    } else {
+      setError(result.message);
+      alert(message);
+    }
+  };
+
 
   return (
     <div className='flex flex-col relative'>
@@ -39,12 +65,12 @@ const PageHeader = () => {
           onFocus={() => setIsFocus(true)}
           onBlur={() => setIsFocus(false)}
           />
-          <Button variant='find' className='h-full px-6'>
+          <Button variant='find' size='find'>
             {!isShowFullWidthSearch? 'Tìm kiếm': <Search/>}
           </Button>
         </form>
         {!isShowFullWidthSearch && 
-        <div className='flex'>
+        <div className='flex gap-2'>
           <Button size='icon' className='md:hidden' onClick={() => {setShowFullWidthSearch(true)}}>
             <Search/>
           </Button>
@@ -53,14 +79,20 @@ const PageHeader = () => {
           </Button>
 
           <Link 
-            to="/login"           >
+            to={isAuthenticated ? "/user-info" : "/login"}           >
             <Button size='icon'>
-              <User2/>
+              {isAuthenticated? <img src="https://static.fbshop.vn/template/assets/images/im-des.png" className='rounded-full'/>:<User2/>}
             </Button>
           </Link>
           <Button size='icon'>
             <ShoppingCart />
           </Button>
+          {isAuthenticated && <Button size='icon'>
+            <Link 
+              to="/login"
+              onClick={handleLogout}
+            ><LogOut/></Link>
+          </Button>}
         </div>}
     </div>
     {!isHideMainHeader && showMenuBar && (

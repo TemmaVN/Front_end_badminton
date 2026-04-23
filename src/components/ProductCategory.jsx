@@ -1,10 +1,22 @@
 import React from 'react';
 import MyCheckBox from './MyCheckBox';
+import { useState, useEffect } from 'react';
 
-const ProductCategory = ({ mainSub, items = [] }) => {
-  const defaultItems = ["Vợt cầu lông", "Giày cầu lông", "Balo cầu lông", "Bao vợt cầu lông", "Quần áo cầu lông", "Phụ kiện Aolikes - Fbshop", "Quả Cầu Lông"];
-  const displayItems = items.length > 0 ? items : defaultItems;
-
+const ProductCategory = ({ mainSub, items = [],isSetUp }) => {
+  const [selectedItems, setSelectedItems] = useState([]);
+  useEffect(() => {
+    if (isSetUp) {
+      setSelectedItems([]);
+    }
+  }, [isSetUp]);
+  const handleToggle = (itemValue) => {
+    setSelectedItems((prev) => {
+      if (prev.includes(itemValue)) {
+        return prev.filter(i => i !== itemValue);
+      }
+      return [...prev, itemValue];
+    });
+  };
   return (
     <div className="w-full">
       <h2 className="text-[#f15a22] text-lg font-bold mb-4">{mainSub}</h2>
@@ -17,12 +29,14 @@ const ProductCategory = ({ mainSub, items = [] }) => {
         [&::-webkit-scrollbar-thumb]:rounded-full
         hover:[&::-webkit-scrollbar-thumb]:bg-[#f15a22]">
         
-        {displayItems.map((item, index) => (
+        {items.map((item, index) => (
           <MyCheckBox 
             key={index} 
             id={`${mainSub}-${index}`} 
             data={item} 
             className="font-medium"
+            isChecked={selectedItems.includes(item)}
+            onCheck={() => handleToggle(item)}
           />
         ))}
       </div>
