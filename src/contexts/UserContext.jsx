@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { userApi} from '../api';
-import { a } from 'framer-motion/client';
 
 const UserContext = createContext(null);
 
@@ -35,8 +34,19 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber}) => {
+        try {
+            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber});
+            return { success: true };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Update profile failed';
+            return { success: false, message };
+        }
+    };
+
     const value = {
         user,
+        UpdateProfile,
         changePassword,
         loading,
     };

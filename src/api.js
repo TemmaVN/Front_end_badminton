@@ -44,6 +44,7 @@ export const authApi = {
 // User API
 export const userApi = {
     changePassword: ({ oldPassword, newPassword }) => api.put('/user/change-password', { oldPassword, newPassword }),
+    UpdateProfile: ({ fullName, dateOfBirth, phoneNumber }) => api.put('/user/profile', { fullName, dateOfBirth, phoneNumber }),
     getAll: (params) => api.get('/users', { params }),
     getById: (id) => api.get(`/users/${id}`),
     create: (data) => api.post('/users', data),

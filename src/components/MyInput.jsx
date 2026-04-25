@@ -13,13 +13,15 @@ export const inputStyle = cva(["transition-colors"], {
   }
 })
 
-const MyInput = ({type, placeHolder, size, value, onChange , className}) => {
+const MyInput = ({type, placeHolder, size, value, onChange ,isReadOnly=false ,className}) => {
   const [isFocus, setIsFocus] = useState(false);
   const [isHide, setIsHide] = useState(true);
+  const actualType = type === 'password' ? (isHide ? 'password' : 'text') : type;
   return (
     <div className={`flex justify-between border ${isFocus? 'border-orange-default': 'border-gray-200'} max-w-${size} rounded-full p-3`}>
         <input 
-        type={isHide? type:'text'} 
+        readOnly={isReadOnly}
+        type={actualType} 
         placeholder={placeHolder}
         value={value} 
         onChange={onChange}
@@ -28,7 +30,7 @@ const MyInput = ({type, placeHolder, size, value, onChange , className}) => {
         onBlur={() => setIsFocus(false)}
         />
         {type=='password'? 
-        <button 
+        <button
         className='text-orange-default hover:transition-transform hover:duration-150 hover:scale-125'
         onClick={() => setIsHide(!isHide)}
         type='button'

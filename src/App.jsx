@@ -13,6 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { useAuth } from './contexts/AuthContext';
 import UserInfo from "./layouts/UserInfo"
 import { UserProvider } from './contexts/UserContext';
+import Admin from './layouts/Admin';
 
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
@@ -32,11 +33,12 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
     return (
         <Routes>
+            {/* Public Routes */}
             <Route
                 path="/"
                 element={
                     <PublicRoute>
-                        <Product />
+                        <Admin />
                     </PublicRoute>
                 }
             />
@@ -72,6 +74,7 @@ function AppRoutes() {
                     </PublicRoute>
                 }
             />
+            {/* User Routes */}
             <Route
                 path='user-info'
                 element={
@@ -82,14 +85,24 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
+            {/* Admin Routes */}
+            <Route
+                path="/admin"
+                element={
+                    <ProtectedRoute adminOnly={true}>
+                        <Admin/>
+                    </ProtectedRoute>
+                }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 }
 
 function App() {
-  const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
-  const linkAdvertisement = [
+  const { isAuthenticated, isAdmin } = useAuth();
+  const isHideMainHeader = useMediaQuery('(min-width: 1250px)')
+    const linkAdvertisement = [
       "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
       "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-4-min.webp",
@@ -97,15 +110,13 @@ function App() {
       "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg"
     ];
   return (
-    <AuthProvider>
       <BrowserRouter>
         <div className='bg-white h-auto w-full'>
-          <PageHeader/>
-            {isHideMainHeader && <MainHeader></MainHeader>}        
+          <PageHeader></PageHeader>
+            {isHideMainHeader && <MainHeader></MainHeader>} 
             <AppRoutes />
         </div> 
       </BrowserRouter>
-    </AuthProvider>
   );
 }
 
