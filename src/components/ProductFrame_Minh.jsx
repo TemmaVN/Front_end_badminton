@@ -3,7 +3,10 @@ import { Crown } from "lucide-react";
 import Button from "./Button";
 
 function ProductPrice({ basePrice, sellingPrice }) {
-  const parsePrice = (priceStr) => Number(priceStr.replace(/[^0-9]/g, ""));
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0; // Nếu không có giá trị thì mặc định là 0
+    return Number(String(priceStr).replace(/[^0-9]/g, "")); // Ép kiểu về String trước khi replace
+  };
   const basePriceNum = parsePrice(basePrice);
   const sellingPriceNum = parsePrice(sellingPrice);
   if (basePriceNum === sellingPriceNum)
