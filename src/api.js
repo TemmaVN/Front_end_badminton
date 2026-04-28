@@ -54,21 +54,42 @@ export const userApi = {
 
 // Product API
 export const productApi = {
-    getAll: (params) => api.get('/products', { params }),
-    search: (params) => api.get('/products', { params }),
-    getById: (id) => api.get(`/products/${id}`),
-    create: (data) => api.post('/products', data),
-    update: (id, data) => api.put(`/products/${id}`, data),
-    delete: (id) => api.delete(`/products/${id}`),
+    getAll: (params) => api.get('/Product', { params }),
+    search: (params) => api.get('/Product/searchAsync', { params }),
+    getById: (id) => api.get(`/Product/${id}`),
+    create: (data) => api.post('/Product', data),
+    update: (id, data) => api.put(`/Product/${id}`, data),
+    delete: (id) => api.delete(`/Product/${id}`),
 };
 
 // Category API
 export const categoryApi = {
-    getAll: () => api.get('/categories'),
-    getById: (id) => api.get(`/categories/${id}`),
-    create: (data) => api.post('/categories', data),
-    update: (id, data) => api.put(`/categories/${id}`, data),
-    delete: (id) => api.delete(`/categories/${id}`),
+    getAll: () => api.get('/Category'), 
+    getById: (id) => api.get(`/Category/${id}`),
+    create: (categoryName) => api.post('/Category', `"${categoryName}"`, {
+        headers: { 'Content-Type': 'application/json' }
+    }),
+    update: (id, newName) => api.put(`/Category/${id}`, `"${newName}"`, {
+        headers: { 'Content-Type': 'application/json' }
+    }),
+    delete: (id) => api.delete(`/Category/${id}`),
+};
+
+// api.js
+// ... (các config axios cũ giữ nguyên)
+
+export const brandApi = {
+    getAll: () => api.get('/Brand'),
+
+    create: (brandName) => api.post('/Brand', JSON.stringify(brandName), {
+        headers: { 'Content-Type': 'application/json' }
+    }),
+
+    update: (id, newBrandName) => api.put(`/Brand/${id}`, JSON.stringify(newBrandName), {
+        headers: { 'Content-Type': 'application/json' }
+    }),
+
+    delete: (id) => api.delete(`/Brand/${id}`),
 };
 
 // Order API

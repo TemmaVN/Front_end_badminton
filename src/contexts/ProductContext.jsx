@@ -14,21 +14,31 @@ export const useProduct = () => {
 export const ProductProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: 1
+    });
 
-    useEffect(() => {
-        // Fetch products on mount
-        const fetchProducts = async () => {
-            try {
-                const response = await userApi.getProducts();
-                setProducts(response.data);
-            } catch (error) {
-                console.error('Failed to fetch products', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProducts();
-    }, []);
+    const searchProducts = async (filters) => {
+        setLoading(true);
+        try {
+            const response = await productApi.search(filters);
+            
+            const { items, totalCount, totalPages, page } = response.data;
+
+            setProducts(items);
+            setPagination({
+                totalCount,
+                totalPages,
+                currentPage: page
+            });
+        } catch (error) {
+            console.error('Lỗi khi lấy sản phẩm:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     const getAll = async (params) => {
@@ -75,6 +85,8 @@ export const ProductProvider = ({ children }) => {
         search,
         products,
         loading,
+        pagination,
+        searchProducts,
         addProduct,
     };
 

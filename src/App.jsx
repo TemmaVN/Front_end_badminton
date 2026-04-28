@@ -15,10 +15,10 @@ import UserInfo from "./layouts/UserInfo"
 import { UserProvider } from './contexts/UserContext';
 import Admin from './layouts/Admin';
 import { ProductProvider } from './contexts/ProductContext';
+import { CategoryProvider } from './contexts/CategoryContext';
 
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
-
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -32,6 +32,7 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+    const { isAdmin } = useAuth();
     return (
         <Routes>
             {/* Public Routes */}
@@ -95,7 +96,7 @@ function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={isAdmin() ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />} />
         </Routes>
     );
 }
@@ -115,9 +116,11 @@ function App() {
         <div className='bg-white h-auto w-full'>
           {!isAdmin() && <PageHeader></PageHeader>}
             {isHideMainHeader && <MainHeader></MainHeader>} 
-            <ProductProvider>
-                <AppRoutes />
-            </ProductProvider>
+            <CategoryProvider>
+                <ProductProvider>
+                    <AppRoutes />
+                </ProductProvider>
+            </CategoryProvider>
         </div> 
       </BrowserRouter>
   );

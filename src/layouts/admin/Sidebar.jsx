@@ -108,7 +108,6 @@ const Sidebar = ({collapsed, onToggle, currentPage, setCurrentPage}) => {
                                 toggleExpanded(item.id);
                             }
                             setCurrentPage(item.id);
-                            alert(item.id);
                         }}
                         >
                         <div className='flex items-center space-x-3'>
@@ -140,7 +139,6 @@ const Sidebar = ({collapsed, onToggle, currentPage, setCurrentPage}) => {
                                         transition-all'
                                         onClick={() => {
                                             setCurrentPage(subitem.id);
-                                            alert(subitem.id);
                                         }}
                                         >
                                     {subitem.label}
