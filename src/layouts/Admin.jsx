@@ -2,7 +2,7 @@ import React from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './admin/Sidebar'
 import Header from './admin/Header'
-<<<<<<< HEAD
+
 import Dashboard from '../components/admin/Dashboard'
 import Catalog from '../components/admin/Catalog'
 import ProductList from '../components/admin/ProductList'
@@ -12,12 +12,12 @@ import SalesOverview from '../components/admin/SalesOverview'
 import OrderList from '../components/admin/OrderList'
 import OrderDetail from '../components/admin/OrderDetail'
 import CustomerList from '../components/admin/CustomerList'
-=======
->>>>>>> Nguyen_testing
+
+
 
 const Admin = () => {
   const [sideBarCollapsed, setSideBarCollapsed] = React.useState(false)
-<<<<<<< HEAD
+
   const [currentPage, setCurrentPage] = React.useState('Dashboard')
   const [activeFilters, setActiveFilters] = React.useState(null);
   
@@ -47,8 +47,7 @@ const Admin = () => {
       default: return <Dashboard />;
     }
   };
-=======
->>>>>>> Nguyen_testing
+
 
   return (
     <div className='flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden'>
