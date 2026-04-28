@@ -44,16 +44,18 @@ export const authApi = {
 // User API
 export const userApi = {
     changePassword: ({ oldPassword, newPassword }) => api.put('/user/change-password', { oldPassword, newPassword }),
-    UpdateProfile: ({ fullName, dateOfBirth, phoneNumber }) => api.put('/user/profile', { fullName, dateOfBirth, phoneNumber }),
-    getAll: (params) => api.get('/users', { params }),
+    UpdateProfile: ({ fullName, dateOfBirth, phoneNumber }) => api.put('/User/profile', { fullName, dateOfBirth, phoneNumber }),
+    get_info: () => api.get('/User/user-info'),
+    getAll: (keyword = '') => api.get(`/User?keyword=${keyword}`),    
+    create: (userData) => api.post('/User', userData),
     getById: (id) => api.get(`/users/${id}`),
-    create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
     delete: (id) => api.delete(`/users/${id}`),
 };
 
 // Product API
 export const productApi = {
+    getHomeProducts: () => api.get('/Product/home'),
     getAll: (params) => api.get('/Product', { params }),
     search: (params) => api.get('/Product/searchAsync', { params }),
     getById: (id) => api.get(`/Product/${id}`),
@@ -80,7 +82,6 @@ export const categoryApi = {
 
 export const brandApi = {
     getAll: () => api.get('/Brand'),
-
     create: (brandName) => api.post('/Brand', JSON.stringify(brandName), {
         headers: { 'Content-Type': 'application/json' }
     }),

@@ -16,7 +16,7 @@ import { UserProvider } from './contexts/UserContext';
 import Admin from './layouts/Admin';
 import { ProductProvider } from './contexts/ProductContext';
 import { CategoryProvider } from './contexts/CategoryContext';
-
+import HomePage from './layouts/HomePage';
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
     if (loading) {
@@ -40,7 +40,7 @@ function AppRoutes() {
                 path="/"
                 element={
                     <PublicRoute>
-                        <Product/>
+                        <HomePage />
                     </PublicRoute>
                 }
             />
@@ -114,8 +114,8 @@ function App() {
   return (
       <BrowserRouter>
         <div className='bg-white h-auto w-full'>
-          {!isAdmin() && <PageHeader></PageHeader>}
-            {isHideMainHeader && <MainHeader></MainHeader>} 
+          <PageHeader></PageHeader>
+            <MainHeader></MainHeader> 
             <CategoryProvider>
                 <ProductProvider>
                     <AppRoutes />

@@ -21,24 +21,29 @@ export const ProductProvider = ({ children }) => {
     });
 
     const searchProducts = async (filters) => {
-        setLoading(true);
-        try {
-            const response = await productApi.search(filters);
-            
-            const { items, totalCount, totalPages, page } = response.data;
+    setLoading(true);
+    try {
+        const response = await productApi.search(filters);
+        
+        const { items, totalCount, totalPages, page } = response.data;
 
-            setProducts(items);
-            setPagination({
-                totalCount,
-                totalPages,
-                currentPage: page
-            });
-        } catch (error) {
-            console.error('Lỗi khi lấy sản phẩm:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        setProducts(items);
+        setPagination({
+            totalCount,
+            totalPages,
+            currentPage: page
+        });
+
+        // QUAN TRỌNG: Phải return dữ liệu để Component nhận được
+        return response.data; 
+
+    } catch (error) {
+        console.error('Lỗi khi lấy sản phẩm:', error);
+        return null; // Return null để tránh lỗi crash ở UI
+    } finally {
+        setLoading(false);
+    }
+};
 
 
     const getAll = async (params) => {

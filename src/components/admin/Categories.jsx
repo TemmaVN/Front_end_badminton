@@ -1,10 +1,26 @@
 import React from 'react';
 import { useCategory } from '../../contexts/CategoryContext'; // Đảm bảo đúng đường dẫn
-import { Loader2, Box, ChevronRight } from 'lucide-react';
+import { Loader2, Box, ChevronRight, Plus , Edit2, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Categories = () => {
-  const { categories, loading } = useCategory();
+  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategory();
+  const navigate = useNavigate(); 
+  const handleCategoryClick = (categoryId) => {
+    // Chuyển hướng sang trang sản phẩm với query categoryId
+    navigate(`/products?categoryId=${categoryId}`);
+  };
+  const handleAddCategory = async () => {
+    const name = prompt("Nhập tên danh mục mới:");
+    if (!name || name.trim() === "") return;
 
+    const result = await addCategory(name);
+    if (result.success) {
+      alert("Thêm danh mục thành công!");
+    } else {
+      alert("Lỗi: " + result.message);
+    }
+  };
   const getCategoryDisplay = (name) => {
   const lowerName = name.toLowerCase();
   
@@ -37,9 +53,46 @@ const Categories = () => {
       </div>
     );
   }
+  const handleDelete = async (e, id, name) => {
+    e.stopPropagation(); // Ngăn sự kiện click thẻ (chuyển hướng)
+    if (window.confirm(`Bạn có chắc muốn xóa danh mục "${name}"?`)) {
+      const result = await deleteCategory(id);
+      if (result.success) {
+        alert("Xóa thành công!");
+      }
+    }
+  };
 
+  const handleEdit = async (e, id, currentName) => {
+    e.stopPropagation(); // Ngăn sự kiện click thẻ
+    const newName = prompt("Nhập tên mới cho danh mục:", currentName);
+    if (!newName || newName === currentName) return;
+
+    // Giả sử bạn đã thêm hàm updateCategory vào Context (xem mục 2 bên dưới)
+    const result = await updateCategory(id, newName);
+    if (result.success) {
+      alert("Cập nhật thành công!");
+    } else {
+      alert("Lỗi: " + result.message);
+    }
+  };
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Quản lý danh mục</h3>
+            <p className="text-slate-500 text-sm mt-1">Quản lý các nhóm sản phẩm trong cửa hàng</p>
+          </div>
+          
+          <button 
+            onClick={handleAddCategory}
+            className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-orange-200"
+          >
+            <Plus size={20} /> Thêm danh mục
+          </button>
+        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      
       {categories && categories.length > 0 ? (
         categories.map((cat) => {
           const display = getCategoryDisplay(cat.categoryName);
@@ -65,9 +118,25 @@ const Categories = () => {
                   <span className="text-xs font-mono text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md">
                     /{cat.slug}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
-                    <ChevronRight size={16} />
-                  </div>
+                  <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => handleEdit(e, cat.categoryId, cat.categoryName)}
+                        className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all"
+                        title="Sửa"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => handleDelete(e, cat.categoryId, cat.categoryName)}
+                        className="w-8 h-8 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                        title="Xóa"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
+                        <ChevronRight size={16} />
+                      </div>
+                    </div>
                 </div>
               </div>
             </div>
@@ -79,6 +148,7 @@ const Categories = () => {
           <p className="text-slate-500">Không có danh mục nào để hiển thị.</p>
         </div>
       )}
+    </div>
     </div>
   );
 };

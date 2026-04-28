@@ -37,9 +37,21 @@ export const UserProvider = ({ children }) => {
     const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber}) => {
         try {
             const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber});
+            alert('hehe');
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Update profile failed';
+            return { success: false, message };
+        }
+    };
+
+    const getUserInfo = async () => {
+        try {
+            const response = await userApi.get_info();
+            
+            return { success: true, user: response.data };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Get user info failed';
             return { success: false, message };
         }
     };
@@ -48,6 +60,7 @@ export const UserProvider = ({ children }) => {
         user,
         UpdateProfile,
         changePassword,
+        getUserInfo,
         loading,
     };
 
