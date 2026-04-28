@@ -1,6 +1,8 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 import Sidebar from './admin/Sidebar'
 import Header from './admin/Header'
+<<<<<<< HEAD
 import Dashboard from '../components/admin/Dashboard'
 import Catalog from '../components/admin/Catalog'
 import ProductList from '../components/admin/ProductList'
@@ -10,10 +12,12 @@ import SalesOverview from '../components/admin/SalesOverview'
 import OrderList from '../components/admin/OrderList'
 import OrderDetail from '../components/admin/OrderDetail'
 import CustomerList from '../components/admin/CustomerList'
+=======
+>>>>>>> Nguyen_testing
 
 const Admin = () => {
-
   const [sideBarCollapsed, setSideBarCollapsed] = React.useState(false)
+<<<<<<< HEAD
   const [currentPage, setCurrentPage] = React.useState('Dashboard')
   const [activeFilters, setActiveFilters] = React.useState(null);
   
@@ -43,18 +47,23 @@ const Admin = () => {
       default: return <Dashboard />;
     }
   };
+=======
+>>>>>>> Nguyen_testing
 
   return (
     <div className='flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden'>
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} sideBarCollapsed={sideBarCollapsed} onToggleSidebar={setSideBarCollapsed} />
+      <Sidebar 
+        sideBarCollapsed={sideBarCollapsed} 
+        onToggleSidebar={setSideBarCollapsed} 
+      />
       <div className='flex-1 flex flex-col overflow-hidden relative'>
         <Header />
         <main className='flex-1 overflow-y-auto p-6 custom-scrollbar'>
-           {renderContent()}
+           <Outlet />
         </main>
       </div>
     </div>
   );
 };
 
-export default Admin
+export default Admin;
