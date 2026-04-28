@@ -16,6 +16,13 @@ import { UserProvider } from './contexts/UserContext';
 import Admin from './layouts/Admin';
 import { ProductProvider } from './contexts/ProductContext';
 import { CategoryProvider } from './contexts/CategoryContext';
+import Dashboard from './components/admin/Dashboard';
+import Catalog from './components/admin/Catalog';
+import ProductList from './components/admin/ProductList';
+import Categories from './components/admin/Categories';
+import Brand from './components/admin/Brand';
+import SalesOverview from './components/admin/SalesOverview';
+import OrderList from './components/admin/OrderList';
 
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
@@ -95,7 +102,17 @@ function AppRoutes() {
                         <Admin/>
                     </ProtectedRoute>
                 }
-            />
+            >
+                <Route index element={<Navigate to="dashboard" replace/>} />
+                <Route path="dashboard" element={<Dashboard/>} />
+                <Route path="catalog" element={<Catalog/>} />
+                <Route path="product" element={<ProductList/>} />
+                <Route path="categories" element={<Categories/>} />
+                <Route path="brands" element={<Brand/>} />
+                <Route path="sales-overview" element={<SalesOverview/>} />
+                <Route path="orders" element={<OrderList/>} />
+            </Route>
+            
             <Route path="*" element={isAdmin() ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />} />
         </Routes>
     );
