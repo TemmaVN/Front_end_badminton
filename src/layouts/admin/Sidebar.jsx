@@ -1,19 +1,14 @@
 import { button, div, label, sub } from 'framer-motion/client'
 import { 
-    Badge, 
-    CreditCard, 
-    FileText, 
-    Layout, 
-    MessageSquare,
-    Package, 
-    ShoppingBag, 
-    Zap,
-    LayoutDashboard,
-    BarChart3,
     Users,
-    Calendar,
+    Package,
+    ShoppingBag,
+    LayoutDashboard,
     Settings,
-    ChevronDown
+    Zap,
+    ChevronDown,
+    BarChart3,
+
 } from 'lucide-react'
 import React, {useState} from 'react'
 
@@ -22,90 +17,63 @@ const menuItems = [
         id: "Dashboard",
         icon: LayoutDashboard,
         label: "Dashboard",
-        active: true,
-        badge: "New"
     },
     {
-        id: "analytics",
-        icon: BarChart3,
-        label: "Analytics",
-        submenu: [
-            { id: "overview", label: "Overview" },
-            { id: "reports", label: "Reports" },
-            { id: "insights", label: "Insights" }
-        ]
-    },
-    {
-        id: "users",
-        icon: Users,
-        label: "Users",
-        count: "2.4k",
-        submenu: [
-            { id: "all-users", label: "All Users" },
-            { id: "roles", label: "Roles & Permissions" },
-            { id: "activity", label: "User Activity" }
-        ]
-    },
-    {
-        id: "ecommerce",
-        icon: ShoppingBag,
-        label: "E-commerce",
-        submenu: [
-            { id: "products", label: "Products" },
-            { id: "orders", label: "Orders" },
-            { id: "customers", label: "Customers" }
-        ]
-    },
-    {
-        id: "inventory",
+        id: "Catalog",
         icon: Package,
-        label: "Inventory",
-        count: "847k",
+        label: "Catalog",
+        submenu: [
+            { id: "products", label: "Products" }, // dbo.Products
+            { id: "categories", label: "Categories" }, // dbo.Categories
+            { id: "brands", label: "Brands" }, // dbo.Brands
+        ]
     },
     {
-        id: "transactions",
-        icon: CreditCard,
-        label: "Transactions",
+        id: "Sales",
+        icon: ShoppingBag,
+        label: "Sales",
+        submenu: [
+            { id: "orders", label: "Orders" }, // dbo.Orders
+            { id: "order-details", label: "Order Details" }, // dbo.OrderDetails
+            { id: "payments", label: "Payments" } // dbo.Payments
+        ]
     },
     {
-        id: "messages",
-        icon: MessageSquare,
-        label: "Messages",
-        badge: "12",
+        id: "Customers",
+        icon: Users,
+        label: "Customers", // dbo.Customers
+        count: "1.2k",
     },
     {
-        id: "calendar",
-        icon: Calendar,
-        label: "Calendar",
-    },
-    {
-        id: "reports",
-        icon: FileText,
-        label: "Reports",
-    },
-    {
-        id: "settings",
+        id: "System",
         icon: Settings,
-        label: "Settings",
+        label: "System",
+        submenu: [
+            { id: "users", label: "Admin Users" }, // dbo.Users
+            { id: "roles", label: "Roles & Permissions" }, // dbo.Roles, dbo.UserRoles
+            { id: "vouchers", label: "Vouchers" }, // dbo.VoucherConditions
+            { id: "tickets", label: "Service Tickets" } // dbo.ServiceTickets
+        ]
     }
-
-]
+];
 
 const Sidebar = ({collapsed, onToggle, currentPage, setCurrentPage}) => {
-    const [expandedItems, setExpandedItems] = useState([]);
+    const [expandedItems, setExpandedItems] = useState(new Set());
 
     const toggleExpanded = (itemid) => {
-        const newExpanded = new Set
-        if (newExpanded.has(itemid)) {
-            newExpanded.delete(itemid);
-        } else {
-            newExpanded.add(itemid);
-        }
-        setExpandedItems(newExpanded);
+        setExpandedItems((prev) => {
+            const newExpanded = new Set(prev);
+            if (newExpanded.has(itemid)) {
+                newExpanded.delete(itemid);
+            } else {
+                newExpanded.add(itemid);
+            }
+            return newExpanded
+        })
 
     };
   return (
-    <div className={`${collapsed? 'w-20':'w72'} transition duration-300 ease-in-out bg-white/80 dark:bg-slate-900/80
+    <div className={`${collapsed? 'w-20':'w-72'} transition-all duration-300 ease-in-out bg-white/80 dark:bg-slate-900/80
     backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-700/50 flex flex-col relative z-10`}>
         {/*logo*/}
         <div className='p-6 border-b border-slate-200/50 dark:border-slate-700/50'> 
@@ -140,6 +108,7 @@ const Sidebar = ({collapsed, onToggle, currentPage, setCurrentPage}) => {
                                 toggleExpanded(item.id);
                             }
                             setCurrentPage(item.id);
+                            alert(item.id);
                         }}
                         >
                         <div className='flex items-center space-x-3'>
@@ -160,15 +129,25 @@ const Sidebar = ({collapsed, onToggle, currentPage, setCurrentPage}) => {
                     </button>
 
                     {/* Subs Menus */}
-                    {(!collapsed && item.submenu && expandedItems.has(item.id)) &&
+                    {   !collapsed && 
+                        item.submenu && 
+                        expandedItems.has(item.id) && (
                         <div className='ml-8 mt-2 space-y-1'>
                             {item.submenu.map((subitem) => {
-                                return (<button>
-                                    subitem.label
+                                return (<button className='w-full text-sm text-left p-2 text-slate-600
+                                        dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200
+                                        hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-lg
+                                        transition-all'
+                                        onClick={() => {
+                                            setCurrentPage(subitem.id);
+                                            alert(subitem.id);
+                                        }}
+                                        >
+                                    {subitem.label}
                                 </button>)
                             })}
                         </div>
-                    }
+                    )}
                 </div>
             ))}
         </nav>

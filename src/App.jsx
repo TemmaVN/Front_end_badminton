@@ -14,6 +14,7 @@ import { useAuth } from './contexts/AuthContext';
 import UserInfo from "./layouts/UserInfo"
 import { UserProvider } from './contexts/UserContext';
 import Admin from './layouts/Admin';
+import { ProductProvider } from './contexts/ProductContext';
 
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
@@ -38,7 +39,7 @@ function AppRoutes() {
                 path="/"
                 element={
                     <PublicRoute>
-                        <Admin />
+                        <Product/>
                     </PublicRoute>
                 }
             />
@@ -101,7 +102,7 @@ function AppRoutes() {
 
 function App() {
   const { isAuthenticated, isAdmin } = useAuth();
-  const isHideMainHeader = useMediaQuery('(min-width: 1250px)')
+  const isHideMainHeader = useMediaQuery('(min-width: 1250px)') && !isAdmin();
     const linkAdvertisement = [
       "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
       "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
@@ -112,9 +113,11 @@ function App() {
   return (
       <BrowserRouter>
         <div className='bg-white h-auto w-full'>
-          <PageHeader></PageHeader>
+          {!isAdmin() && <PageHeader></PageHeader>}
             {isHideMainHeader && <MainHeader></MainHeader>} 
-            <AppRoutes />
+            <ProductProvider>
+                <AppRoutes />
+            </ProductProvider>
         </div> 
       </BrowserRouter>
   );

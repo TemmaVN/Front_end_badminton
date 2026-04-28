@@ -30,6 +30,7 @@ export const ProductProvider = ({ children }) => {
         fetchProducts();
     }, []);
 
+
     const getAll = async (params) => {
         setLoading(true);
         try {
@@ -56,11 +57,25 @@ export const ProductProvider = ({ children }) => {
         }
     }
 
+    const addProduct = async (product) => {
+        setLoading(true);
+        try {
+            const response = await productApi.addProduct(product);
+            setProducts([...products, response.data]);
+            alert('Product added successfully');
+            setLoading(false);
+        } catch (error) {
+            alert('Failed to add product');
+            setLoading(false);
+        }
+    }
+
     const value = {
         getAll,
         search,
         products,
         loading,
+        addProduct,
     };
 
     return (
