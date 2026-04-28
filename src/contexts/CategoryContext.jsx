@@ -57,12 +57,26 @@ export const CategoryProvider = ({ children }) => {
         }
     };
 
+    const updateCategory = async (id, newName) => {
+    try {
+        await categoryApi.update(id, newName); // Gọi api.put(`/categories/${id}`, newName)
+        await refreshCategories(); // Tải lại danh sách
+        return { success: true };
+    } catch (error) {
+        return { 
+            success: false, 
+            message: error.response?.data?.Message || "Lỗi khi cập nhật" 
+        };
+    }
+};
+
     const value = {
         categories,
         loading,
         refreshCategories,
         addCategory,
-        deleteCategory
+        deleteCategory, 
+        updateCategory,
     };
 
     return (

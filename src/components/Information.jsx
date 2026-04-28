@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {use, useEffect, useState} from 'react'
 import MyInput from '../components/MyInput'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import FlashButton from '../components/FlashButton'
@@ -16,6 +16,8 @@ const Information = () => {
     const [ward, setWard] = useState('');
     const [address, setAddress] = useState('');
     const { UpdateProfile } = useUser();
+
+    const {  getUserInfo } = useUser();
 
     const handleSaveInfo = async () => {
         // Validate input fields
@@ -39,26 +41,26 @@ const Information = () => {
     const storedUser = localStorage.getItem('user');
     const user = JSON.parse(storedUser);
 
-    const formatDateForInput = (date) => {
-        if (!date) return "";
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return "";
-
-        const year = d.getFullYear();
-        const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(d.getUTCDate()).padStart(2, '0');
-
-        return `${year}-${month}-${day}`; // Kết quả: "2026-04-24"
+    const handleGetUserInfo = async () => {
+        const result = await getUserInfo();
+        if (result.success) {
+            setFullName(result.user.fullName);
+            const formattedDate = formatDateForInput(result.user.dateOfBirth);
+            setBirthDate(formattedDate);
+            setEmail(result.user.email);
+            setPhoneNumber(result.user.phoneNumber);
+            localStorage.setItem('user', JSON.stringify(result.user));
+        }
     };
 
     useEffect(() => {
-        if (user) {
-            if (!fullName) setFullName(user.fullName || "");
-            if (!birthDate) setBirthDate(formatDateForInput(user.dateOfBirth));
-            if (!email) setEmail(user.email || "");
-            if (!phoneNumber) setPhoneNumber(user.phoneNumber || "");
-        }
-    }, [user]); 
+        handleGetUserInfo();
+    }, []);
+
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        return dateString.split('T')[0]; 
+    };
 
     return (
         <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>

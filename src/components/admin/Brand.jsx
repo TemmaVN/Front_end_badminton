@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, Globe, Package, Loader2, RefreshCw } from 'lucide-react';
 import { brandApi } from '../../api';
 
-const Brand = () => {
+const Brand = ({onBrandClick}) => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,6 +59,25 @@ const Brand = () => {
     }
   };
 
+  const handleUpdate = async (e, id, currentName) => {
+    e.stopPropagation();
+    const newName = prompt("Nhập tên mới cho thương hiệu:", currentName);
+    if (!newName || newName === currentName) return;
+
+    try {
+        const response = await brandApi.update(id, newName);
+        
+        if (response.status === 200) {
+            alert("Cập nhật thành công!");
+            fetchBrands(); // Tải lại danh sách
+        }
+    } catch (error) {
+        // Lấy thông báo lỗi từ Backend (C# trả về object có thuộc tính Message)
+        const errorMsg = error.response?.data?.Message || error.response?.data?.message || "Lỗi không xác định";
+        alert("Lỗi: " + errorMsg);
+    }
+};
+
   if (loading && brands.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-20 gap-4">
@@ -111,7 +130,9 @@ const Brand = () => {
               </div>
               
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors">
+                <button 
+                onClick={(e) => handleUpdate(e, brand.brandId, brand.brandName)}
+                className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors">
                   <Edit2 size={14}/>
                 </button>
                 <button 
