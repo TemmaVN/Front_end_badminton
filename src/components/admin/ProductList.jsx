@@ -25,15 +25,14 @@ const ProductList = () => {
     useEffect(() => {
         const fetchFilteredData = async () => {
             const response = await searchProducts(filters);
-            // Kiểm tra xem response từ Context có chứa totalPages không
             if (response && response.totalPages) {
                 setTotalPages(response.totalPages);
             } else {
-                setTotalPages(1); // Default nếu không có dữ liệu
+                setTotalPages(1); 
             }
         };
         fetchFilteredData();
-    }, [filters]); // Chỉ chạy khi filters (bao gồm cả page) thay đổi
+    }, [filters]); 
 
     
 
@@ -57,7 +56,7 @@ const ProductList = () => {
             try {
                 const res = await brandApi.getAll();
                 setBrands(res.data.data || []);
-            } catch (err) { console.error("Lỗi lấy brands:", err); }
+            } catch (err) { alert("Lỗi lấy brands:", err); }
         };
         fetchBrands();
     }, []);

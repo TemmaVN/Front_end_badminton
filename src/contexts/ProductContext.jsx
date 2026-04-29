@@ -38,7 +38,7 @@ export const ProductProvider = ({ children }) => {
         return response.data; 
 
     } catch (error) {
-        console.error('Lỗi khi lấy sản phẩm:', error);
+        alert('Lỗi khi lấy sản phẩm:', error);
         return null; // Return null để tránh lỗi crash ở UI
     } finally {
         setLoading(false);

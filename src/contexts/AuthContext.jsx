@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, use } from 'react';
 import { authApi } from '../api';
 import { jwtDecode } from 'jwt-decode';
 
@@ -13,19 +13,21 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const storedUser = localStorage.getItem('user');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+    
     const [loading, setLoading] = useState(true);
 
+
     useEffect(() => {
-        // Check for stored user on mount
-        const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
+        if (!token) {
+            setUser(null);
         }
         setLoading(false);
     }, []);
-
     const login = async (email, password) => {
         try {
             const response = await authApi.login(email, password);
@@ -69,13 +71,15 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    useEffect(() => {
+        console.log("Auth Context Updated:", user);
+    },[user]);
+
     const isAdmin = () => {
         if (!user) return false;
-
         const roleData = user.role || 
                         user.roles || 
                         user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-
         if (!roleData) return false;
 
         if (Array.isArray(roleData)) {
@@ -84,6 +88,7 @@ export const AuthProvider = ({ children }) => {
 
         return roleData.toLowerCase() === 'admin';
     };
+
 
     const value = {
         user,

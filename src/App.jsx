@@ -16,6 +16,10 @@ import { UserProvider } from './contexts/UserContext';
 import Admin from './layouts/Admin';
 import { ProductProvider } from './contexts/ProductContext';
 import { CategoryProvider } from './contexts/CategoryContext';
+import HomePage from './layouts/HomePage';
+import { useEffect } from 'react';
+
+// Admin Routes
 import Dashboard from './components/admin/Dashboard';
 import Catalog from './components/admin/Catalog';
 import ProductList from './components/admin/ProductList';
@@ -23,6 +27,13 @@ import Categories from './components/admin/Categories';
 import Brand from './components/admin/Brand';
 import SalesOverview from './components/admin/SalesOverview';
 import OrderList from './components/admin/OrderList';
+import OrderDetail from './components/admin/OrderDetail';
+import System from './components/admin/System';
+import AdminInfo from './components/admin/AdminInfo';
+import PermissionsAndRoles from './components/admin/PermissionsAndRoles';
+import Payment from './components/admin/Payment';
+import UserList from './components/admin/UserList';
+import { User } from 'lucide-react';
 
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
@@ -39,7 +50,16 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-    const { isAdmin } = useAuth();
+    const { isAdmin , loading} = useAuth();
+    if (loading) {
+        return (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+            </div>
+        )
+    }
     return (
         <Routes>
             {/* Public Routes */}
@@ -106,20 +126,26 @@ function AppRoutes() {
                 <Route index element={<Navigate to="dashboard" replace/>} />
                 <Route path="dashboard" element={<Dashboard/>} />
                 <Route path="catalog" element={<Catalog/>} />
-                <Route path="product" element={<ProductList/>} />
-                <Route path="categories" element={<Categories/>} />
-                <Route path="brands" element={<Brand/>} />
+                <Route path="catalog/products" element={<ProductList/>} />
+                <Route path="catalog/categories" element={<Categories/>} />
+                <Route path="catalog/brands" element={<Brand/>} />
                 <Route path="sales-overview" element={<SalesOverview/>} />
-                <Route path="orders" element={<OrderList/>} />
+                <Route path="sales-overview/orders" element={<OrderList/>} />
+                <Route path="sales-overview/orders-detail" element={<OrderDetail/>} />
+                <Route path="sales-overview/payments" element={<Payment/>} />
+                <Route path="users-list" element={<UserList/>} />
+                <Route path='system' element={<System/>} />
+                <Route path='system/info' element={<AdminInfo/>} />
+                <Route path='system/permissions-and-roles' element={<PermissionsAndRoles/>} />
             </Route>
             
-            <Route path="*" element={isAdmin() ? <Navigate to="/admin" replace /> : <Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" />} />
         </Routes>
     );
 }
 
 function App() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)') && !isAdmin();
     const linkAdvertisement = [
       "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
@@ -128,11 +154,20 @@ function App() {
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-6-min.webp",
       "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg"
     ];
+    if (loading) {
+        return (
+            <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="sr-only">Loading...</span>
+                </div>
+            </div>
+        )
+    }
   return (
       <BrowserRouter>
         <div className='bg-white h-auto w-full'>
-          <PageHeader></PageHeader>
-            <MainHeader></MainHeader> 
+          {!isAdmin() && <PageHeader></PageHeader>}
+             {isHideMainHeader && <MainHeader></MainHeader>}
             <CategoryProvider>
                 <ProductProvider>
                     <AppRoutes />
