@@ -49,7 +49,6 @@ const Information = () => {
             setBirthDate(formattedDate);
             setEmail(result.user.email);
             setPhoneNumber(result.user.phoneNumber);
-            localStorage.setItem('user', JSON.stringify(result.user));
         }
     };
 

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { categoryApi } from '../api';
 
+
 const CategoryContext = createContext(null);
 
 export const useCategory = () => {

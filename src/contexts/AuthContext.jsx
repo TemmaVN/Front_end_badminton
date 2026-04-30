@@ -71,12 +71,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        console.log("Auth Context Updated:", user);
-    },[user]);
-
     const isAdmin = () => {
         if (!user) return false;
+
         const roleData = user.role || 
                         user.roles || 
                         user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
