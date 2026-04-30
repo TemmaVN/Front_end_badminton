@@ -12,10 +12,9 @@ const Brand = ({onBrandClick}) => {
     try {
       setLoading(true);
       const response = await brandApi.getAll();
-      // Backend của bạn trả về: { data: [...], totalCount: x }
       setBrands(response.data.data || []);
     } catch (err) {
-      console.error("Fetch brands error:", err);
+      alert(err.message);
       setError("Không thể kết nối đến máy chủ");
     } finally {
       setLoading(false);

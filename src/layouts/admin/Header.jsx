@@ -1,7 +1,8 @@
 import {User, LogOut, Filter, Menu, Plus, Search, Sun ,Bell, Settings, ChevronDown} from 'lucide-react'
 import React, {useEffect, useRef, useState} from 'react'
 import {useAuth} from  "../../contexts/AuthContext"
-import {useNavigate, Link} from "react-router-dom"
+import {useNavigate, Link, useLocation} from "react-router-dom"
+import {useUser} from "../../contexts/UserContext"
 
 
 const Header = ({sideBarCollapsed, onToggleSidebar}) => {
@@ -11,8 +12,20 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate();
-    const {user} = useAuth();
+    const {getUserInfo} = useUser();
+    const [user, setUser] = useState(null);
+    const [fullName, setFullName] = useState('');
 
+    const handleGetUserInfo = async () => {
+        const result = await getUserInfo();
+        if (result.success) {
+            setFullName(result.user.fullName);
+        }
+    };
+
+    useEffect(() => {
+        handleGetUserInfo();
+    }, []);
   // Đóng dropdown khi click ra ngoài
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -116,7 +129,7 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                 className='w-8 h-8 rounded-full ring-2 ring-orange-default'
               />
               <div className='hidden md:block text-left'>
-                <p className='text-sm font-medium text-slate-800 dark:text-white leading-tight'>Admin</p>
+                <p className='text-sm font-medium text-slate-800 dark:text-white leading-tight'>{fullName}</p>
                 <p className='text-[10px] text-slate-500 dark:text-slate-400'>Administrator</p>
               </div>
               <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />

@@ -10,7 +10,6 @@ const MenuHeader = ({isOpen, setIsOpen}) => {
         }`}
         onClick={() => setIsOpen(false)}
       />
-      {/* Thân Drawer trượt từ phải sang */}
       <div className={`fixed left-0 h-full w-full max-w-150 bg-white z-100 shadow-2xl transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>

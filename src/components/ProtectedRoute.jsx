@@ -1,10 +1,9 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
     const { isAuthenticated, isAdmin, loading } = useAuth();
-
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -14,9 +13,8 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
             </div>
         );
     }
-
     if (!isAuthenticated) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     if (adminOnly && !isAdmin()) {

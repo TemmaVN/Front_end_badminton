@@ -37,7 +37,6 @@ export const UserProvider = ({ children }) => {
     const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber}) => {
         try {
             const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber});
-            alert('hehe');
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Update profile failed';
@@ -52,6 +51,16 @@ export const UserProvider = ({ children }) => {
             return { success: true, user: response.data };
         } catch (error) {
             const message = error.response?.data?.message || 'Get user info failed';
+            return { success: false, message };
+        }
+    };
+
+    const getAllUsers = async () => {
+        try {
+            const response = await userApi.getAll();
+            return { success: true, users: response.data };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Get all users failed';
             return { success: false, message };
         }
     };

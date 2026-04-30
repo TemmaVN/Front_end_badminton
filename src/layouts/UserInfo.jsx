@@ -14,9 +14,6 @@ const UserInfo = () => {
     const isFlexData = useMediaQuery('(max-width: 1030px)');
     const [page, setPage] = useState('info');
     const { logout } = useAuth();
-    useEffect(() => {
-    console.log("UserInfo vừa được sinh ra (Mount)");
-}, []);
     return (
     <div className='text-black flex justify-center '>
         <div className={`w-300 h-auto my-30 p-15 flex ${isMini? 'flex-col':''} gap-8 shadow-2xl`}>

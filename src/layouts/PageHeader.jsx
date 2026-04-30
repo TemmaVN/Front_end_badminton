@@ -7,11 +7,13 @@ import { Link } from 'react-router-dom'
 import { FaUserCircle } from 'react-icons/fa'
 import {useAuth} from  "../contexts/AuthContext"
 import {useNavigate} from "react-router-dom"
+import CartDrawer from './CartDrawer'
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
   const [showFullWidthSearch, setShowFullWidthSearch] = useState(false);
   const [showMenuBar, setShowMenuBar] = useState(false);
+  const [showCartDrawer, setShowCartDrawer] = useState(false)
 
   const isHideMainHeader = useMediaQuery('(min-width: 1250px)');
   const isPageMedium = useMediaQuery('(min-width: 768px)');
@@ -84,7 +86,9 @@ const PageHeader = () => {
               {isAuthenticated? <img src="https://static.fbshop.vn/template/assets/images/im-des.png" className='rounded-full'/>:<User2/>}
             </Button>
           </Link>
-          <Button size='icon'>
+          <Button 
+          size='icon'
+          onClick={() => setShowCartDrawer(true)}>
             <ShoppingCart />
           </Button>
           {isAuthenticated && <Button size='icon'>
@@ -103,6 +107,14 @@ const PageHeader = () => {
     />
   </div>
 )}
+        {showCartDrawer && (
+          <div className='absolute top-0 left-0 z-150 bg-white w-max-200 shadow-lg border'>
+            <CartDrawer 
+            isOpen={showCartDrawer}
+            setIsOpen={setShowCartDrawer}
+            />
+          </div>
+        )}
       </div>
   );
 }

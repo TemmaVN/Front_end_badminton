@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { categoryApi } from '../api';
 
+
 const CategoryContext = createContext(null);
 
 export const useCategory = () => {
@@ -23,7 +24,7 @@ export const CategoryProvider = ({ children }) => {
             // Backend trả về: { data: [ {categoryId, categoryName, slug}, ... ], totalCount: x }
             setCategories(response.data.data);
         } catch (error) {
-            console.error("Lỗi fetch categories:", error);
+            alert("Lỗi fetch categories:", error);
         } finally {
             setLoading(false);
         }
