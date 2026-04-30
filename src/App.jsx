@@ -23,6 +23,8 @@ import Categories from "./components/admin/Categories";
 import Brand from "./components/admin/Brand";
 import SalesOverview from "./components/admin/SalesOverview";
 import OrderList from "./components/admin/OrderList";
+import HomePage from "./layouts/HomePage";
+import ProductDetail from "./layouts/ProductDetail";
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -86,6 +88,25 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+
+      {/* Product and Category Routes */}
+      <Route
+        path="/product/:productSlug"
+        element={
+          <PublicRoute>
+            <ProductDetail />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/:categorySlug"
+        element={
+          <PublicRoute>
+            <Product />
+          </PublicRoute>
+        }
+      />
+
       {/* User Routes */}
       <Route
         path="user-info"

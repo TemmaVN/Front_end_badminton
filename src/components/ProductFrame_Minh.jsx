@@ -1,5 +1,6 @@
 import React from "react";
 import { Crown } from "lucide-react";
+import { Link } from "react-router-dom";
 import Button from "./Button";
 
 function ProductPrice({ basePrice, sellingPrice }) {
@@ -33,50 +34,53 @@ export default function ProductFrame_Minh({
   sellingPrice,
   isBestSeller,
   discountPercent,
+  productDetailSlug,
 }) {
   const [isHover, setIsHover] = React.useState(false);
 
   return (
     <>
-      <div
-        className=" flex flex-col relative w-full max-w-60 max-h-100 h-full  mx-auto rounded-b-lg p-4 shadow-sm hover:border-orange-500 hover:border-2 hover:scale-102 transition-all duration-300 cursor-pointer"
-        onMouseEnter={() => setIsHover(true)}
-        onMouseLeave={() => setIsHover(false)}
-      >
-        <div className=" absolute top-4.5 right-4.5 flex flex-col gap-1.5 items-end ">
-          {isBestSeller && (
-            <div className=" flex items-center gap-1.5 right-2 top-2 bg-orange-400 p-1 rounded font-semibold text-[11px] ">
-              <Crown />
-              Bán chạy
-            </div>
+      <Link to={`/product/${productDetailSlug}`} className="block h-full group">
+        <div
+          className=" flex flex-col relative w-full max-w-60 max-h-100 h-full  mx-auto rounded-b-lg p-4 shadow-sm hover:border-orange-500 hover:border-2 hover:scale-102 transition-all duration-300 cursor-pointer"
+          onMouseEnter={() => setIsHover(true)}
+          onMouseLeave={() => setIsHover(false)}
+        >
+          <div className=" absolute top-4.5 right-4.5 flex flex-col gap-1.5 items-end ">
+            {isBestSeller && (
+              <div className=" flex items-center gap-1.5 right-2 top-2 bg-orange-400 p-1 rounded font-semibold text-[11px] ">
+                <Crown />
+                Bán chạy
+              </div>
+            )}
+            {discountPercent != 0 && (
+              <div className="font-bold text-white bg-rose-500 p-0.5 rounded text-[11px] border border-rose-500 ">
+                -{discountPercent}
+              </div>
+            )}
+          </div>
+          <div className="w-full aspect-square ">
+            <img
+              src={image}
+              alt=""
+              className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+          {isHover && (
+            <Button className="flex justify-center items-center bg-orange-default hover:bg-orange-dark text-white font-bold w-full h-full py-3 mt-4 rounded-2xl">
+              Xem chi tiết
+            </Button>
           )}
-          {discountPercent != 0 && (
-            <div className="font-bold text-white bg-rose-500 p-0.5 rounded text-[11px] border border-rose-500 ">
-              -{discountPercent}
+          <div className="pt-4 flex flex-col flex-grow gap-2">
+            <h3 className="overflow-hidden text-[16px] text-black font-medium line-clamp-2">
+              {productName}
+            </h3>
+            <div className="bg-white mt-auto pt-1">
+              <ProductPrice basePrice={basePrice} sellingPrice={sellingPrice} />
             </div>
-          )}
-        </div>
-        <div className="w-full aspect-square ">
-          <img
-            src={image}
-            alt=""
-            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-        {isHover && (
-          <Button className="flex justify-center items-center bg-orange-default hover:bg-orange-dark text-white font-bold w-full h-full py-3 mt-4 rounded-2xl">
-            Xem chi tiết
-          </Button>
-        )}
-        <div className="pt-4 flex flex-col flex-grow gap-2">
-          <h3 className="overflow-hidden text-[16px] text-black font-medium line-clamp-2">
-            {productName}
-          </h3>
-          <div className="bg-white mt-auto pt-1">
-            <ProductPrice basePrice={basePrice} sellingPrice={sellingPrice} />
           </div>
         </div>
-      </div>
+      </Link>
     </>
   );
 }
