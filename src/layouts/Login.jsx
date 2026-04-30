@@ -6,7 +6,7 @@ import { useMediaQuery } from '../mystate/useMediaQuery'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
+import { jwtDecode } from 'jwt-decode';
 
 const Login = () => {
   const isShowPic = useMediaQuery("(min-width: 700px)");
@@ -23,13 +23,22 @@ const Login = () => {
           setLoading(true);
   
           const result = await login(email, password);
-  
+          const userRoles = result.user?.role;
+          const isUserAdmin = Array.isArray(userRoles) 
+            ? userRoles.some(r => r.toLowerCase() === 'admin')
+            : userRoles?.toLowerCase() === 'admin';
           if (result.success) {
               alert("Đăng nhập thành công!");
-              navigate('/');
+              const user = result.user;
+              if (isUserAdmin) {
+                  navigate('/admin');
+              }
+              else {
+                  navigate('/');
+              }
           } else {
               setError(result.message);
-              alert("Sai email hoặc mật khẩu!");
+              alert(result.message);
           }
   
           setLoading(false);

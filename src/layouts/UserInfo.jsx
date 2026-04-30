@@ -1,5 +1,5 @@
 import { LockKeyhole, PackageMinus, User2, UserCircleIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Button from '../components/Button'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import Information from '../components/Information'
@@ -14,6 +14,9 @@ const UserInfo = () => {
     const isFlexData = useMediaQuery('(max-width: 1030px)');
     const [page, setPage] = useState('info');
     const { logout } = useAuth();
+    useEffect(() => {
+    console.log("UserInfo vừa được sinh ra (Mount)");
+}, []);
     return (
     <div className='text-black flex justify-center '>
         <div className={`w-300 h-auto my-30 p-15 flex ${isMini? 'flex-col':''} gap-8 shadow-2xl`}>

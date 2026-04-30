@@ -13,10 +13,19 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
 import UserInfo from "./layouts/UserInfo";
 import { UserProvider } from "./contexts/UserContext";
+import Admin from "./layouts/Admin";
+import { ProductProvider } from "./contexts/ProductContext";
+import { CategoryProvider } from "./contexts/CategoryContext";
+import Dashboard from "./components/admin/Dashboard";
+import Catalog from "./components/admin/Catalog";
+import ProductList from "./components/admin/ProductList";
+import Categories from "./components/admin/Categories";
+import Brand from "./components/admin/Brand";
+import SalesOverview from "./components/admin/SalesOverview";
+import OrderList from "./components/admin/OrderList";
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-
   if (loading) {
     return (
       <div
@@ -33,13 +42,15 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  const { isAdmin } = useAuth();
   return (
     <Routes>
+      {/* Public Routes */}
       <Route
         path="/"
         element={
           <PublicRoute>
-            <Product />
+            <HomePage />
           </PublicRoute>
         }
       />
@@ -75,6 +86,7 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      {/* User Routes */}
       <Route
         path="user-info"
         element={
@@ -85,13 +97,42 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute adminOnly={true}>
+            <Admin />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="catalog" element={<Catalog />} />
+        <Route path="product" element={<ProductList />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="brands" element={<Brand />} />
+        <Route path="sales-overview" element={<SalesOverview />} />
+        <Route path="orders" element={<OrderList />} />
+      </Route>
+
+      <Route
+        path="*"
+        element={
+          isAdmin() ? (
+            <Navigate to="/admin" replace />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
     </Routes>
   );
 }
 
 function App() {
-  const isHideMainHeader = useMediaQuery("(min-width: 1250px)");
+  const { isAuthenticated, isAdmin } = useAuth();
+  const isHideMainHeader = useMediaQuery("(min-width: 1250px)") && !isAdmin();
   const linkAdvertisement = [
     "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
     "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
@@ -100,15 +141,17 @@ function App() {
     "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
   ];
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="bg-white h-auto w-full">
-          <PageHeader />
-          {isHideMainHeader && <MainHeader></MainHeader>}
-          <AppRoutes />
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <div className="bg-white h-auto w-full">
+        <PageHeader></PageHeader>
+        <MainHeader></MainHeader>
+        <CategoryProvider>
+          <ProductProvider>
+            <AppRoutes />
+          </ProductProvider>
+        </CategoryProvider>
+      </div>
+    </BrowserRouter>
   );
 }
 

@@ -1,44 +1,66 @@
-import React, {useState} from 'react'
+import React, {use, useEffect, useState} from 'react'
 import MyInput from '../components/MyInput'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import FlashButton from '../components/FlashButton'
 import { UserCircleIcon } from 'lucide-react'
+import { useUser } from '../contexts/UserContext'
 
 const Information = () => {
     const [fullName, setFullName] = useState('');
-    const [birthDate, setBirthDate] = useState('');
+    const [birthDate, setBirthDate] = useState("");
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-
-    const handleSaveInfo = () => {
-        // Validate input fields
-        if (!fullName || !email) {
-            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
-            return;
-        }
-
-        alert('Thông tin đã được lưu thành công!');
-    }
+    const [phoneNumber, setPhoneNumber] = useState('');
 
     const [province, setProvince] = useState('');
     const [district, setDistrict] = useState('');
     const [ward, setWard] = useState('');
     const [address, setAddress] = useState('');
+    const { UpdateProfile } = useUser();
 
-    const handleSaveAddress = () => {
+    const {  getUserInfo } = useUser();
+
+    const handleSaveInfo = async () => {
         // Validate input fields
-        if (!province || !district || !ward || !address) {
-            alert('Vui lòng điền đầy đủ thông tin giao hàng!');
+        if (!fullName || !email) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
             return;
         }
-
-        alert('Thông tin giao hàng đã được lưu thành công!');
+        const result = await UpdateProfile({fullName, birthDate, phoneNumber});
+        if (result.success) {
+            alert('Thông tin đã được lưu thành công!');
+        } else {
+            alert(result.message);
+        }
+        
     }
 
     const isCol = useMediaQuery('(min-width: 970px)');
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
 
+    const storedUser = localStorage.getItem('user');
+    const user = JSON.parse(storedUser);
+
+    const handleGetUserInfo = async () => {
+        const result = await getUserInfo();
+        if (result.success) {
+            setFullName(result.user.fullName);
+            const formattedDate = formatDateForInput(result.user.dateOfBirth);
+            setBirthDate(formattedDate);
+            setEmail(result.user.email);
+            setPhoneNumber(result.user.phoneNumber);
+            localStorage.setItem('user', JSON.stringify(result.user));
+        }
+    };
+
+    useEffect(() => {
+        handleGetUserInfo();
+    }, []);
+
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        return dateString.split('T')[0]; 
+    };
 
     return (
         <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
@@ -65,7 +87,7 @@ const Information = () => {
                                     <label className='pb-2' htmlFor="">Ngày sinh</label>
                                     <MyInput 
                                     size="200" 
-                                    type="datetime-local"
+                                    type="date"
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
                                     />
@@ -76,6 +98,7 @@ const Information = () => {
                                     <label className='pb-2' htmlFor="email">Email</label>
                                     <MyInput 
                                     size="200" 
+                                    isReadOnly={true}
                                     placeHolder="Email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -86,8 +109,8 @@ const Information = () => {
                                     <MyInput 
                                     size="200" 
                                     placeHolder="Số điện thoại"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -101,21 +124,21 @@ const Information = () => {
                             <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Tỉnh/thành phố </label>
-                                    <span className='text-orange-default'>*</span>  
+                                    <span className='text-orange-default'></span>  
                                 </div>
                                 <MyInput size="800" placeHolder="Tỉnh/thành phố"/>
                             </div>
                             <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Quận/huyện </label>
-                                    <span className='text-orange-default'>*</span>  
+                                    <span className='text-orange-default'></span>  
                                 </div>
                                 <MyInput size="800" placeHolder="Quận/huyện"/>
                             </div>
                             <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Phường/xã</label>
-                                    <span className='text-orange-default'>*</span>  
+                                    <span className='text-orange-default'></span>  
                                 </div>
                                 <MyInput size="800" placeHolder="Phường/xã"/>
                             </div>
@@ -123,13 +146,17 @@ const Information = () => {
                         <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Địa chỉ</label>
-                                    <span className='text-orange-default'>*</span>  
+                                    <span className='text-orange-default'></span>  
                                 </div>
                                 <MyInput size="800" placeHolder="Địa chỉ của bạn"/>
                             </div>
                     </div>
                     <div className='flex w-full justify-center'>
-                        <FlashButton itemName="Lưu thông tin"/>
+                        <FlashButton 
+                        type='submit'
+                        itemName="Lưu thông tin"
+                        onClick={handleSaveInfo}
+                        />
                     </div>
                 </div>
             </form>

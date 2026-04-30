@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../api';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
 
@@ -25,16 +26,21 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const login = async (username, password) => {
+    const login = async (email, password) => {
         try {
-            const response = await authApi.login(username, password);
+            const response = await authApi.login(email, password);
             const userData = response.data;
-
-            localStorage.setItem('token', userData.token);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
-
-            return { success: true };
+            const token = userData.token;
+            if (token) {
+                const decodedUser = jwtDecode(token);
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(decodedUser));
+                setUser(decodedUser);
+                return { success: true, user: decodedUser };
+            }
+            else {
+                return { success: false, message: 'Login failed' };
+            }
         } catch (error) {
             const message = error.response?.data?.message || 'Login failed';
             return { success: false, message };
@@ -64,7 +70,19 @@ export const AuthProvider = ({ children }) => {
     };
 
     const isAdmin = () => {
-        return user?.role === 'Admin';
+        if (!user) return false;
+
+        const roleData = user.role || 
+                        user.roles || 
+                        user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+        if (!roleData) return false;
+
+        if (Array.isArray(roleData)) {
+            return roleData.map(r => r.toLowerCase()).includes('admin');
+        }
+
+        return roleData.toLowerCase() === 'admin';
     };
 
     const value = {
