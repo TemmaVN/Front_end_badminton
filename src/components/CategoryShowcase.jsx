@@ -4,14 +4,16 @@ import ProductFrame_Minh from "./ProductFrame_Minh";
 
 const CategoryShowcase = ({ category, products, categoryImage }) => {
   if (!category || !products || products.length === 0) {
-    return null; // Không hiển thị nếu thiếu dữ liệu
+    return null;
   }
 
   const displayedProducts = products.slice(0, 6);
+
   return (
-    <div className="container mx-auto my-12 px-4">
+    <div className="max-w-[1200px] mx-auto my-12 px-4">
+      {/* Tiêu đề */}
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">
-        <h2 className="text-3xl font-bold text-gray-800 uppercase">
+        <h2 className="text-3xl font-bold text-gray-800">
           {category.categoryName}
         </h2>
         <Link
@@ -21,20 +23,26 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
           Xem Tất cả &raquo;
         </Link>
       </div>
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Banner Ảnh lớn bên trái */}
-        <div className="w-full lg:w-1/3 shrink-0 h-full">
-          <Link to={`/${category.slug}`} className="block h-full">
+
+      {/* Sử dụng Flexbox để kiểm soát Banner và Grid Sản phẩm */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+        {/* BANNER ẢNH LỚN: Thiết lập chiều rộng cố định (vd: 320px) để không bị bóp méo */}
+        <div className="w-full lg:w-[320px] shrink-0">
+          <Link
+            to={`/${category.slug}`}
+            className="block h-full rounded-xl overflow-hidden border-[1.6px] border-orange-500 shadow-md group"
+          >
             <img
               src={categoryImage}
               alt={category.categoryName}
-              className="w-full h-full min-h-[500px] object-cover rounded-xl border-2 border-orange-500 shadow-md hover:shadow-lg transition-shadow duration-300"
+              // Sử dụng object-cover và h-full để lấp đầy thẻ chứa
+              className="w-full h-full min-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
         </div>
 
-        {/* Lưới sản phẩm bên phải (Grid 3 cột) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow">
+        {/* LƯỚI SẢN PHẨM: flex-1 sẽ tự động lấy toàn bộ khoảng trống còn lại */}
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-3">
           {displayedProducts.map((product) => (
             <ProductFrame_Minh
               key={product.productId}
@@ -44,7 +52,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
               sellingPrice={product.sellingPrice}
               isBestSeller={product.isBestSeller}
               discountPercent={product.discountPercent}
-              productDetailSlug={product.slug} // Dữ liệu slug sản phẩm để vào trang detail
+              productDetailSlug={product.slug}
             />
           ))}
         </div>
