@@ -23,6 +23,7 @@ export const ProductProvider = ({ children }) => {
             discountPercent: '',
             productDetailSlug: '',
             categorySlug: '',
+            productSlug: '',
         }
     );
     const [products, setProducts] = useState([]);

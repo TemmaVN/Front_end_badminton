@@ -141,10 +141,12 @@ function AppRoutes() {
       >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        
         <Route path="catalog" element={<Catalog />} />
         <Route path="product" element={<ProductList />} />
         <Route path="categories" element={<Categories />} />
         <Route path="brands" element={<Brand />} />
+        
         <Route path="sales-overview" element={<SalesOverview />} />
         <Route path="orders" element={<OrderList />} />
       </Route>

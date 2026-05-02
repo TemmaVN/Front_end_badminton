@@ -15,6 +15,9 @@ const ProductDetail = (
     { id: 'specs', label: 'Thông số kỹ thuật' },
     { id: 'reviews', label: 'Đánh giá 0 ⭐' },
   ];
+    useEffect(() => {
+      fetchCart();
+    }, []);
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-6">
