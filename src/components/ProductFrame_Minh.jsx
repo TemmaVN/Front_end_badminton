@@ -86,7 +86,7 @@ export default function ProductFrame_Minh({
 
         {/* Nội dung Tên và Giá */}
         <div className="flex flex-col flex-grow justify-between gap-2">
-          <h3 className="text-[14px] text-gray-800 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
+          <h3 className="text-[16px] text-gray-800 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
             {productName}
           </h3>
           <div className="mt-auto pt-1 border-t border-gray-50">

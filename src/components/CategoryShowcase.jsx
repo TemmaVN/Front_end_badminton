@@ -13,7 +13,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
     <div className="max-w-[1200px] mx-auto my-12 px-4">
       {/* Tiêu đề */}
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">
-        <h2 className="text-3xl font-bold text-gray-800 uppercase">
+        <h2 className="text-3xl font-bold text-gray-800">
           {category.categoryName}
         </h2>
         <Link

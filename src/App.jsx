@@ -25,6 +25,7 @@ import SalesOverview from "./components/admin/SalesOverview";
 import OrderList from "./components/admin/OrderList";
 import HomePage from "./layouts/HomePage";
 import ProductDetail from "./layouts/ProductDetail";
+import Footer from "./layouts/Footer";
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -171,6 +172,8 @@ function App() {
             <AppRoutes />
           </ProductProvider>
         </CategoryProvider>
+        {/* Nhúng Footer vào cuối ứng dụng */}
+        <Footer />
       </div>
     </BrowserRouter>
   );
