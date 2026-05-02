@@ -44,11 +44,11 @@ const HomePage = () => {
 
   const categoryImages = {
     "Vợt cầu lông":
-      "https://cdn.shopvnb.com/uploads/advertising/vot-cau-long.webp",
+      "https://static.fbshop.vn/wp-content/uploads/2024/01/Artboard-5-copy-2@2x.webp",
     "Giày cầu lông":
-      "https://cdn.shopvnb.com/uploads/advertising/giay-cau-long.webp",
+      "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
     "Bao vợt & Balo":
-      "https://cdn.shopvnb.com/uploads/advertising/balo-tui-vnb.webp",
+      "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
   };
 
   if (loading) {
