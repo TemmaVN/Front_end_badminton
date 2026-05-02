@@ -4,6 +4,7 @@ import { useMediaQuery } from '../mystate/useMediaQuery'
 import FlashButton from '../components/FlashButton'
 import { UserCircleIcon } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
+import { foreignObject } from 'framer-motion/client'
 
 const Information = () => {
     const [fullName, setFullName] = useState('');
@@ -49,6 +50,12 @@ const Information = () => {
             setBirthDate(formattedDate);
             setEmail(result.user.email);
             setPhoneNumber(result.user.phoneNumber);
+            if (user) {
+                user.fullName = fullName;
+                user.dateOfBirth = formattedDate;
+                user.phoneNumber = phoneNumber;
+                localStorage.setItem(JSON.stringify(user));
+            }
         }
     };
 

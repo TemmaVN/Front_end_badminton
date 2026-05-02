@@ -2,6 +2,7 @@ import React from "react";
 import { Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "./Button";
+import { categoryApi } from "../api";
 
 function ProductPrice({ basePrice, sellingPrice }) {
   const parsePrice = (priceStr) => {
@@ -35,14 +36,16 @@ export default function ProductFrame_Minh({
   isBestSeller,
   discountPercent,
   productDetailSlug,
+  categorySlug,
 }) {
   const [isHover, setIsHover] = React.useState(false);
-
+  console.log(productDetailSlug)
+  console.log(categorySlug)
   return (
     <>
-      <Link to={`/product/${productDetailSlug}`} className="block h-full group">
+      <Link to={`/products/${categorySlug}/${productDetailSlug}`} className="block h-full group">
         <div
-          className=" flex flex-col relative w-full max-w-60 max-h-100 h-full  mx-auto rounded-b-lg p-4 shadow-sm hover:border-orange-500 hover:border-2 hover:scale-102 transition-all duration-300 cursor-pointer"
+          className=" flex flex-col relative w-full max-w-60 max-h-130 h-full  mx-auto rounded-b-lg p-4 shadow-sm hover:border-orange-500 hover:border-2 hover:scale-102 transition-all duration-300 cursor-pointer"
           onMouseEnter={() => setIsHover(true)}
           onMouseLeave={() => setIsHover(false)}
         >

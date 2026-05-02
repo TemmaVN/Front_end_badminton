@@ -25,6 +25,8 @@ import SalesOverview from "./components/admin/SalesOverview";
 import OrderList from "./components/admin/OrderList";
 import HomePage from "./layouts/HomePage";
 import ProductDetail from "./layouts/ProductDetail";
+import { CartProvider } from "./contexts/CartContext";
+import CartPage from "./layouts/CartPage";
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -52,7 +54,7 @@ function AppRoutes() {
         path="/"
         element={
           <PublicRoute>
-            <HomePage />
+            <HomePage/>
           </PublicRoute>
         }
       />
@@ -91,7 +93,7 @@ function AppRoutes() {
 
       {/* Product and Category Routes */}
       <Route
-        path="/product/:productSlug"
+        path="/products/:categorySlug/:productSlug"
         element={
           <PublicRoute>
             <ProductDetail />
@@ -99,14 +101,23 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/:categorySlug"
+        path="/products/:categorySlug"
         element={
           <PublicRoute>
             <Product />
           </PublicRoute>
         }
       />
-
+      <Route
+        path="/cart"
+        element={
+          <PublicRoute>
+            <UserProvider>
+              <CartPage/>
+            </UserProvider>
+          </PublicRoute>
+        }
+      />
       {/* User Routes */}
       <Route
         path="user-info"
@@ -163,7 +174,8 @@ function App() {
   ];
   return (
     <BrowserRouter>
-      <div className="bg-white h-auto w-full">
+      <CartProvider>
+        <div className="bg-white h-auto w-full">
         <PageHeader></PageHeader>
         <MainHeader></MainHeader>
         <CategoryProvider>
@@ -172,6 +184,7 @@ function App() {
           </ProductProvider>
         </CategoryProvider>
       </div>
+      </CartProvider>
     </BrowserRouter>
   );
 }

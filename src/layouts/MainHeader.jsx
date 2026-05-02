@@ -93,12 +93,13 @@ const MainHeader = () => {
   const [page, setPage] = useState('home');
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
     const buildMenu = async () => {
       try {
         const catRes = await categoryApi.getAll();
-        const categories = catRes.data?.data || catRes.data || [];
+        const categories = catRes.data?.data || catRes.data || [];   // xem field name thực tế
 
         const built = MENU_CONFIG.map(({ catIndex, productCategories }) => ({
           label: categories[catIndex]?.categoryName?.toUpperCase() ?? `DANH MỤC ${catIndex + 1}`,
@@ -137,7 +138,8 @@ const MainHeader = () => {
 
           {!loading &&
             menuItems.map(({ label, slug, productCategories }) => (
-              <div
+              <Link
+                to={`/products/${slug}`}
                 key={slug}
                 className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
                 onMouseEnter={() => {
@@ -146,7 +148,7 @@ const MainHeader = () => {
                 }}
               >
                 {label} <span className="text-[10px]">▼</span>
-              </div>
+              </Link>
             ))}
 
           <Link

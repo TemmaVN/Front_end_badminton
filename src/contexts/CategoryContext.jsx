@@ -21,7 +21,6 @@ export const CategoryProvider = ({ children }) => {
         setLoading(true);
         try {
             const response = await categoryApi.getAll();
-            // Backend trả về: { data: [ {categoryId, categoryName, slug}, ... ], totalCount: x }
             setCategories(response.data.data);
         } catch (error) {
             alert("Lỗi fetch categories:", error);

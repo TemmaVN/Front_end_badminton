@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { productApi } from '../api';
+import { useCallback } from 'react';
 
 const ProductContext = createContext(null);
 
@@ -14,6 +15,8 @@ export const useProduct = () => {
 export const ProductProvider = ({ children }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [slug, setSlug] = useState('');
+    const [error, setError] = useState('');
     const [pagination, setPagination] = useState({
         totalCount: 0,
         totalPages: 0,
@@ -85,12 +88,29 @@ export const ProductProvider = ({ children }) => {
         }
     }
 
+     const fetchProductsBySlug = useCallback(async (categorySlug, params = {}) => {
+        try {
+        setLoading(true);
+        setError(null);
+        const response = await productApi.getProductsBySlug(categorySlug, params);
+        const data = response.data;
+
+        setProducts(data.items || []);
+        setTotalCount(data.totalCount || 0);
+        } catch (err) {
+        setError(err.message);
+        } finally {
+        setLoading(false);
+        }
+    }, []);
+
     const value = {
         getAll,
         search,
         products,
         loading,
         pagination,
+        fetchProductsBySlug,
         searchProducts,
         addProduct,
     };

@@ -8,7 +8,6 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
   }
 
   const displayedProducts = products.slice(0, 6);
-  console.log(category.slug);
   return (
     <div className="container mx-auto my-12 px-4">
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">

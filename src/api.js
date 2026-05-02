@@ -62,6 +62,17 @@ export const productApi = {
     create: (data) => api.post('/Product', data),
     update: (id, data) => api.put(`/Product/${id}`, data),
     delete: (id) => api.delete(`/Product/${id}`),
+    getProductsBySlug: (categorySlug, params = {}) =>
+        axios.get(`/api/product/product_of_category/${categorySlug}`, {
+        params: {
+            categorySlug,
+            page: params.page || 1,
+            pagesize: params.pagesize || 9,
+            keyword: params.keyword || undefined,
+            minPrice: params.minPrice || undefined,
+            maxPrice: params.maxPrice || undefined,
+        },
+    }),
 };
 
 // Category API
@@ -95,9 +106,17 @@ export const brandApi = {
 
 // Order API
 export const orderApi = {
-    create: (data) => api.post('/orders', data),
-    getMyOrders: () => api.get('/orders'),
-    getById: (id) => api.get(`/orders/${id}`),
+    create: (data) => api.post('/Order/create', data),  // hoặc đúng route backend của bạn
+    getMyOrders: () => api.get('/Order/my-orders'),
+    getById: (id) => api.get(`/Order/${id}`),
 };
 
 export default api;
+
+// Cart API
+export const cartApi = {
+    getMyCart: () => api.get('/Cart/my-cart'),
+    addToCart: (detailId, quantity) => api.post('/Cart/add-to-cart', { detailId, quantity }),
+    updateCartItem: (cartItemId, quantity) => api.put(`/Cart/update-cart-item/${cartItemId}`, null, { params: { quantity } }),
+    deleteCartItem: (cartItemId) => api.delete(`/Cart/delete-cart-item/${cartItemId}`),
+};
