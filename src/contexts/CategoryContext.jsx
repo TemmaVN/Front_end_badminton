@@ -15,6 +15,7 @@ export const useCategory = () => {
 export const CategoryProvider = ({ children }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pageCatagory, setPageCatagory] = useState([]);
 
     // 1. Hàm lấy tất cả danh mục (GetAll)
     const refreshCategories = async () => {
@@ -72,6 +73,8 @@ export const CategoryProvider = ({ children }) => {
 
     const value = {
         categories,
+        pageCatagory,
+        setPageCatagory,
         loading,
         refreshCategories,
         addCategory,

@@ -94,7 +94,7 @@ function AppRoutes() {
 
       {/* Product and Category Routes */}
       <Route
-        path="/products/:categorySlug/:productSlug"
+        path="/p/:productSlug"
         element={
           <PublicRoute>
             <ProductDetail />
@@ -102,7 +102,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/products/:categorySlug"
+        path="/:categorySlug"
         element={
           <PublicRoute>
             <Product />
@@ -175,19 +175,19 @@ function App() {
   ];
   return (
     <BrowserRouter>
-      <CartProvider>
-        <div className="bg-white h-auto w-full">
-        <PageHeader></PageHeader>
-        <MainHeader></MainHeader>
-        <CategoryProvider>
-          <ProductProvider>
-            <AppRoutes />
-          </ProductProvider>
-        </CategoryProvider>
-        {/* Nhúng Footer vào cuối ứng dụng */}
-        <Footer />
-      </div>
-      </CartProvider>
+      <CategoryProvider>
+          <CartProvider>
+          <div className="bg-white h-auto w-full">
+          <PageHeader></PageHeader>
+          <MainHeader></MainHeader>
+            <ProductProvider>
+              <AppRoutes />
+            </ProductProvider>
+          {/* Nhúng Footer vào cuối ứng dụng */}
+          <Footer />
+        </div>
+        </CartProvider>
+      </CategoryProvider>
     </BrowserRouter>
   );
 }

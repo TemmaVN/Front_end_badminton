@@ -15,9 +15,9 @@ const menuItems = [
         label: "Catalog",
         path: "/admin/catalog",
         submenu: [
-            { id: "products", label: "Products", path: "/admin/catalog/products" },
-            { id: "categories", label: "Categories", path: "/admin/catalog/categories" },
-            { id: "brands", label: "Brands", path: "/admin/catalog/brands" },
+            { id: "products", label: "Products", path: "/admin/product" },
+            { id: "categories", label: "Categories", path: "/admin/categories" },
+            { id: "brands", label: "Brands", path: "/admin/brands" },
         ]
     },
     {
@@ -26,7 +26,7 @@ const menuItems = [
         label: "Sales",
         path: "/admin/sales-overview",
         submenu: [
-            { id: "orders", label: "Orders", path: "/admin/sales-overview/orders" },
+            { id: "orders", label: "Orders", path: "/admin/orders" },
             { id: "orders-detail", label: "Orders Detail", path: "/admin/sales-overview/orders-detail" },
             { id: "payments", label: "Payments", path: "/admin/sales-overview/payments" }
         ]

@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import FlashButton from '../components/FlashButton';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
+import { useProduct } from "../contexts/ProductContext";
 
-const ProductPage = () => {
+const ProductDetail = (
+) => {
+  const { currentProduct, setCurrentProduct } = useProduct();
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
@@ -12,7 +15,6 @@ const ProductPage = () => {
     { id: 'specs', label: 'Thông số kỹ thuật' },
     { id: 'reviews', label: 'Đánh giá 0 ⭐' },
   ];
-
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -35,18 +37,14 @@ const ProductPage = () => {
               <img src="https://fbshop.vn/wp-content/uploads/2023/04/bg-80-power-jp.jpg" alt="Yonex BG80 Power" className="max-h-[500px] object-contain" />
             </div>
             <div className="flex gap-3 overflow-x-auto">
-               {[1,2,3,4].map(i => (
-                 <div key={i} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500">
-                    <img src="https://fbshop.vn/wp-content/uploads/2023/04/bg-80-power-jp.jpg" className="w-full h-full object-contain" />
-                 </div>
-               ))}
+               <img src={currentProduct.image} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500" />
             </div>
           </div>
 
           {/* Right: Summary & Order */}
           <div className="flex flex-col">
             <h1 className="text-3xl font-bold text-slate-800 mb-4 leading-snug">
-              Cước Đan Vợt Cầu Lông Yonex BG80 Power JP | Yonex BG80 Power Nội Địa Nhật
+              {currentProduct.productName}
             </h1>
             <div className="mb-4"><span className="bg-teal-400 text-white px-3 py-1 rounded text-xs font-bold uppercase">✨ Mới</span></div>
             
@@ -56,9 +54,9 @@ const ProductPage = () => {
             </div>
 
             <div className="flex items-baseline gap-4 mb-6">
-              <span className="text-4xl font-bold text-orange-500">230.000đ</span>
-              <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-sm font-bold">-17%</span>
-              <span className="text-xl text-gray-400 line-through">276.000đ</span>
+              <span className="text-4xl font-bold text-orange-500">{currentProduct.sellingPrice}</span>
+              {currentProduct.sellingPrice !== currentProduct.basePrice && <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-sm font-bold">-{currentProduct.discountPercent}%</span>}
+              {currentProduct.sellingPrice !== currentProduct.basePrice && <span className="text-xl text-gray-400 line-through">{currentProduct.basePrice}</span>}
             </div>
 
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-orange-800 mb-8">
@@ -183,4 +181,4 @@ const ProductPage = () => {
   );
 };
 
-export default ProductPage;
+export default ProductDetail;

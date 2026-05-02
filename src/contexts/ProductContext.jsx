@@ -13,6 +13,18 @@ export const useProduct = () => {
 };
 
 export const ProductProvider = ({ children }) => {
+    const [currentProduct, setCurrentProduct] = useState(
+        {
+            image: '',
+            productName: '',
+            basePrice: '',
+            sellingPrice: '',
+            isBestSeller: '',
+            discountPercent: '',
+            productDetailSlug: '',
+            categorySlug: '',
+        }
+    );
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [slug, setSlug] = useState('');
@@ -93,10 +105,14 @@ export const ProductProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         const response = await productApi.getProductsBySlug(categorySlug, params);
-        const data = response.data;
-
-        setProducts(data.items || []);
-        setTotalCount(data.totalCount || 0);
+        const { items, totalCount, totalPages, page } = response.data;
+        console.log(items, totalCount, totalPages, page)
+        setProducts(items);
+        setPagination({
+            totalCount: totalCount,
+            totalPages: totalPages,
+            currentPage: page
+        });
         } catch (err) {
         setError(err.message);
         } finally {
@@ -108,6 +124,8 @@ export const ProductProvider = ({ children }) => {
         getAll,
         search,
         products,
+        currentProduct,
+        setCurrentProduct,
         loading,
         pagination,
         fetchProductsBySlug,

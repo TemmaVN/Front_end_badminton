@@ -1,6 +1,7 @@
 import React from "react";
 import { Crown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useProduct } from "../contexts/ProductContext";
 
 function ProductPrice({ basePrice, sellingPrice }) {
   const parsePrice = (priceVal) => {
@@ -44,14 +45,24 @@ export default function ProductFrame_Minh({
   productDetailSlug,
   categorySlug,
 }) {
+  const { currentProduct, setCurrentProduct } = useProduct();
   return (
     // Bỏ w-full ở Link, thay bằng h-full để thẻ con trải dài hết chiều cao của ô Grid
-    <Link to={`/product/${productDetailSlug}`} className="block h-full group">
-      {/* 
-        SỬA LẠI:
-        - XÓA max-w-[240px] và max-h-[365px]
-        - Giữ lại w-full h-full để nó điền đầy ô grid
-      */}
+    <Link 
+    to={`/p/${productDetailSlug}`}
+    onClick={() => setCurrentProduct(
+      {
+        image: image,
+        productName: productName,
+        basePrice: basePrice,
+        sellingPrice: sellingPrice,
+        isBestSeller: isBestSeller,
+        discountPercent: discountPercent,
+        productDetailSlug: productDetailSlug,
+        categorySlug: categorySlug,
+      }
+    )} 
+    className="block h-full group">
       <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-[10px] border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
         {/* Nhãn Bán chạy & Giảm giá */}
         <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 items-end z-10">
