@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Racket from '../components/Racket';
 import { Link } from 'react-router-dom';
 import { categoryApi } from '../api';
+import { useCategory } from '../contexts/CategoryContext';
 
 const MENU_CONFIG = [
   {
@@ -93,19 +94,15 @@ const MainHeader = () => {
   const [page, setPage] = useState('home');
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const {categories, refreshCategories ,pageCatagory, setPageCatagory} = useCategory();
   useEffect(() => {
     const buildMenu = async () => {
-      try {
-        const catRes = await categoryApi.getAll();
-        const categories = catRes.data?.data || catRes.data || [];
-
+      try { 
         const built = MENU_CONFIG.map(({ catIndex, productCategories }) => ({
           label: categories[catIndex]?.categoryName?.toUpperCase() ?? `DANH MỤC ${catIndex + 1}`,
           slug: categories[catIndex]?.slug ?? `category-${catIndex}`,
           productCategories,
         }));
-
         built.push(ACCESSORY_MENU);
         setMenuItems(built);
       } catch (err) {
@@ -116,6 +113,10 @@ const MainHeader = () => {
     };
 
     buildMenu();
+  }, [categories]);
+
+  useEffect(() => {
+    refreshCategories();
   }, []);
 
   return (
@@ -137,8 +138,12 @@ const MainHeader = () => {
 
           {!loading &&
             menuItems.map(({ label, slug, productCategories }) => (
-              <div
+              <Link
+                to={`${slug}`}
                 key={slug}
+                onClick={
+                  () => setPageCatagory(label)
+                }
                 className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
                 onMouseEnter={() => {
                   setCurrentProduct(productCategories);
@@ -146,7 +151,7 @@ const MainHeader = () => {
                 }}
               >
                 {label} <span className="text-[10px]">▼</span>
-              </div>
+              </Link>
             ))}
 
           <Link

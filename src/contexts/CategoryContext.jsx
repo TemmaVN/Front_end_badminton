@@ -15,13 +15,13 @@ export const useCategory = () => {
 export const CategoryProvider = ({ children }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pageCatagory, setPageCatagory] = useState([]);
 
     // 1. Hàm lấy tất cả danh mục (GetAll)
     const refreshCategories = async () => {
         setLoading(true);
         try {
             const response = await categoryApi.getAll();
-            // Backend trả về: { data: [ {categoryId, categoryName, slug}, ... ], totalCount: x }
             setCategories(response.data.data);
         } catch (error) {
             alert("Lỗi fetch categories:", error);
@@ -73,6 +73,8 @@ export const CategoryProvider = ({ children }) => {
 
     const value = {
         categories,
+        pageCatagory,
+        setPageCatagory,
         loading,
         refreshCategories,
         addCategory,

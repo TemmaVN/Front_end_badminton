@@ -8,6 +8,7 @@ import {
   Search,
   FilterIcon,
   ChevronDown,
+  Cat,
 } from "lucide-react";
 import FilterDrawer from "../components/DrawerFilter";
 import { useMediaQuery } from "../mystate/useMediaQuery";
@@ -17,14 +18,19 @@ import { HiFire } from "react-icons/hi";
 import { button, div, i } from "framer-motion/client";
 import { productApi } from "../api";
 import ProductFrame_Minh from "../components/ProductFrame_Minh";
+import { useParams } from "react-router-dom";
+import { useProduct } from "../contexts/ProductContext";
+import { useCategory } from "../contexts/CategoryContext";
 
 const Product = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [rangePrice, setRangePrice] = useState([0, 10000000]);
-
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {categorySlug} = useParams();
+  const { products, totalCount, loading, error, fetchProductsBySlug, pagination } = useProduct(); // ← dùng context
+  const [keyword, setKeyword] = useState("");
+  const [minPrice, setMinPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(10000000);
+  const {pageCatagory} = useCategory();
 
   const isMediumScreen = useMediaQuery("(min-width: 1025px");
   const isSmallScreen = useMediaQuery("(max-width: 850px)");
@@ -33,22 +39,25 @@ const Product = () => {
   const linkAdvertisement = [
     "https://static.fbshop.vn/wp-content/uploads/2024/01/891903_627183127297272_1688220992_o-scaled.jpg",
   ];
-
   //Gọi API khi component load lần đầu
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await productApi.getHomeProducts();
-        setProducts(response.data.data || []);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+    if (categorySlug) {
+      fetchProductsBySlug(categorySlug, {
+        minPrice: rangePrice[0],
+        maxPrice: rangePrice[1],
+        page: 1,
+      });
+    }
+  }, [categorySlug]);
+
+  const handlePageChange = (newPage) => {
+    console.log(pagination.currentPage)
+    fetchProductsBySlug(categorySlug, {
+      minPrice: rangePrice[0],
+      maxPrice: rangePrice[1],
+      page: newPage,
+    });
+  };
   return (
     <div className="w-full h-auto">
       <Advertisement linkAdvertisement={linkAdvertisement} />
@@ -127,7 +136,7 @@ const Product = () => {
             <div className="flex-1">
               <div className="flex flex-col justify-between mb-8 pb-4 border-b border-gray-100 gap-4">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold">Dòng vợt Aeronaut</h1>
+                  <h1 className="text-3xl font-bold">{pageCatagory}</h1>
                   <span className="text-xs text-gray-400 bg-gray-bg px-3 py-1 rounded-full">
                     0 sản phẩm
                   </span>
@@ -209,6 +218,8 @@ const Product = () => {
                       sellingPrice={product.sellingPrice}
                       isBestSeller={product.IsBestSeller}
                       discountPercent={product.discountPercent}
+                      categorySlug={categorySlug}
+                      productDetailSlug={product.slug}
                     />
                   ))}
                 </div>
@@ -219,7 +230,59 @@ const Product = () => {
                   </h3>
                 </div>
               )}
+                          <div className="p-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="text-sm text-slate-500">
+                            Trang <span className="font-semibold text-slate-800">{pagination.currentPage}</span> trên <span className="font-semibold text-slate-800">{pagination.totalPages}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                  handlePageChange(pagination.currentPage - 1)
+                                }}
+                                disabled={pagination.currentPage === 1}
+                                className="px-3 py-1 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Trước
+                            </button>
+
+                            {/* Hiển thị danh sách số trang (logic đơn giản) */}
+                            {[...Array(pagination.totalPages)].map((_, index) => {
+                                const pageNum = index + 1;
+                                // Chỉ hiển thị giới hạn số nút nếu quá nhiều trang (ví dụ: hiển thị 5 trang gần nhất)
+                                if (pagination.totalPages > 5 && Math.abs(pageNum - pagination.currentPage) > 2) return null;
+                                
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => {
+                                          handlePageChange(pageNum)
+                                        }}
+                                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                                            pagination.currentPage === pageNum
+                                                ? "bg-orange-500 text-white shadow-md shadow-orange-200"
+                                                : "text-slate-600 hover:bg-slate-100"
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={() => {
+                                  handlePageChange(pagination.currentPage + 1)
+                                }}
+                                disabled={pagination.currentPage === pagination.totalPages}
+                                className="px-3 py-1 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    </div>
+              
             </div>
+
           </div>
         </div>
       </div>

@@ -1,30 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
-
+import { useCart } from '../contexts/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 const CartDrawer = ({ isOpen, setIsOpen }) => {
-  // Dữ liệu mẫu khớp với hình ảnh image_f1eaf5.png
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Vợt Cầu Lông Lining Tectonic 3 | Xử Lý Linh Hoạt - 4U: 80g-84g',
-      price: 1270000,
-      quantity: 4,
-      image: 'https://static.fbshop.vn/wp-content/uploads/2023/12/vot-lining-tectonic-3-anh-dai-dien-8-2048x2048.jpg' // Thay bằng link ảnh thật nếu có
-    }
-  ])
+  const {cart, totalItems, addToCart, fetchCart,updateCartItem, setCart ,deleteCartItem, clearCartState} = useCart()
+  const navigate = useNavigate()
 
-  const changeQuantity = (id, delta) => {
-    setCartItems(
-      prevItems => prevItems.map(
-        item => item.id === id ?
-          {...item, quantity: Math.max(1, item.quantity + delta)}
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const changeQuantity = async (cartItemId, detailId, delta, currentQuantity) => {
+    const newQuantity = currentQuantity + delta;
+
+    // Optimistic update - cập nhật UI trước
+    setCart(prev => prev.map(item => 
+      item.cartItemId === cartItemId 
+        ? { ...item, quantity: newQuantity, subTotal: item.unitPrice * newQuantity }
+        : item
+    ));
+    console.log(cart,'1')
+    try {
+      if (delta === 1) {
+        // Tăng → dùng addToCart với quantity = 1
+        await addToCart(detailId, 1);
+      } else {
+        // Giảm → dùng updateCartItem với số lượng tuyệt đối
+        if (newQuantity <= 0) {
+          await deleteCartItem(cartItemId);
+        } else {
+          await updateCartItem(cartItemId, newQuantity);
+        }
+      }
+    } catch (err) {
+      // Rollback nếu lỗi
+      setCart(prev => prev.map(item =>
+        item.cartItemId === cartItemId
+          ? { ...item, quantity: currentQuantity, subTotal: item.unitPrice * currentQuantity }
           : item
-      )
-    );
-  };
+      ));
+      alert(err.message); // hoặc toast
+    }
+      console.log('2', cart)
 
-  const totalAmount = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  };
 
   return (
     <>
@@ -62,13 +82,13 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
             [&::-webkit-scrollbar-thumb]:bg-gray-200
             [&::-webkit-scrollbar-thumb]:rounded-full">
             
-            {cartItems.map((item) => (
+            {cart.map((item) => (
               <div key={item.id} className="flex gap-4 relative">
                 {/* Ảnh sản phẩm */}
                 <div className="w-20 h-20 flex-shrink-0">
                   <img 
-                    src={item.image} 
-                    alt={item.name} 
+                    src={item.imageUrl} 
+                    alt={item.productName} 
                     className="w-full h-full object-contain border border-gray-100 rounded-sm"
                   />
                 </div>
@@ -76,14 +96,14 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
                 {/* Chi tiết sản phẩm */}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[16px] font-medium leading-tight text-gray-800 line-clamp-2 mb-3">
-                    {item.name}
+                    {item.productName}
                   </h3>
-                  
+                  <p className="text-xs text-gray-400 mb-2">{item.variantInfo}</p>
                   <div className="flex items-center justify-between">
                     {/* Bộ tăng giảm số lượng */}
                     <div className="flex items-center border border-gray-200 rounded">
                       <button 
-                      onClick={() => changeQuantity(item.id, -1)}
+                      onClick={() => changeQuantity(item.cartItemId, item.detailId, -1, item.quantity)}
                       className="px-2 py-1 text-gray-500 hover:text-orange-500 transition-colors"
                       >
                         <Minus size={14} />
@@ -92,7 +112,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
                         {item.quantity < 10 ? `0${item.quantity}` : item.quantity}
                       </span>
                       <button 
-                      onClick={() => changeQuantity(item.id, 1)}
+                      onClick={() => changeQuantity(item.cartItemId, item.detailId, 1, item.quantity)}
                       className="px-2 py-1 text-gray-500 hover:text-orange-500 transition-colors">
                         <Plus size={14} />
                       </button>
@@ -100,7 +120,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
 
                     {/* Giá tiền */}
                     <span className="text-orange-600 font-bold text-base">
-                      {(item.price).toLocaleString('vi-VN')}đ
+                      {(item.unitPrice).toLocaleString('vi-VN')}đ
                     </span>
                   </div>
                 </div>
@@ -113,12 +133,14 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
             <div className="flex justify-between items-center mb-8">
               <span className="text-lg font-bold text-gray-900">Tổng cộng</span>
               <span className="text-xl font-bold text-red-600">
-                {totalAmount.toLocaleString('vi-VN')}đ
+                {cart.reduce((sum, item) => sum + item.subTotal, 0).toLocaleString('vi-VN')}đ
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button className="py-3.5 px-4 border border-orange-500 text-orange-600 rounded-full font-bold text-sm hover:bg-orange-50 transition-all">
+              <button 
+              onClick={() => navigate("/cart")}
+              className="py-3.5 px-4 border border-orange-500 text-orange-600 rounded-full font-bold text-sm hover:bg-orange-50 transition-all">
                 Xem giỏ hàng
               </button>
               <button className="py-3.5 px-4 bg-orange-500 text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">

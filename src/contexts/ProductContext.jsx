@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useCallback,
+} from 'react';
 import { productApi } from '../api';
 
 const ProductContext = createContext(null);
@@ -12,87 +17,175 @@ export const useProduct = () => {
 };
 
 export const ProductProvider = ({ children }) => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [products, setProducts]   = useState([]);
+    const [loading, setLoading]     = useState(false);
+    const [error, setError]         = useState(null);
     const [pagination, setPagination] = useState({
         totalCount: 0,
         totalPages: 0,
-        currentPage: 1
+        currentPage: 1,
     });
 
-    const searchProducts = async (filters) => {
-    setLoading(true);
-    try {
-        const response = await productApi.search(filters);
-        
-        const { items, totalCount, totalPages, page } = response.data;
-
-        setProducts(items);
+    // ─── helper dùng nội bộ ───────────────────────────────────────────────────
+    const setPaginationFromResponse = ({ totalCount, totalPages, page }) => {
         setPagination({
             totalCount,
             totalPages,
-            currentPage: page
+            currentPage: page,
         });
+    };
 
-        // QUAN TRỌNG: Phải return dữ liệu để Component nhận được
-        return response.data; 
-
-    } catch (error) {
-        alert('Lỗi khi lấy sản phẩm:', error);
-        return null; // Return null để tránh lỗi crash ở UI
-    } finally {
-        setLoading(false);
-    }
-};
-
-
-    const getAll = async (params) => {
+    // ─── Search / Filter (trang danh sách chính) ─────────────────────────────
+    /**
+     * params: { keyword, categorySlug, brandSlug,
+     *           minPrice, maxPrice, Voucher, page, pagesize }
+     * return: { items, totalCount, totalPages, page } | null
+     */
+    const searchProducts = useCallback(async (params = {}) => {
         setLoading(true);
+        setError(null);
         try {
-            const respone = await productApi.getAll(params);
-            setProducts(respone.products);
-            alert('Products fetched successfully');
-            setLoading(false);
-        } catch (error) {
-            alert('Failed to fetch products');
+            const response = await productApi.search(params);
+            const data = response.data;             // { items, totalCount, totalPages, page }
+
+            setProducts(data.items ?? []);
+            setPaginationFromResponse(data);
+            return data;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
-    const search = async (params) => {
+    // ─── Lấy sản phẩm theo danh mục (slug) ───────────────────────────────────
+    /**
+     * params: { page, pagesize, keyword, minPrice, maxPrice }
+     */
+    const fetchProductsBySlug = useCallback(async (categorySlug, params = {}) => {
         setLoading(true);
+        setError(null);
         try {
-            const respone = await productApi.search(params);
-            setProducts(respone.products);
-            alert('Products fetched successfully');
-            setLoading(false);
-        } catch (error) {
-            alert('Failed to fetch products');
+            const response = await productApi.getProductsBySlug(categorySlug, params);
+            const data = response.data;
+
+            setProducts(data.items ?? []);
+            setPaginationFromResponse(data);
+            return data;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
-    const addProduct = async (product) => {
+    // ─── Tạo sản phẩm mới (Admin) ─────────────────────────────────────────────
+    /**
+     * data: CreateProductRequest (xem swagger / controller)
+     * return: { productId } | null
+     */
+    const addProduct = useCallback(async (data) => {
         setLoading(true);
+        setError(null);
         try {
-            const response = await productApi.addProduct(product);
-            setProducts([...products, response.data]);
-            alert('Product added successfully');
-            setLoading(false);
-        } catch (error) {
-            alert('Failed to add product');
+            const response = await productApi.create(data);
+            const created = response.data;
+
+            // Thêm vào đầu danh sách local (optimistic update)
+            setProducts((prev) => [created, ...prev]);
+            return created;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
+    // ─── Cập nhật sản phẩm (Admin) ────────────────────────────────────────────
+    /**
+     * return: updated product | null
+     */
+    const updateProduct = useCallback(async (id, data) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await productApi.update(id, data);
+            const updated = response.data;
+
+            setProducts((prev) =>
+                prev.map((p) => (p.productId === id ? { ...p, ...updated } : p))
+            );
+            return updated;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // ─── Xóa sản phẩm (Admin) ─────────────────────────────────────────────────
+    /**
+     * return: true | false
+     */
+    const deleteProduct = useCallback(async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+            await productApi.delete(id);
+            setProducts((prev) => prev.filter((p) => p.productId !== id));
+            return true;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // ─── Xóa error thủ công (dùng ở UI nếu cần) ──────────────────────────────
+    const clearError = useCallback(() => setError(null), []);
+    // ─── Lấy chi tiết 1 sản phẩm theo slug ───────────────────────────────────
+
+    const getProductDetaildBySlug = useCallback(async (slug) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await productApi.getProductDetaildBySlug(slug);
+            const product = response.data?.data ?? response.data;
+            return product;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+    // ─── Value ────────────────────────────────────────────────────────────────
     const value = {
-        getAll,
-        search,
+        // state
         products,
         loading,
+        error,
         pagination,
+
+        // actions
+        getProductDetaildBySlug,
         searchProducts,
+        fetchProductsBySlug,
         addProduct,
+        updateProduct,
+        deleteProduct,
+        clearError,
     };
 
     return (
@@ -100,6 +193,6 @@ export const ProductProvider = ({ children }) => {
             {children}
         </ProductContext.Provider>
     );
-}
+};
 
 export default ProductContext;

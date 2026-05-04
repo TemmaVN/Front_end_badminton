@@ -1,9 +1,9 @@
 import React from 'react'
 
-const FlashButton = ({itemName,icon,...others}) => {
+const FlashButton = ({itemName,icon,className,...others}) => {
   return (
     <button 
-    className="group relative overflow-hidden bg-orange-default hover:bg-orange-dark text-white font-bold py-3 px-4 rounded-full w-fit" 
+    className={`group relative overflow-hidden bg-orange-default hover:bg-orange-dark text-white font-bold py-3 px-4 rounded-full w-fit ${className}`}
     {...others}
     >    
       <span className="

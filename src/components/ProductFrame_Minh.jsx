@@ -1,26 +1,35 @@
 import React from "react";
 import { Crown } from "lucide-react";
-import Button from "./Button";
+import { Link } from "react-router-dom";
+import { useProduct } from "../contexts/ProductContext";
 
 function ProductPrice({ basePrice, sellingPrice }) {
-  const parsePrice = (priceStr) => {
-    if (!priceStr) return 0; // Nếu không có giá trị thì mặc định là 0
-    return Number(String(priceStr).replace(/[^0-9]/g, "")); // Ép kiểu về String trước khi replace
+  const parsePrice = (priceVal) => {
+    if (!priceVal) return 0;
+    return Number(String(priceVal).replace(/[^0-9]/g, ""));
   };
+
   const basePriceNum = parsePrice(basePrice);
   const sellingPriceNum = parsePrice(sellingPrice);
+
+  const formatVND = (price) => {
+    return price.toLocaleString("vi-VN") + "đ";
+  };
+
   if (basePriceNum === sellingPriceNum)
     return (
-      <div className="text-orange-600 font-bold text-[20px] ">{basePrice}</div>
+      <div className="text-[#f97316] font-bold text-[16px] md:text-[18px]">
+        {basePriceNum === 0 ? "0đ" : formatVND(basePriceNum)}
+      </div>
     );
   else
     return (
-      <div className="flex  justify-between items-center">
-        <div className="text-orange-600 font-bold text-[20px]">
-          {sellingPrice}
+      <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-1">
+        <div className="text-[#f97316] font-bold text-[16px] md:text-[18px]">
+          {formatVND(sellingPriceNum)}
         </div>
-        <div className="text-gray-400 line-through text-[20px]">
-          {basePrice}
+        <div className="text-gray-400 line-through text-[13px] md:text-[14px]">
+          {formatVND(basePriceNum)}
         </div>
       </div>
     );
@@ -33,50 +42,58 @@ export default function ProductFrame_Minh({
   sellingPrice,
   isBestSeller,
   discountPercent,
+  productDetailSlug,
+  categorySlug,
 }) {
-  const [isHover, setIsHover] = React.useState(false);
-
+  const { currentProduct, setCurrentProduct } = useProduct();
   return (
-    <>
-      <div
-        className=" flex flex-col relative w-full max-w-60 max-h-100 h-full  mx-auto rounded-b-lg p-4 shadow-sm hover:border-orange-500 hover:border-2 hover:scale-102 transition-all duration-300 cursor-pointer"
-        onMouseEnter={() => setIsHover(true)}
-        onMouseLeave={() => setIsHover(false)}
-      >
-        <div className=" absolute top-4.5 right-4.5 flex flex-col gap-1.5 items-end ">
+    // Bỏ w-full ở Link, thay bằng h-full để thẻ con trải dài hết chiều cao của ô Grid
+    <Link 
+    to={`/p/${productDetailSlug}`}
+    className="block h-full group">
+      <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-[10px] border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
+        {/* Nhãn Bán chạy & Giảm giá */}
+        <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 items-end z-10">
           {isBestSeller && (
-            <div className=" flex items-center gap-1.5 right-2 top-2 bg-orange-400 p-1 rounded font-semibold text-[11px] ">
-              <Crown />
+            <div className="flex items-center gap-1 bg-[#f97316] px-2 py-0.5 rounded text-white font-semibold text-[10px] md:text-[11px] shadow-sm">
+              <Crown size={12} />
               Bán chạy
             </div>
           )}
-          {discountPercent != 0 && (
-            <div className="font-bold text-white bg-rose-500 p-0.5 rounded text-[11px] border border-rose-500 ">
-              -{discountPercent}
+          {discountPercent > 0 && (
+            <div className="font-bold text-white bg-rose-500 px-1.5 py-0.5 rounded text-[10px] md:text-[11px] shadow-sm">
+              -{discountPercent}%
             </div>
           )}
         </div>
-        <div className="w-full aspect-square ">
+
+        {/* Khu vực Hình ảnh */}
+        {/* Vẫn giữ aspect-square để ảnh vuông */}
+        <div className="relative w-full aspect-square bg-white overflow-hidden rounded-md flex items-center justify-center">
           <img
             src={image}
-            alt=""
-            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
+            alt={productName}
+            className="object-contain w-full h-full p-2 group-hover:scale-105 transition-transform duration-500"
           />
         </div>
-        {isHover && (
-          <Button className="flex justify-center items-center bg-orange-default hover:bg-orange-dark text-white font-bold w-full h-full py-3 mt-4 rounded-2xl">
+
+        {/* KHOẢNG TRỐNG ẢO DÀNH CHO NÚT "XEM CHI TIẾT" */}
+        <div className="w-full h-10 mt-1 mb-2 overflow-hidden flex items-center justify-center">
+          <div className="w-[90%] bg-[#f97316] text-white font-bold py-2 rounded text-[12px] md:text-[13px] text-center shadow-md uppercase opacity-0 translate-y-6 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out">
             Xem chi tiết
-          </Button>
-        )}
-        <div className="pt-4 flex flex-col flex-grow gap-2">
-          <h3 className="overflow-hidden text-[16px] text-black font-medium line-clamp-2">
+          </div>
+        </div>
+
+        {/* Nội dung Tên và Giá */}
+        <div className="flex flex-col flex-grow justify-between gap-2">
+          <h3 className="text-[16px] text-gray-800 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
             {productName}
           </h3>
-          <div className="bg-white mt-auto pt-1">
+          <div className="mt-auto pt-1 border-t border-gray-50">
             <ProductPrice basePrice={basePrice} sellingPrice={sellingPrice} />
           </div>
         </div>
       </div>
-    </>
+    </Link>
   );
 }

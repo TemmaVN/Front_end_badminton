@@ -47,7 +47,6 @@ export const UserProvider = ({ children }) => {
     const getUserInfo = async () => {
         try {
             const response = await userApi.get_info();
-            
             return { success: true, user: response.data };
         } catch (error) {
             const message = error.response?.data?.message || 'Get user info failed';
