@@ -55,24 +55,37 @@ export const userApi = {
 
 // Product API
 export const productApi = {
-    getHomeProducts: () => api.get('/Product/home'),
-    getAll: (params) => api.get('/Product', { params }),
-    search: (params) => api.get('/Product/searchAsync', { params }),
-    getById: (id) => api.get(`/Product/${id}`),
-    create: (data) => api.post('/Product', data),
-    update: (id, data) => api.put(`/Product/${id}`, data),
-    delete: (id) => api.delete(`/Product/${id}`),
+    getHomeProducts: () =>
+        api.get('/Product/home'),
+
+    getAll: (params = {}) =>
+        api.get('/Product', { params }),
+
+    search: (params = {}) =>
+        api.get('/Product/searchAsync', { params }),
+
     getProductsBySlug: (categorySlug, params = {}) =>
-        axios.get(`/api/product/product_of_category/${categorySlug}`, {
-        params: {
-            categorySlug,
-            page: params.page || 1,
-            pagesize: params.pagesize || 9,
-            keyword: params.keyword || undefined,
-            minPrice: params.minPrice || undefined,
-            maxPrice: params.maxPrice || undefined,
-        },
-    }),
+        api.get(`/Product/product_of_category/${categorySlug}`, {
+            params: {
+                page: params.page || 1,
+                pagesize: params.pagesize || 9,
+                keyword: params.keyword || undefined,
+                minPrice: params.minPrice || undefined,
+                maxPrice: params.maxPrice || undefined,
+            },
+        }),
+
+    getProductDetaildBySlug: (slug) =>
+        api.get(`/Product/${slug}`),
+
+    create: (data) =>
+        api.post('/Product', data),
+
+    update: (id, data) =>
+        api.put(`/Product/${id}`, data),
+
+    delete: (id) =>
+        api.delete(`/Product/${id}`),
 };
 
 // Category API
@@ -104,19 +117,37 @@ export const brandApi = {
     delete: (id) => api.delete(`/Brand/${id}`),
 };
 
-// Order API
-export const orderApi = {
-    create: (data) => api.post('/Order/create', data),  // hoặc đúng route backend của bạn
-    getMyOrders: () => api.get('/Order/my-orders'),
-    getById: (id) => api.get(`/Order/${id}`),
-};
-
-export default api;
-
-// Cart API
 export const cartApi = {
     getMyCart: () => api.get('/Cart/my-cart'),
     addToCart: (detailId, quantity) => api.post('/Cart/add-to-cart', { detailId, quantity }),
     updateCartItem: (cartItemId, quantity) => api.put(`/Cart/update-cart-item/${cartItemId}`, null, { params: { quantity } }),
     deleteCartItem: (cartItemId) => api.delete(`/Cart/delete-cart-item/${cartItemId}`),
 };
+
+// Order API
+export const orderApi = {
+    // ✅ Đã có sẵn
+    create: (data) => api.post('/Order', data),
+    getMyOrders: () => api.get('/Order/my-orders'),
+    getById: (id) => api.get(`/Order/${id}`),
+
+    // ✅ Bổ sung mới
+    getAllOrders: (page = 1, pageSize = 10) =>
+        api.get('/Order/all-orders', { params: { page, pageSize } }),
+
+    getOrdersByStatus: (statusId, page = 1, pageSize = 10) =>
+        api.get(`/Order/all-orders-by-status/${statusId}`, { params: { page, pageSize } }),
+
+    updateOrderStatus: (orderId, newOrderStatusId) =>
+        api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
+            headers: { 'Content-Type': 'application/json' }
+        }),
+
+    cancelMyOrder: (orderId) =>
+        api.put(`/Order/cancel-my-order/${orderId}`),
+};
+
+export default api;
+
+// Cart API
+

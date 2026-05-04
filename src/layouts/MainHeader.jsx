@@ -98,13 +98,11 @@ const MainHeader = () => {
   useEffect(() => {
     const buildMenu = async () => {
       try { 
-        console.log(categories)
         const built = MENU_CONFIG.map(({ catIndex, productCategories }) => ({
           label: categories[catIndex]?.categoryName?.toUpperCase() ?? `DANH MỤC ${catIndex + 1}`,
           slug: categories[catIndex]?.slug ?? `category-${catIndex}`,
           productCategories,
         }));
-        console.log(built)
         built.push(ACCESSORY_MENU);
         setMenuItems(built);
       } catch (err) {

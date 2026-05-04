@@ -11,7 +11,7 @@ import { orderApi } from '../api';
 const CartPage = () => {
   // 1. STATE QUẢN LÝ BƯỚC & THANH TOÁN
   const [step, setStep] = useState(1); 
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('COD');
   const {getUserInfo} = useUser()
   const [fullName, setFullName] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
@@ -68,16 +68,14 @@ const CartPage = () => {
     setOrderError('');
     try {
       const orderPayload = {
-        recipientName: formData.fullName,
+        receiverName: formData.fullName,
         phoneNumber: formData.phoneNumber,
         shippingAddress: `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`,
         note: formData.note,
         paymentMethod: paymentMethod,
         orderDetails: cartItems.map(item => ({
-          cartItemId: item.cartItemId,
           detailId: item.detailId,       // tuỳ theo DTO backend yêu cầu
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
         }))
       };
 
@@ -210,7 +208,7 @@ const CartPage = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <PaymentOption id="cod" title="Thanh toán khi nhận hàng" desc="Trả tiền mặt khi nhận hàng (COD)" icon={<BanknotesIcon className="w-6 h-6" />} selected={paymentMethod === 'cod'} onSelect={() => setPaymentMethod('cod')} />
+                    <PaymentOption id="COD" title="Thanh toán khi nhận hàng" desc="Trả tiền mặt khi nhận hàng (COD)" icon={<BanknotesIcon className="w-6 h-6" />} selected={paymentMethod === 'COD'} onSelect={() => setPaymentMethod('COD')} />
                     <PaymentOption id="bank" title="Chuyển khoản ngân hàng" desc="Vietcombank, BIDV, Techcombank..." icon={<CreditCardIcon className="w-6 h-6" />} selected={paymentMethod === 'bank'} onSelect={() => setPaymentMethod('bank')} />
                     <PaymentOption id="momo" title="Ví MoMo" desc="Thanh toán nhanh qua ví MoMo" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'momo'} onSelect={() => setPaymentMethod('momo')} />
                     <PaymentOption id="zalopay" title="ZaloPay" desc="Thanh toán qua ứng dụng ZaloPay" icon={<DevicePhoneMobileIcon className="w-6 h-6" />} selected={paymentMethod === 'zalopay'} onSelect={() => setPaymentMethod('zalopay')} />

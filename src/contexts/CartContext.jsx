@@ -16,7 +16,6 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const res = await cartApi.getMyCart();
-      console.log(res.data.items);
       setCart(res.data.items);
     } catch (err) {
       // 404 = giỏ hàng trống, không phải lỗi thật
@@ -43,10 +42,11 @@ export const CartProvider = ({ children }) => {
     return [];
   };
 
-  const handleAddToCart = async (detailId, quantity = 1) => {
+  const addToCart = async (detailId, quantity = 1) => {
     try {
       setLoading(true);
       setError(null);
+      console.log(detailId, quantity);
       const res = await cartApi.addToCart(detailId, quantity);
       setCart(extractItems(res.data));
       return res.data;
@@ -59,7 +59,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const handleUpdateItem = async (cartItemId, quantity) => {
+  const updateCartItem = async (cartItemId, quantity) => {
     try {
       setLoading(true);
       setError(null);
@@ -74,7 +74,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const handleDeleteItem = async (cartItemId) => {
+  const deleteCartItem = async (cartItemId) => {
     try {
       setLoading(true);
       setError(null);
@@ -101,9 +101,9 @@ export const CartProvider = ({ children }) => {
         loading,
         error,
         fetchCart,
-        addToCart: handleAddToCart,
-        updateCartItem: handleUpdateItem,
-        deleteCartItem: handleDeleteItem,
+        addToCart,
+        updateCartItem,
+        deleteCartItem,
         clearCartState,
       }}
     >

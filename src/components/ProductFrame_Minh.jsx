@@ -50,18 +50,6 @@ export default function ProductFrame_Minh({
     // Bỏ w-full ở Link, thay bằng h-full để thẻ con trải dài hết chiều cao của ô Grid
     <Link 
     to={`/p/${productDetailSlug}`}
-    onClick={() => setCurrentProduct(
-      {
-        image: image,
-        productName: productName,
-        basePrice: basePrice,
-        sellingPrice: sellingPrice,
-        isBestSeller: isBestSeller,
-        discountPercent: discountPercent,
-        productDetailSlug: productDetailSlug,
-        categorySlug: categorySlug,
-      }
-    )} 
     className="block h-full group">
       <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-[10px] border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
         {/* Nhãn Bán chạy & Giảm giá */}

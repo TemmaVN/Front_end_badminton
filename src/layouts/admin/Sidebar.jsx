@@ -27,8 +27,7 @@ const menuItems = [
         path: "/admin/sales-overview",
         submenu: [
             { id: "orders", label: "Orders", path: "/admin/orders" },
-            { id: "orders-detail", label: "Orders Detail", path: "/admin/sales-overview/orders-detail" },
-            { id: "payments", label: "Payments", path: "/admin/sales-overview/payments" }
+            { id: "payments", label: "Payments", path: "/admin/payment" }
         ]
     },
     { id: "users", icon: Users, label: "Users", count: "1.2k" , path: "/admin/users-list" },

@@ -28,6 +28,9 @@ import ProductDetail from "./layouts/ProductDetail";
 import Footer from "./layouts/Footer";
 import { CartProvider } from "./contexts/CartContext";
 import CartPage from "./layouts/CartPage";
+import UserList from "./components/admin/UserList";
+import Payment from "./components/admin/Payment";
+import pic from '../public/vl.jpeg';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -149,6 +152,8 @@ function AppRoutes() {
         
         <Route path="sales-overview" element={<SalesOverview />} />
         <Route path="orders" element={<OrderList />} />
+        <Route path="users-list" element={<UserList/>}/>
+        <Route path="payment" element={<Payment />} />
       </Route>
 
       <Route
@@ -173,6 +178,7 @@ function App() {
     "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
     "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-4-min.webp",
     "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-6-min.webp",
+    "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
     "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
   ];
   return (

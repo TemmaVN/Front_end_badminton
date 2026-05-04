@@ -1,14 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FlashButton from '../components/FlashButton';
 import Button from '../components/Button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useProduct } from "../contexts/ProductContext";
+import { useCart } from "../contexts/CartContext";
+
+const testData = {
+  "productId": 1,
+  "productName": "Vợt Cầu Lông Yonex Astrox 100ZZ",
+  "basePrice": 4500000.00,
+  "sellingPrice": 3870000.00,
+  "discountPercent": 14,
+  "mainImageUrl": "https://example.com/images/astrox-100zz-main.jpg",
+  "description": "Yonex Astrox 100ZZ là cây vợt cầu lông cao cấp được thiết kế cho người chơi tấn công. Công nghệ Rotational Generator System tối ưu hóa sức mạnh và tốc độ.",
+  "isAvailable": true,
+  "images": [
+    {
+      "imageUrl": "https://example.com/images/astrox-100zz-1.jpg",
+      "displayOrder": 1
+    },
+    {
+      "imageUrl": "https://example.com/images/astrox-100zz-2.jpg",
+      "displayOrder": 2
+    },
+    {
+      "imageUrl": "https://example.com/images/astrox-100zz-3.jpg",
+      "displayOrder": 3
+    }
+  ],
+  "variants": [
+    {
+      "detailId": 1,
+      "productId": 1,
+      "weightClass": "3U",
+      "gripSize": "G5",
+      "balancePoint": "Head Heavy",
+      "stiffness": "Stiff",
+      "maxTension": 13,
+      "price": 4300000.00,
+      "stockQuantity": 15,
+      "serialNumber": "SP-1-1",
+      "inStock": true
+    },
+    {
+      "detailId": 2,
+      "productId": 1,
+      "weightClass": "4U",
+      "gripSize": "G5",
+      "balancePoint": "Head Heavy",
+      "stiffness": "Stiff",
+      "maxTension": 12,
+      "price": 4300000.00,
+      "stockQuantity": 8,
+      "serialNumber": "SP-1-2",
+      "inStock": true
+    },
+    {
+      "detailId": 3,
+      "productId": 1,
+      "weightClass": "3U",
+      "gripSize": "G4",
+      "balancePoint": "Head Heavy",
+      "stiffness": "Medium",
+      "maxTension": 13,
+      "price": 4100000.00,
+      "stockQuantity": 0,
+      "serialNumber": "SP-1-3",
+      "inStock": false
+    }
+  ]
+}
 
 const ProductDetail = (
 ) => {
-  const { currentProduct, setCurrentProduct } = useProduct();
+  const {productSlug} = useParams();
+  const {  getProductDetaildBySlug } = useProduct();
+  const { getCart, addToCart,fetchCart} = useCart();
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState({});
   const navigate = useNavigate();
   const tabs = [
     { id: 'description', label: 'Mô tả sản phẩm' },
@@ -16,50 +86,62 @@ const ProductDetail = (
     { id: 'reviews', label: 'Đánh giá 0 ⭐' },
   ];
     useEffect(() => {
-      fetchCart();
+      const loadProduct = async () => {
+        fetchCart();
+        const result = await getProductDetaildBySlug(productSlug);
+        console.log(result);
+        if (result) {
+          setProduct(result);
+        }
+      };
+      loadProduct();
     }, []);
+    const handleAddToCart = async () => {
+      try {
+        const result = await addToCart(product.variants[0].detailId, quantity);
+        if (result) {
+          setQuantity(1);
+          navigate("/cart");
+        }
+      } catch (err) {
+        // lỗi thực hiện thêm vào giỏ
+      }
+    };
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* BREADCRUMB */}
-        <nav className="flex text-sm text-gray-500 mb-8 overflow-x-auto whitespace-nowrap pb-2">
-          <a href="#" className="hover:text-orange-500">Trang chủ</a>
-          <span className="mx-2">/</span>
-          <a href="#" className="hover:text-orange-500">Phụ kiện thể thao</a>
-          <span className="mx-2">/</span>
-          <a href="#" className="hover:text-orange-500">Phụ kiện cầu lông</a>
-          <span className="mx-2">/</span>
-          <span className="text-orange-500 font-medium">Cước Đan Vợt Cầu Lông Yonex BG80 Power JP</span>
-        </nav>
 
         {/* TOP SECTION: PRODUCT INFO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
           {/* Left: Images */}
           <div>
             <div className="border border-gray-100 rounded-xl p-4 flex justify-center mb-4">
-              <img src="https://fbshop.vn/wp-content/uploads/2023/04/bg-80-power-jp.jpg" alt="Yonex BG80 Power" className="max-h-[500px] object-contain" />
+              <img src={product.image} alt="Yonex BG80 Power" className="max-h-[500px] object-contain" />
             </div>
             <div className="flex gap-3 overflow-x-auto">
-               <img src={currentProduct.image} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500" />
+               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500" />
             </div>
           </div>
 
           {/* Right: Summary & Order */}
           <div className="flex flex-col">
             <h1 className="text-3xl font-bold text-slate-800 mb-4 leading-snug">
-              {currentProduct.productName}
+              {product.productName}
             </h1>
             <div className="mb-4"><span className="bg-teal-400 text-white px-3 py-1 rounded text-xs font-bold uppercase">✨ Mới</span></div>
             
             <div className="flex gap-6 text-sm mb-6 pb-6 border-b border-gray-100">
               <p>Xuất xứ: <span className="font-bold text-gray-900">Nhật Bản</span></p>
-              <p>Tình trạng: <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100">Hết hàng</span></p>
+              <p>Tình trạng: {
+                !product.variants[0].inStock ? <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100">Hết hàng</span> : <span className="bg-green-50 text-green-500 px-3 py-1 rounded-full text-xs border border-green-100">Còn hàng</span>
+                  }</p>
             </div>
 
             <div className="flex items-baseline gap-4 mb-6">
-              <span className="text-4xl font-bold text-orange-500">{currentProduct.sellingPrice}</span>
-              {currentProduct.sellingPrice !== currentProduct.basePrice && <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-sm font-bold">-{currentProduct.discountPercent}%</span>}
-              {currentProduct.sellingPrice !== currentProduct.basePrice && <span className="text-xl text-gray-400 line-through">{currentProduct.basePrice}</span>}
+              <span className="text-4xl font-bold text-orange-500">{product.sellingPrice}</span>
+              {product.sellingPrice !== product.basePrice && <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-sm font-bold">-{product.discountPercent}%</span>}
+              {product.sellingPrice !== product.basePrice && <span className="text-xl text-gray-400 line-through">{product.basePrice}</span>}
             </div>
 
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-orange-800 mb-8">
@@ -74,17 +156,24 @@ const ProductDetail = (
                 <button onClick={() => setQuantity(quantity+1)}>+</button>
               </div>
             </div>
-
-            <div className='flex  gap-4'>
-              <Button 
-              onClick={() => navigate("/cart")}
-              className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`}>
-                Thêm vào giỏ
+            {product.variants[0].inStock? 
+                <div className='flex gap-4'>
+                <Button 
+                onClick={() => {
+                  handleAddToCart();
+                  navigate("/cart")
+                }}
+                className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`}>
+                  Thêm vào giỏ
+                </Button>
+                <Button className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`} >
+                  Mua ngay
+                </Button>
+              </div>
+              : <Button className={`w-50 rounded-2xl bg-gray-200 text-slate-400 hover:cursor-not-allowed`} disabled={true}>
+                  Đang hết hàng
               </Button>
-               <Button className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`} >
-                Mua ngay
-               </Button>
-            </div>
+            }
           </div>
         </div>
 
