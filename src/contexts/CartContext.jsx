@@ -9,14 +9,15 @@ export const CartProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   // Tổng số lượng hiển thị trên icon giỏ hàng
-  const totalItems = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
-
+  const [totalItems, setTotalItems] = useState(0);
   const fetchCart = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const res = await cartApi.getMyCart();
       setCart(res.data.items);
+      console.log(res.data);
+      setTotalItems(res.data.totalQuantity);
     } catch (err) {
       // 404 = giỏ hàng trống, không phải lỗi thật
       if (err.response?.status !== 404) {

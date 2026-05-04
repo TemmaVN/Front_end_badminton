@@ -74,12 +74,14 @@ const testData = {
 const ProductDetail = (
 ) => {
   const {productSlug} = useParams();
-  const {  getProductDetaildBySlug } = useProduct();
+  const [loading, setLoading] = useState(true);
   const { getCart, addToCart,fetchCart} = useCart();
+  const { getProductDetaildBySlug } = useProduct();
   const [activeTab, setActiveTab] = useState('description');
   const [quantity, setQuantity] = useState(1);
-  const [product, setProduct] = useState({});
+  const [product, setProduct] = useState(null);
   const navigate = useNavigate();
+
   const tabs = [
     { id: 'description', label: 'Mô tả sản phẩm' },
     { id: 'specs', label: 'Thông số kỹ thuật' },
@@ -95,7 +97,8 @@ const ProductDetail = (
         }
       };
       loadProduct();
-    }, []);
+      setLoading(false);
+    }, [productSlug]);
     const handleAddToCart = async () => {
       try {
         const result = await addToCart(product.variants[0].detailId, quantity);
@@ -107,6 +110,8 @@ const ProductDetail = (
         // lỗi thực hiện thêm vào giỏ
       }
     };
+  if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
+  if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
   return (
     <div className="bg-white min-h-screen font-sans text-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-6">

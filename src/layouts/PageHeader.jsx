@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import { ArrowLeft, ClosedCaption, Heart, LogOut, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
@@ -8,6 +8,7 @@ import { FaUserCircle } from 'react-icons/fa'
 import {useAuth} from  "../contexts/AuthContext"
 import {useNavigate} from "react-router-dom"
 import CartDrawer from './CartDrawer'
+import { useCart } from '../contexts/CartContext'
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
@@ -24,7 +25,11 @@ const PageHeader = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate();
-  
+
+  const {cart, totalItems, addToCart, fetchCart,updateCartItem, setCart ,deleteCartItem, clearCartState} = useCart()
+  useEffect (() => {
+    fetchCart();
+  },[])
   const handleLogout = async (e) => {
     e.preventDefault();
     setError('')
@@ -87,9 +92,15 @@ const PageHeader = () => {
             </Button>
           </Link>
           <Button 
-          size='icon'
-          onClick={() => setShowCartDrawer(true)}>
-            <ShoppingCart />
+            size='icon'
+            onClick={() => setShowCartDrawer(true)}
+            className="relative">
+              <ShoppingCart />
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {totalItems > 99 ? '99+' : totalItems}
+                </span>
+              )}
           </Button>
           {isAuthenticated && <Button size='icon'>
             <Link 
