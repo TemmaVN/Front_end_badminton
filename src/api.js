@@ -145,6 +145,13 @@ export const orderApi = {
 
     cancelMyOrder: (orderId) =>
         api.put(`/Order/cancel-my-order/${orderId}`),
+    getByStatus: (statusId, params) =>
+    api.get(`/Order/all-orders-by-status/${statusId}`, { params }),
+  getAll: (params) => api.get("/Order/all-orders", { params }),
+  updateStatus: (orderId, statusId) =>
+    api.put(`/Order/updateStatus/${orderId}`, statusId, {
+      headers: { "Content-Type": "application/json" },
+    }), 
 };
 
 export default api;
