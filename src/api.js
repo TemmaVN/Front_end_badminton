@@ -22,15 +22,23 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Handle response errors
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+        // Không có response = mất kết nối, timeout, CORS → không làm gì
+        if (!error.response) {
+            return Promise.reject(error);
         }
+
+        if (error.response.status === 401) {
+            // Tránh loop: chỉ redirect nếu đang không ở trang login
+            if (window.location.pathname !== '/login') {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        }
+
         return Promise.reject(error);
     }
 );

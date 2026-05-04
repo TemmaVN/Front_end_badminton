@@ -30,7 +30,6 @@ import { CartProvider } from "./contexts/CartContext";
 import CartPage from "./layouts/CartPage";
 import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
-import pic from '../public/vl.jpeg';
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
