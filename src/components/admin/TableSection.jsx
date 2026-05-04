@@ -1,40 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
+import { useOrder } from '../../contexts/OrderContext';
+import OrderDetail from './OrderDetail';
 
-const recentOrders = [
-  {
-    id: "#3852",
-    customer: "John Smith",
-    product: "MacBook Pro 14",
-    amount: "$2,499",
-    status: "completed",
-    date: "2024-01-14",
-  },
-  {
-    id: "#3851",
-    customer: "Sarah Johnson",
-    product: "iPhone 15 Pro",
-    amount: "$1,199",
-    status: "pending",
-    date: "2024-01-14",
-  },
-  {
-    id: "#3850",
-    customer: "Michael Brown",
-    product: "AirPods Pro",
-    amount: "$249",
-    status: "completed",
-    date: "2024-01-14",
-  },
-  {
-    id: "#3849",
-    customer: "Emily Davis",
-    product: "iPad Air",
-    amount: "$599",
-    status: "cancelled",
-    date: "2024-01-14",
-  }
-];
 
 const topProducts = [
   {
@@ -67,19 +35,43 @@ const topProducts = [
   }
 ];
 
+const STATUSES = {
+  1: { text: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-600" },
+  2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-600" },
+  3: { text: "Đang xử lý", color: "bg-indigo-100 text-indigo-600" },
+  4: { text: "Đang đan lưới", color: "bg-teal-100 text-teal-600" },
+  5: { text: "Đang giao hàng", color: "bg-purple-100 text-purple-600" },
+  6: { text: "Đã giao hàng", color: "bg-green-100 text-green-600" },
+  7: { text: "Hoàn tất", color: "bg-emerald-100 text-emerald-600" },
+  8: { text: "Đã huỷ", color: "bg-red-100 text-red-600" },
+};
+
+
 function TableSection() {
-        const getStatusColor = (status) => {
-    switch (status) {
-        case "completed":
-        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400";
-        case "pending":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400";
-        case "cancelled":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
-        default:
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const handleCloseDetail = () => {
+    setSelectedOrder(null);
+  };
+  const getStatusColor = (status) => {
+    // Tìm status trong object STATUSES dựa vào text
+    const statusEntry = Object.values(STATUSES).find(
+      (item) => item.text === status
+    );
+    
+    if (statusEntry) {
+      return statusEntry.color;
     }
-    };
+    
+    // Fallback nếu không tìm thấy
+    return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
+  };
+
+    const {orders, getAll, getRecentOrders} = useOrder();
+    useEffect(() => {
+      getAll({page: 1, pagesize: 200});
+    } , []);
+
+    const ordersList = getRecentOrders(orders, 4);
   return (
     <div className="space-y-6">
       {/* Recent Orders Header */}
@@ -109,43 +101,42 @@ function TableSection() {
                   Order ID
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Product
+                  Khách hàng
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Amount
+                  Tổng tiền
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Status
+                  Trạng thái
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Date
+                  Ngày tạo
                 </th>
               </tr>
             </thead>
                 <tbody>
-                {recentOrders.map((order, index) => (
+                {ordersList.map((order, index) => (
                     <tr 
+                    onClick={() => setSelectedOrder(order)}
                     key={index} 
                     className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                     {/* Order ID */}
                     <td className="p-4">
                         <span className="text-sm font-medium text-blue-600">
-                        {order.id}
+                        {order.orderId}
                         </span>
                     </td>
-
-                    {/* Product */}
                     <td className="p-4">
                         <span className="text-sm text-slate-800 dark:text-white">
-                        {order.product}
+                        {order.receiverName}
                         </span>
                     </td>
 
                     {/* Amount */}
                     <td className="p-4">
                         <span className="text-sm text-slate-800 dark:text-white">
-                        {order.amount}
+                        {order.totalAmount}
                         </span>
                     </td>
 
@@ -160,9 +151,10 @@ function TableSection() {
                     <td className="p-4">
                         <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-800 dark:text-white">
-                            {order.date}
+                            {order.orderDate}
                         </span>
-                        <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                        <button 
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                             <MoreHorizontal className="w-5 h-5" />
                         </button>
                         </div>
@@ -171,6 +163,7 @@ function TableSection() {
                 ))}
                 </tbody>
           </table>
+
         </div>
       </div>
       {/* Top Products Section */}
@@ -228,6 +221,7 @@ function TableSection() {
             ))}
         </div>
         </div>
+
     </div>
   );
 }

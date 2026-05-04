@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { productApi } from "../api";
+import { orderApi } from "../api"; // Sửa từ productApi thành orderApi
 
 const OrderContext = createContext(null);
 
 export const useOrder = () => {
-  const context = useContext(ProductContext);
+  const context = useContext(OrderContext);
   if (!context) {
-    throw new Error("useProduct must be used within a ProductProvider");
+    throw new Error("useOrder must be used within a OrderProvider");
   }
   return context;
 };
@@ -23,14 +23,24 @@ export const OrderProvider = ({ children }) => {
   const getAll = async (params) => {
     setLoading(true);
     try {
-      const respone = await orderApi.getAll(params);
-      setOrders(respone.orders);
-      alert("Orders fetched successfully");
+      const response = await orderApi.getAllOrders(params); // Sửa 'respone' thành 'response'
+      setOrders(response.data.orders);
+      setPagination({
+        totalCount: response.totalCount || 0,
+        totalPages: response.totalPages || 0,
+        currentPage: response.currentPage || 1,
+      });
       setLoading(false);
     } catch (error) {
-      alert("Failed to fetch orders");
+      console.error("Failed to fetch orders:", error);
       setLoading(false);
     }
+  };
+
+  const getRecentOrders = (orderList, count = 4) => {
+    return [...orderList]
+      .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+      .slice(0, count);
   };
 
   const addOrder = async (order) => {
@@ -38,10 +48,9 @@ export const OrderProvider = ({ children }) => {
     try {
       const response = await orderApi.addOrder(order);
       setOrders([...orders, response.data]);
-      alert("Order added successfully");
       setLoading(false);
     } catch (error) {
-      alert("Failed to add order");
+      console.error("Failed to add order:", error);
       setLoading(false);
     }
   };
@@ -51,10 +60,15 @@ export const OrderProvider = ({ children }) => {
     orders,
     loading,
     pagination,
+    getRecentOrders,
     addOrder,
   };
+
+  // ✅ SỬA LỖI CHÍNH: OrderContext.Provider thay vì OrderProvider.Provider
   return (
-    <OrderProvider.Provider value={value}>{children}</OrderProvider.Provider>
+    <OrderContext.Provider value={value}>
+      {children}
+    </OrderContext.Provider>
   );
 };
 

@@ -8,7 +8,14 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useUser } from '../contexts/UserContext';
 import {useCart} from '../contexts/CartContext'
 import { orderApi } from '../api';
+import { useNavigate, useLocation } from 'react-router-dom';
 const CartPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Lấy productItem từ route state, null = order từ cart
+  const productItem = location.state?.productItem ?? null;
+  const isSingleItem = productItem !== null;
   // 1. STATE QUẢN LÝ BƯỚC & THANH TOÁN
   const [step, setStep] = useState(1); 
   const [paymentMethod, setPaymentMethod] = useState('COD');
@@ -18,11 +25,23 @@ const CartPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
 
-  const {cart} = useCart();
+  const {cart, deleteCartItem, fetchCart} = useCart();
+  const displayItems = isSingleItem
+    ? [{
+        cartItemId: productItem.detailId,
+        imageUrl: productItem.imageUrl,
+        productName: productItem.productName,
+        variantInfo: productItem.variantInfo,
+        quantity: productItem.quantity,
+        unitPrice: productItem.unitPrice,
+        subTotal: productItem.unitPrice * productItem.quantity,
+        detailId: productItem.detailId,
+      }]
+    : cart;
 
-  const cartItems = cart;
-  const subtotal = cartItems.reduce((acc, item) => acc + item.subTotal, 0);
-  const totalQuantity = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  // Gán lại để các chỗ tính subtotal, totalQuantity dùng đúng nguồn
+  const subtotal = displayItems.reduce((acc, item) => acc + item.subTotal, 0);
+  const totalQuantity = displayItems.reduce((acc, item) => acc + item.quantity, 0);
 
   // 2. STATE QUẢN LÝ FORM THÔNG TIN (Giải quyết vấn đề thiếu thông tin)
   const [formData, setFormData] = useState({
@@ -53,45 +72,49 @@ const CartPage = () => {
       }, []);
 
   // Hàm xử lý nút bấm dưới cùng
-  const handleNextAction = async () => {
-  if (step === 1) {
-    // Validate form trước khi sang bước 2
-    if (!formData.fullName || !formData.phoneNumber || !formData.address) {
-      alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
-      return;
-    }
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else {
-    // Gọi API tạo đơn hàng
-    setIsLoading(true);
-    setOrderError('');
-    try {
-      const orderPayload = {
-        receiverName: formData.fullName,
-        phoneNumber: formData.phoneNumber,
-        shippingAddress: `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`,
-        note: formData.note,
-        paymentMethod: paymentMethod,
-        orderDetails: cartItems.map(item => ({
-          detailId: item.detailId,       // tuỳ theo DTO backend yêu cầu
-          quantity: item.quantity,
-        }))
-      };
-
-      const response = await orderApi.create(orderPayload);
-      if (response.status === 200 || response.status === 201) {
-        alert('Đặt hàng thành công! 🎉');
-        // Có thể navigate sang trang lịch sử đơn hàng hoặc trang chủ
+    const handleNextAction = async () => {
+    if (step === 1) {
+      if (!formData.fullName || !formData.phoneNumber || !formData.address) {
+        alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+        return;
       }
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
-      setOrderError(msg);
-    } finally {
-      setIsLoading(false);
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setIsLoading(true);
+      setOrderError('');
+      try {
+        const orderPayload = {
+          receiverName: formData.fullName,
+          phoneNumber: formData.phoneNumber,
+          shippingAddress: `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`,
+          note: formData.note,
+          paymentMethod: paymentMethod,
+          orderDetails: displayItems.map(item => ({
+            detailId: item.detailId,
+            quantity: item.quantity,
+          })),
+        };
+
+        const response = await orderApi.create(orderPayload);
+
+        if (response.status === 200 || response.status === 201) {
+          // Nếu order từ cart → xóa toàn bộ cart
+          if (!isSingleItem) {
+            await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
+            await fetchCart(); // sync lại context
+          }
+          alert('Đặt hàng thành công! 🎉');
+          navigate('/'); // hoặc '/' tuỳ route của bạn
+        }
+      } catch (error) {
+        const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
+        setOrderError(msg);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-10 px-4 text-gray-900">
@@ -150,7 +173,7 @@ const CartPage = () => {
 
                 <div className="space-y-6">
                   <InputField label="Họ và tên" name="fullName" value={formData.fullName} onChange={handleInputChange} icon={UserIcon} placeholder="VD: Nguyễn Văn An" required />
-                  <InputField label="Số điện thoại" name="phone" value={formData.phoneNumber} onChange={handleInputChange} icon={PhoneIcon} placeholder="VD: 0901234567" required />
+                  <InputField label="Số điện thoại" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} icon={PhoneIcon} placeholder="VD: 0901234567" required />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {/* Có thể thay thành thẻ <select> thật nếu bạn có danh sách API */}
@@ -234,8 +257,8 @@ const CartPage = () => {
              </div>
 
              {/* Danh sách sản phẩm - Giải quyết vấn đề bị rớt dòng */}
-             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-               {cartItems.map(item => (
+             <div className="space-y-4 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
+               {displayItems.map(item => (
                 <div key={item.cartItemId} className="flex flex-row items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   <div className="relative shrink-0">
                     <img 

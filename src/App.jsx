@@ -183,8 +183,8 @@ function App() {
         <CategoryProvider>
           <CartProvider>
           <div className="bg-white h-auto w-full">
-          { <PageHeader></PageHeader>}
-          { <MainHeader></MainHeader>}
+          {!isAdmin() && <PageHeader></PageHeader>}
+          {isHideMainHeader && <MainHeader></MainHeader>}
             <ProductProvider>
               <AppRoutes />
             </ProductProvider>
