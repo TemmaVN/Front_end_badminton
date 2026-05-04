@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }) => {
             const response = await authApi.login(email, password);
             const userData = response.data;
             const token = userData.token;
-            console.log(token);
             if (token) {
                 const decodedUser = jwtDecode(token);
                 localStorage.setItem('token', token);

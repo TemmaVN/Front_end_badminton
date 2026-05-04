@@ -83,7 +83,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4 relative">
                 {/* Ảnh sản phẩm */}
-                <div className="w-20 h-20 flex-shrink-0">
+                <div className="w-20 h-20 shrink-0">
                   <img 
                     src={item.imageUrl} 
                     alt={item.productName} 

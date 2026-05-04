@@ -60,7 +60,7 @@ const menuItems = [
 ];
 
 const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
-  const {user} = useUser();
+  const {user, getUserInfo} = useUser();
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();

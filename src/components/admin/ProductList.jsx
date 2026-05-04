@@ -272,7 +272,7 @@ const ProductList = () => {
                 </div>
 
                 {/* ── Table ── */}
-                <div className="overflow-x-auto relative min-h-[400px]">
+                <div className="overflow-x-auto relative min-h-100">
                     {loading && (
                         <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
                             <Loader2 className="animate-spin text-orange-500" size={32} />

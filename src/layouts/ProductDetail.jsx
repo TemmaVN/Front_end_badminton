@@ -147,10 +147,10 @@ const handleOrder = () => {
           {/* Left: Images */}
           <div>
             <div className="border border-gray-100 rounded-xl p-4 flex justify-center mb-4">
-              <img src={product.image} alt="Yonex BG80 Power" className="max-h-[500px] object-contain" />
+              <img src={product.image} alt="Yonex BG80 Power" className="max-h-125 object-contain" />
             </div>
             <div className="flex gap-3 overflow-x-auto">
-               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500" />
+               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
             </div>
           </div>
 

@@ -102,7 +102,7 @@ const AdminInfo = () => {
         <div className="max-w-5xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 h-32 relative">
+                <div className="bg-linear-to-r from-orange-500 to-red-500 h-32 relative">
                     <div className="absolute -bottom-12 left-8">
                         <div className="w-24 h-24 bg-white rounded-2xl shadow-md flex items-center justify-center border-4 border-white">
                             <User size={48} className="text-orange-500" />

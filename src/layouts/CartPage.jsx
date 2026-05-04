@@ -145,7 +145,7 @@ const CartPage = () => {
             <span className={`text-sm font-semibold ${step >= 1 ? 'text-orange-default' : 'text-gray-400'}`}>Thông tin</span>
           </div>
 
-          <div className={`absolute top-5 left-0 right-0 h-[2px] -z-10 transition-colors duration-300 ${step > 1 ? 'bg-orange-default' : 'bg-gray-100'}`}></div>
+          <div className={`absolute top-5 left-0 right-0 h-0.5 -z-10 transition-colors duration-300 ${step > 1 ? 'bg-orange-default' : 'bg-gray-100'}`}></div>
 
           <div className="flex items-center gap-3 z-10 bg-[#fcfcfc] pl-4 ml-auto">
             <span className={`text-sm font-semibold ${step === 2 ? 'text-orange-default' : 'text-gray-400'}`}>Xác nhận</span>
