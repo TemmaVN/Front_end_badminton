@@ -149,6 +149,7 @@ function AppRoutes() {
         <Route path="orders" element={<OrderList />} />
         <Route path="users-list" element={<UserList/>}/>
         <Route path="payment" element={<Payment />} />
+        <Route path="admin-info" element={<UserInfo />} />
       </Route>
 
       <Route
