@@ -89,9 +89,7 @@ const ProductDetail = (
   ];
     useEffect(() => {
       const loadProduct = async () => {
-        fetchCart();
         const result = await getProductDetaildBySlug(productSlug);
-        console.log(result);
         if (result) {
           setProduct(result);
         }
@@ -102,6 +100,7 @@ const ProductDetail = (
     const handleAddToCart = async () => {
       try {
         const result = await addToCart(product.variants[0].detailId, quantity);
+        fetchCart();
         if (result) {
           setQuantity(1);
           navigate("/cart");
