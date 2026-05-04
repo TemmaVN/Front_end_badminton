@@ -54,7 +54,7 @@ const Information = () => {
                 user.fullName = fullName;
                 user.dateOfBirth = formattedDate;
                 user.phoneNumber = phoneNumber;
-                localStorage.setItem(JSON.stringify(user));
+                localStorage.setItem(JSON.stringify(user), 'user');
             }
         }
     };

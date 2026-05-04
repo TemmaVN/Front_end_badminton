@@ -38,7 +38,7 @@ const menuItems = [
     submenu: [
       { id: "orders", label: "Orders", path: "orders" }, // dbo.Orders
       { id: "order-details", label: "Order Details", path: "order-details" }, // dbo.OrderDetails
-      { id: "payments", label: "Payments", path: "payments" }, // dbo.Payments
+      { id: "payments", label: "Payments", path: "payment" }, // dbo.Payments
     ],
   },
   {
@@ -46,7 +46,7 @@ const menuItems = [
     icon: Users,
     label: "Customers", // dbo.Customers
     count: "1.2k",
-    path: "customers",
+    path: "users-list",
   },
   {
     id: "System",
