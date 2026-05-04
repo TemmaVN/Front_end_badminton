@@ -116,9 +116,7 @@ function AppRoutes() {
         path="/cart"
         element={
           <PublicRoute>
-            <UserProvider>
               <CartPage/>
-            </UserProvider>
           </PublicRoute>
         }
       />
@@ -127,9 +125,7 @@ function AppRoutes() {
         path="user-info"
         element={
           <ProtectedRoute>
-            <UserProvider>
               <UserInfo />
-            </UserProvider>
           </ProtectedRoute>
         }
       />
@@ -183,7 +179,8 @@ function App() {
   ];
   return (
     <BrowserRouter>
-      <CategoryProvider>
+      <UserProvider>
+        <CategoryProvider>
           <CartProvider>
           <div className="bg-white h-auto w-full">
           <PageHeader></PageHeader>
@@ -196,6 +193,7 @@ function App() {
         </div>
         </CartProvider>
       </CategoryProvider>
+      </UserProvider>
     </BrowserRouter>
   );
 }
