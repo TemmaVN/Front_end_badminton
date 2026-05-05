@@ -94,6 +94,7 @@ export const ProductProvider = ({ children }) => {
         try {
             const response = await productApi.create(data);
             const created = response.data;
+            console.log(created);
 
             // Thêm vào đầu danh sách local (optimistic update)
             setProducts((prev) => [created, ...prev]);

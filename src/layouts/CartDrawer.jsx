@@ -20,7 +20,6 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
         ? { ...item, quantity: newQuantity, subTotal: item.unitPrice * newQuantity }
         : item
     ));
-    console.log(cart,'1')
     try {
       if (delta === 1) {
         // Tăng → dùng addToCart với quantity = 1
@@ -42,8 +41,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
       ));
       alert(err.message); // hoặc toast
     }
-      console.log('2', cart)
-
+    fetchCart();
   };
 
   return (
@@ -85,7 +83,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4 relative">
                 {/* Ảnh sản phẩm */}
-                <div className="w-20 h-20 flex-shrink-0">
+                <div className="w-20 h-20 shrink-0">
                   <img 
                     src={item.imageUrl} 
                     alt={item.productName} 
@@ -137,13 +135,10 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button 
-              onClick={() => navigate("/cart")}
-              className="py-3.5 px-4 border border-orange-500 text-orange-600 rounded-full font-bold text-sm hover:bg-orange-50 transition-all">
-                Xem giỏ hàng
-              </button>
-              <button className="py-3.5 px-4 bg-orange-500 text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
+            <div className="flex justify-center">
+              <button
+              onClick={() => navigate("/cart")} 
+              className="py-3.5 px-20 bg-orange-500 text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-100">
                 <ShoppingCart size={18} />
                 Đặt mua
               </button>

@@ -24,6 +24,18 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    const fetchUser = async () => {
+        try {
+            const response = await userApi.get_info();
+            setUser(response.data);
+            localStorage.setItem('user', JSON.stringify(response.data));
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+
+
     const changePassword = async ({oldPassword, newPassword}) => {
         try {
             const response = await userApi.changePassword({ oldPassword, newPassword });
@@ -70,6 +82,7 @@ export const UserProvider = ({ children }) => {
         changePassword,
         getUserInfo,
         loading,
+        fetchUser,
     };
 
     return (

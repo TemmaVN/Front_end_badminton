@@ -5,6 +5,7 @@ import FlashButton from '../components/FlashButton'
 import { UserCircleIcon } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 import { foreignObject } from 'framer-motion/client'
+import { useAuth } from '../contexts/AuthContext'
 
 const Information = () => {
     const [fullName, setFullName] = useState('');
@@ -17,8 +18,8 @@ const Information = () => {
     const [ward, setWard] = useState('');
     const [address, setAddress] = useState('');
     const { UpdateProfile } = useUser();
-
-    const {  getUserInfo } = useUser();
+    const {isAdmin} = useAuth();
+    const {  getUserInfo, fetchUser } = useUser();
 
     const handleSaveInfo = async () => {
         // Validate input fields
@@ -29,6 +30,7 @@ const Information = () => {
         const result = await UpdateProfile({fullName, birthDate, phoneNumber});
         if (result.success) {
             alert('Thông tin đã được lưu thành công!');
+            fetchUser();
         } else {
             alert(result.message);
         }
@@ -51,6 +53,7 @@ const Information = () => {
             setEmail(result.user.email);
             setPhoneNumber(result.user.phoneNumber);
             if (user) {
+                console.log(user)
                 user.fullName = fullName;
                 user.dateOfBirth = formattedDate;
                 user.phoneNumber = phoneNumber;
@@ -123,7 +126,7 @@ const Information = () => {
                         </div>
                     </div>
                 </div>
-                <div className='pt-8 gap-8 flex flex-col'>
+                {!isAdmin() &&                 <div className='pt-8 gap-8 flex flex-col'>
                     <h2 className='font-bold text-2xl'>Thông tin giao hàng</h2>
                     <div className={`flex flex-col grow ${isFlexData? '':'flex-wrap'} gap-3 justify-around items-center`}>
                         <div className={`flex grow ${isFlexData? 'flex-col':''} justify-around items-center gap-5 w-full`}>
@@ -157,14 +160,15 @@ const Information = () => {
                                 <MyInput size="800" placeHolder="Địa chỉ của bạn"/>
                             </div>
                     </div>
-                    <div className='flex w-full justify-center'>
+                    
+                </div>}
+                <div className='flex w-full justify-center mt-4'>
                         <FlashButton 
                         type='submit'
                         itemName="Lưu thông tin"
                         onClick={handleSaveInfo}
                         />
                     </div>
-                </div>
             </form>
   )
 }

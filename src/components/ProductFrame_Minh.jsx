@@ -51,7 +51,7 @@ export default function ProductFrame_Minh({
     <Link 
     to={`/p/${productDetailSlug}`}
     className="block h-full group">
-      <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-[10px] border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
+      <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-2.5 border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
         {/* Nhãn Bán chạy & Giảm giá */}
         <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 items-end z-10">
           {isBestSeller && (
@@ -85,7 +85,7 @@ export default function ProductFrame_Minh({
         </div>
 
         {/* Nội dung Tên và Giá */}
-        <div className="flex flex-col flex-grow justify-between gap-2">
+        <div className="flex flex-col grow justify-between gap-2">
           <h3 className="text-[16px] text-gray-800 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
             {productName}
           </h3>

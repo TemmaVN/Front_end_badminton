@@ -9,8 +9,9 @@ import {
   ChevronDown,
   BarChart3,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../../contexts/UserContext";
 
 const menuItems = [
   {
@@ -37,7 +38,6 @@ const menuItems = [
     path: "sales-overview",
     submenu: [
       { id: "orders", label: "Orders", path: "orders" }, // dbo.Orders
-      { id: "order-details", label: "Order Details", path: "order-details" }, // dbo.OrderDetails
       { id: "payments", label: "Payments", path: "payment" }, // dbo.Payments
     ],
   },
@@ -53,21 +53,19 @@ const menuItems = [
     icon: Settings,
     label: "System",
     submenu: [
-      { id: "users", label: "Admin Users", path: "users" }, // dbo.Users
+      { id: "users", label: "Admin Users", path: "admin-info" }, // dbo.Users
       { id: "roles", label: "Roles & Permissions", path: "roles" }, // dbo.Roles, dbo.UserRoles
-      { id: "vouchers", label: "Vouchers", path: "vouchers" }, // dbo.VoucherConditions
-      { id: "tickets", label: "Service Tickets", path: "tickets" }, // dbo.ServiceTickets
     ],
   },
 ];
 
 const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
+  const {user, fetchUser} = useUser()
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();
 
   const currentPath = location.pathname.split("/").pop();
-
   const toggleExpanded = (itemid) => {
     setExpandedItems((prev) => {
       const newExpanded = new Set(prev);
@@ -97,7 +95,7 @@ const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
           {!sideBarCollapsed && (
             <div>
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-                Temma Admin
+                {user.fullName}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Dashboard
