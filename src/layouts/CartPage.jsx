@@ -99,13 +99,18 @@ const CartPage = () => {
         const response = await orderApi.create(orderPayload);
 
         if (response.status === 200 || response.status === 201) {
-          // Nếu order từ cart → xóa toàn bộ cart
+          // Xóa cart riêng, KHÔNG để lỗi ở đây block UX
           if (!isSingleItem) {
-            await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
-            await fetchCart(); // sync lại context
+            try {
+              await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
+              await fetchCart();
+            } catch (cartError) {
+              fetchCart().catch(() => {});
+            }
           }
+          
           alert('Đặt hàng thành công! 🎉');
-          navigate('/'); // hoặc '/' tuỳ route của bạn
+          navigate('/');
         }
       } catch (error) {
         const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';

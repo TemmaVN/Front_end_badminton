@@ -44,7 +44,7 @@ const ProductList = () => {
         mainImageUrl: '',
         description: '',
         productDetailRequests: [
-            { weightClass: '', gripSize: '', price: '', stockQuantity: 10 },
+            { weightClass: '', gripSize: '', balancePoint: '', stiffness: '', maxTension: '', price: '', stockQuantity: 10, serialNumber: '' },
         ],
     };
     const [formData, setFormData] = useState(defaultForm);
@@ -161,12 +161,16 @@ const ProductList = () => {
             mainImageUrl: formData.mainImageUrl || null,
             description: formData.description || null,
             productDetailRequests: formData.productDetailRequests
-                .filter((d) => d.price)   // bỏ row còn trống
+                .filter((d) => d.price && d.serialNumber)  // serial bắt buộc
                 .map((d) => ({
                     weightClass: d.weightClass || null,
                     gripSize: d.gripSize || null,
+                    balancePoint: d.balancePoint || null,
+                    stiffness: d.stiffness || null,
+                    maxTension: d.maxTension ? parseInt(d.maxTension) : null,
                     price: parseFloat(d.price),
                     stockQuantity: parseInt(d.stockQuantity) || 0,
+                    serialNumber: d.serialNumber,   // ✅ bắt buộc
                 })),
         };
 
@@ -176,6 +180,7 @@ const ProductList = () => {
             if (editingProduct) {
                 result = await updateProduct(editingProduct.productId, payload);
             } else {
+                console.log(payload);
                 result = await addProduct(payload);
             }
 
@@ -517,13 +522,13 @@ const ProductList = () => {
 
                                     {/* Header */}
                                     <div className="grid grid-cols-9 gap-2 mb-2">
-                                        {['WeightClass', 'GripSize', 'Giá', 'Tồn kho', ''].map((h) => (
+                                        {['WeightClass', 'GripSize','Số seri', 'Giá', 'Tồn kho', ].map((h) => (
                                             <span key={h} className="text-xs text-slate-400 col-span-2 last:col-span-1">{h}</span>
                                         ))}
                                     </div>
 
                                     {formData.productDetailRequests.map((row, i) => (
-                                        <div key={i} className="grid grid-cols-9 gap-2 mb-2">
+                                        <div key={i} className="grid grid-cols-10 gap-2 mb-2">
                                             <input
                                                 placeholder="3U/4U"
                                                 className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none"
@@ -535,6 +540,13 @@ const ProductList = () => {
                                                 className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none"
                                                 value={row.gripSize}
                                                 onChange={(e) => updateDetailRow(i, 'gripSize', e.target.value)}
+                                            />
+                                            <input
+                                                required
+                                                placeholder="Serial *"
+                                                className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none"
+                                                value={row.serialNumber}
+                                                onChange={(e) => updateDetailRow(i, 'serialNumber', e.target.value)}
                                             />
                                             <input
                                                 required

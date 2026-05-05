@@ -82,6 +82,7 @@ export const UserProvider = ({ children }) => {
         changePassword,
         getUserInfo,
         loading,
+        fetchUser,
     };
 
     return (

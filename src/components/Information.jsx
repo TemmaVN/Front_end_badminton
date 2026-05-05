@@ -53,6 +53,7 @@ const Information = () => {
             setEmail(result.user.email);
             setPhoneNumber(result.user.phoneNumber);
             if (user) {
+                console.log(user)
                 user.fullName = fullName;
                 user.dateOfBirth = formattedDate;
                 user.phoneNumber = phoneNumber;

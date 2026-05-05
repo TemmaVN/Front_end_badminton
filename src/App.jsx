@@ -3,7 +3,7 @@ import MainHeader from "./layouts/MainHeader";
 import { useMediaQuery } from "./mystate/useMediaQuery";
 import Login from "./layouts/Login";
 import Register from "./layouts/Register";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useParams , useLocation} from "react-router-dom";
 import Advertisement from "./components/Advertisement";
 import Contract from "./layouts/Contract";
 import Sales from "./layouts/Sales";
@@ -30,6 +30,8 @@ import { CartProvider } from "./contexts/CartContext";
 import CartPage from "./layouts/CartPage";
 import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
+import MyOrders from "./layouts/MyOrders";
+
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -50,6 +52,12 @@ const PublicRoute = ({ children }) => {
 
 function AppRoutes() {
   const { isAdmin } = useAuth();
+  const location = useLocation();
+
+  // Nếu là admin và không ở trong /admin thì tự redirect
+  if (isAdmin() && !location.pathname.startsWith("/admin")) {
+    return <Navigate to="/admin" replace />;
+  }
   return (
     <Routes>
       {/* Public Routes */}
@@ -128,6 +136,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="orders"
+        element={
+          <ProtectedRoute>
+            <MyOrders />
+          </ProtectedRoute>
+        }
+      />
       {/* Admin Routes */}
       <Route
         path="/admin"
@@ -168,8 +184,9 @@ function AppRoutes() {
 
 function App() {
   const { isAuthenticated, isAdmin } = useAuth();
+  const isHidePageHeader = !isAdmin();
   const isHideMainHeader = useMediaQuery("(min-width: 1250px)") && !isAdmin();
-  const linkAdvertisement = [
+  const Advertisement = [
     "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
     "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
     "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-4-min.webp",
@@ -183,7 +200,7 @@ function App() {
         <CategoryProvider>
           <CartProvider>
           <div className="bg-white h-auto w-full">
-          {!isAdmin() && <PageHeader></PageHeader>}
+          {isHidePageHeader && <PageHeader></PageHeader>}
           {isHideMainHeader && <MainHeader></MainHeader>}
             <ProductProvider>
               <AppRoutes />

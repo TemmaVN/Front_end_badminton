@@ -60,13 +60,12 @@ const menuItems = [
 ];
 
 const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
-  const {user, getUserInfo} = useUser();
+  const {user, fetchUser} = useUser()
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();
 
   const currentPath = location.pathname.split("/").pop();
-
   const toggleExpanded = (itemid) => {
     setExpandedItems((prev) => {
       const newExpanded = new Set(prev);
