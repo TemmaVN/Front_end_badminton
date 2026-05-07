@@ -17,44 +17,44 @@ const menuItems = [
   {
     id: "Dashboard",
     icon: LayoutDashboard,
-    label: "Dashboard",
+    label: "Tổng quan",
     path: "dashboard",
   },
   {
     id: "Catalog",
     icon: Package,
-    label: "Catalog",
+    label: "Danh mục",
     path: "catalog",
     submenu: [
-      { id: "products", label: "Products", path: "product" }, // dbo.Products
-      { id: "categories", label: "Categories", path: "categories" }, // dbo.Categories
-      { id: "brands", label: "Brands", path: "brands" }, // dbo.Brands
+      { id: "products", label: "Sản phẩm", path: "product" },
+      { id: "categories", label: "Danh mục sản phẩm", path: "categories" },
+      { id: "brands", label: "Thương hiệu", path: "brands" },
     ],
   },
   {
     id: "Sales",
     icon: ShoppingBag,
-    label: "Sales",
+    label: "Bán hàng",
     path: "sales-overview",
     submenu: [
-      { id: "orders", label: "Orders", path: "orders" }, // dbo.Orders
-      { id: "payments", label: "Payments", path: "payment" }, // dbo.Payments
+      { id: "orders", label: "Đơn hàng", path: "orders" },
+      { id: "payments", label: "Thanh toán", path: "payment" },
     ],
   },
   {
     id: "Customers",
     icon: Users,
-    label: "Customers", // dbo.Customers
+    label: "Khách hàng",
     count: "1.2k",
     path: "users-list",
   },
   {
     id: "System",
     icon: Settings,
-    label: "System",
+    label: "Hệ thống",
     submenu: [
-      { id: "users", label: "Admin Users", path: "admin-info" }, // dbo.Users
-      { id: "roles", label: "Roles & Permissions", path: "roles" }, // dbo.Roles, dbo.UserRoles
+      { id: "users", label: "Quản trị viên", path: "admin-info" },
+      { id: "roles", label: "Vai trò & Phân quyền", path: "roles" },
     ],
   },
 ];
@@ -98,7 +98,7 @@ const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
                 {user.fullName}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Dashboard
+                Bảng điều khiển
               </p>
             </div>
           )}

@@ -14,28 +14,33 @@ const Information = () => {
     const [phoneNumber, setPhoneNumber] = useState('');
 
     const [province, setProvince] = useState('');
-    const [district, setDistrict] = useState('');
     const [ward, setWard] = useState('');
     const [address, setAddress] = useState('');
     const { UpdateProfile } = useUser();
     const {isAdmin} = useAuth();
     const {  getUserInfo, fetchUser } = useUser();
+    const [loading, setLoading] = useState(false);
 
     const handleSaveInfo = async () => {
-        // Validate input fields
-        if (!fullName || !email) {
-            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
-            return;
-        }
-        const result = await UpdateProfile({fullName, birthDate, phoneNumber});
+        setLoading(true);
+
+        const result = await UpdateProfile({
+            fullName,
+            dateOfBirth: birthDate,
+            phoneNumber,
+            city: province,       // Đảm bảo province chứa đúng dữ liệu city
+            district: ward,       // Đảm bảo ward chứa đúng dữ liệu district
+            detailedAddress: address,
+        });
+
+        setLoading(false);
+
         if (result.success) {
-            alert('Thông tin đã được lưu thành công!');
-            fetchUser();
+            alert('Cập nhật thành công');
         } else {
-            alert(result.message);
+            alert('Lỗi:', result.message);
         }
-        
-    }
+    };
 
     const isCol = useMediaQuery('(min-width: 970px)');
     const isMini = useMediaQuery('(max-width: 768px)');
@@ -46,17 +51,23 @@ const Information = () => {
 
     const handleGetUserInfo = async () => {
         const result = await getUserInfo();
+        console.log(result.user);
         if (result.success) {
             setFullName(result.user.fullName);
             const formattedDate = formatDateForInput(result.user.dateOfBirth);
             setBirthDate(formattedDate);
             setEmail(result.user.email);
             setPhoneNumber(result.user.phoneNumber);
+            setProvince(result.user.city);
+            setWard(result.user.district);
+            setAddress(result.user.detailedAddress);
             if (user) {
-                console.log(user)
                 user.fullName = fullName;
                 user.dateOfBirth = formattedDate;
                 user.phoneNumber = phoneNumber;
+                user.city = province;
+                user.district = ward;
+                user.detailedAddress = address;
                 localStorage.setItem(JSON.stringify(user), 'user');
             }
         }
@@ -70,7 +81,9 @@ const Information = () => {
         if (!dateString) return "";
         return dateString.split('T')[0]; 
     };
-
+    if (loading) {
+        return <div>Loading...</div>;
+    }
     return (
         <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
                 <div className='border-b-2 border-gray-300 pb-8'>
@@ -135,21 +148,24 @@ const Information = () => {
                                     <label htmlFor="">Tỉnh/thành phố </label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Tỉnh/thành phố"/>
-                            </div>
-                            <div className='w-full flex flex-col h-25'>
-                                <div className='flex pb-2 gap-2'>
-                                    <label htmlFor="">Quận/huyện </label>
-                                    <span className='text-orange-default'></span>  
-                                </div>
-                                <MyInput size="800" placeHolder="Quận/huyện"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Tỉnh/thành phố"
+                                value={province}
+                                onChange={(e) => setProvince(e.target.value)}
+                                />
                             </div>
                             <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Phường/xã</label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Phường/xã"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Phường/xã"
+                                value={ward}
+                                onChange={(e) => setWard(e.target.value)}
+                                />
                             </div>
                         </div>
                         <div className='w-full flex flex-col h-25'>
@@ -157,7 +173,12 @@ const Information = () => {
                                     <label htmlFor="">Địa chỉ</label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Địa chỉ của bạn"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Địa chỉ của bạn"
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                />
                             </div>
                     </div>
                     

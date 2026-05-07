@@ -112,7 +112,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/:categorySlug"
+        path="/:categorySlug/*"
         element={
           <PublicRoute>
             <Product />

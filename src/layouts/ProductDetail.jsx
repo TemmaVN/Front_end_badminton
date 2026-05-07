@@ -306,12 +306,7 @@ const handleOrder = () => {
                 
                 <h2 className="text-2xl font-bold text-slate-800 mt-8">1. Giới thiệu cước đan vợt cầu lông Yonex BG80 Power JP</h2>
                 <p>Cước đan vợt cầu lông Yonex BG80 Power JP là phiên bản nâng cấp hoàn hảo của dòng BG80 huyền thoại...</p>
-                
-                <div className="my-8 rounded-2xl overflow-hidden shadow-sm">
-                  <img src="https://fbshop.vn/wp-content/uploads/2023/04/bg-80-power-jp-1.jpg" alt="Mô tả" className="w-full" />
-                </div>
-
-                <h2 className="text-2xl font-bold text-slate-800">3. Công nghệ tích hợp</h2>
+                <h2 className="text-2xl font-bold text-slate-800">2. Công nghệ tích hợp</h2>
                 <ul className="list-disc pl-6 space-y-3">
                   <li><strong>Công nghệ Multi Filament:</strong> Giúp sợi dây có độ đàn hồi cực cao...</li>
                   <li><strong>Pha sợi Vectran:</strong> Tăng cường độ cứng cho dây, giữ sức căng ổn định...</li>
@@ -352,9 +347,9 @@ const handleOrder = () => {
           </div>
 
           <button
-            onClick={() => setActiveTab(false)}
+            onClick={() => setActiveTab(activeTab === 'description' ? '' : 'description')}
             className="mt-10 mx-auto block text-orange-500 font-bold border-b border-orange-500 hover:text-orange-700 transition-colors">
-            Thu gọn
+            {activeTab ? 'Thu gọn' : 'Mở rộng'}
           </button>
         </div>
       </div>

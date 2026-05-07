@@ -3,7 +3,7 @@ import React from 'react'
 
 const stats = [
   {
-    title: "Total Revenue",
+    title: "Tổng doanh thu",
     value: "$124,563",
     change: "+12.5%",
     trend: "up",
@@ -13,7 +13,7 @@ const stats = [
     textColor: "text-emerald-600 dark:text-emerald-400",
   },
   {
-    title: "Active Users",
+    title: "Người dùng hoạt động",
     value: "8,549",
     change: "+8.2%",
     trend: "up",
@@ -23,7 +23,7 @@ const stats = [
     textColor: "text-blue-600 dark:text-blue-400",
   },
   {
-    title: "Total Orders",
+    title: "Tổng đơn hàng",
     value: "2,847",
     change: "+15.3%",
     trend: "up",
@@ -33,7 +33,7 @@ const stats = [
     textColor: "text-purple-600 dark:text-purple-400",
   },
   {
-    title: "Page Views",
+    title: "Lượt xem trang",
     value: "45,892",
     change: "-2.1%",
     trend: "down",
@@ -67,23 +67,19 @@ const StatsGrid = () => {
                                 <ArrowUpRight className='w-4 h-4 text-emerald-500'/> :
                                 <ArrowDownRight className='w-4 h-4 text-red-500'/>
                                 }
-                                <span
-                                className={``}
-                                >Stats Change</span>
-                                <span className='text-sm text-slate-500 dark:text-slate-400'
-                                >vs Last month</span>
+                                <span className={``}>{stats.change}</span>
+                                <span className='text-sm text-slate-500 dark:text-slate-400'>so với tháng trước</span>
                             </div>
                         </div>
                         <div className={`p-3 rounded-xl group-hover:scale-110 transition-all duration-300`}>
                             {<stats.icon className={`w-6 h-6 ${stats.textColor}`}/>}
                         </div>
                     </div>
-                    {/* Progress bar */}
+                    {/* Thanh tiến trình */}
                     <div className='mt-4 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden'>
                         <div className={`h-full bg-linear-to-r ${stats.color} rounded-full transition-all duration-100`}
                         style={{width: stats.trend === "up"? "75%": "45%"}}
                         >
-                            
                         </div>
                     </div>
                 </div> 

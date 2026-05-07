@@ -1,5 +1,5 @@
 import React, { use, useEffect, useState } from 'react'
-import { ArrowLeft, ClosedCaption, Heart, LogOut, Menu, MenuIcon, Search, ShoppingCart, User, User2 } from 'lucide-react'
+import { ArrowLeft, ClosedCaption, Heart, LogOut, Menu, MenuIcon, Package, Search, ShoppingCart, User, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 import MenuHeader from './MenuHeader'
@@ -9,6 +9,7 @@ import {useAuth} from  "../contexts/AuthContext"
 import {useNavigate} from "react-router-dom"
 import CartDrawer from './CartDrawer'
 import { useCart } from '../contexts/CartContext'
+import { GrOrderedList } from 'react-icons/gr'
 
 const PageHeader = () => {
   const [isFocus, setIsFocus] = useState(false);
@@ -81,7 +82,7 @@ const PageHeader = () => {
           {isAuthenticated &&
           <Link to="/orders">
             <Button size='icon'>
-              <Heart/>
+              <Package/>
             </Button>
           </Link>
           }

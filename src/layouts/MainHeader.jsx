@@ -142,7 +142,10 @@ const MainHeader = () => {
                 to={`${slug}`}
                 key={slug}
                 onClick={
-                  () => setPageCatagory(label)
+                  () => {
+                    setPageCatagory(label)
+                    sessionStorage.setItem('pageCatagory', label);
+                  }
                 }
                 className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
                 onMouseEnter={() => {
@@ -172,6 +175,7 @@ const MainHeader = () => {
           >
             Liên hệ
           </Link>
+
         </div>
       </div>
       {isProductHovered && <Racket productCategories={currentProduct} />}

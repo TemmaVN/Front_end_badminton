@@ -46,12 +46,27 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber}) => {
+    const validateProfileData = ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => {
+        if (!fullName?.trim()) return 'Họ tên không được để trống';
+        if (!dateOfBirth) return 'Ngày sinh không được để trống';
+        if (!phoneNumber?.trim()) return 'Số điện thoại không được để trống';
+        if (!city) return 'Tỉnh/Thành phố không được để trống';
+        if (!district) return 'Quận/Huyện không được để trống';
+        if (!detailedAddress?.trim()) return 'Địa chỉ chi tiết không được để trống';
+        return null;
+    };
+
+    const UpdateProfile = async ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => {
+        const validationError = validateProfileData({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress });
+        if (validationError) {
+            return { success: false, message: validationError };
+        }
+
         try {
-            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber});
+            await userApi.UpdateProfile({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress });
             return { success: true };
         } catch (error) {
-            const message = error.response?.data?.message || 'Update profile failed';
+            const message = error.response?.data?.message || 'Cập nhật thông tin thất bại';
             return { success: false, message };
         }
     };

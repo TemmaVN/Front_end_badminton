@@ -2,18 +2,18 @@ import React from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 const data = [
-  { month: "Jan", revenue: 45000, expenses: 32000 },
-  { month: "Feb", revenue: 52000, expenses: 38000 },
-  { month: "Mar", revenue: 48000, expenses: 35000 },
-  { month: "Apr", revenue: 61000, expenses: 42000 },
-  { month: "May", revenue: 55000, expenses: 40000 },
-  { month: "Jun", revenue: 67000, expenses: 45000 },
-  { month: "Jul", revenue: 72000, expenses: 48000 },
-  { month: "Aug", revenue: 69000, expenses: 46000 },
-  { month: "Sep", revenue: 78000, expenses: 52000 },
-  { month: "Oct", revenue: 74000, expenses: 50000 },
-  { month: "Nov", revenue: 82000, expenses: 55000 },
-  { month: "Dec", revenue: 89000, expenses: 58000 },
+  { month: "T1", revenue: 45000, expenses: 32000 },
+  { month: "T2", revenue: 52000, expenses: 38000 },
+  { month: "T3", revenue: 48000, expenses: 35000 },
+  { month: "T4", revenue: 61000, expenses: 42000 },
+  { month: "T5", revenue: 55000, expenses: 40000 },
+  { month: "T6", revenue: 67000, expenses: 45000 },
+  { month: "T7", revenue: 72000, expenses: 48000 },
+  { month: "T8", revenue: 69000, expenses: 46000 },
+  { month: "T9", revenue: 78000, expenses: 52000 },
+  { month: "T10", revenue: 74000, expenses: 50000 },
+  { month: "T11", revenue: 82000, expenses: 55000 },
+  { month: "T12", revenue: 89000, expenses: 58000 },
 ];
 
 const RevenueChart = () => {
@@ -23,10 +23,10 @@ const RevenueChart = () => {
         <div className='flex items-center justify-between m-6'>
             <div>
                 <h3 className='text-xl font-bold text-slate-800 dark:text-white'>
-                    Revenue Chart
+                    Biểu đồ doanh thu
                 </h3>
                 <p className='text-sm text-slate-500 dark:text-slate-400'>
-                    Monthly revenue and expensea
+                    Doanh thu và chi phí hàng tháng
                 </p>
             </div>
             <div className='flex items-center space-x-4'>
@@ -35,7 +35,7 @@ const RevenueChart = () => {
                     rounded-full'>
                     </div>
                     <div className='text-sm text-slate-600 dark:text-slate-400 '>
-                        <span>Expenses</span>
+                        <span>Chi phí</span>
                     </div>
                 </div>
                 <div className='flex items-center space-x-2'>
@@ -43,7 +43,7 @@ const RevenueChart = () => {
                     rounded-full'>
                     </div>
                     <div className='text-sm text-slate-600 dark:text-slate-400 '>
-                        <span>Revenue</span>
+                        <span>Doanh thu</span>
                     </div>
                 </div>
             </div>

@@ -53,7 +53,6 @@ function TableSection() {
     setSelectedOrder(null);
   };
   const getStatusColor = (status) => {
-    // Tìm status trong object STATUSES dựa vào text
     const statusEntry = Object.values(STATUSES).find(
       (item) => item.text === status
     );
@@ -62,7 +61,6 @@ function TableSection() {
       return statusEntry.color;
     }
     
-    // Fallback nếu không tìm thấy
     return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
   };
 
@@ -74,31 +72,31 @@ function TableSection() {
     const ordersList = getRecentOrders(orders, 4);
   return (
     <div className="space-y-6">
-      {/* Recent Orders Header */}
+      {/* Đơn hàng gần đây */}
       <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-b-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
         <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Recent Orders
+                Đơn hàng gần đây
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Latest customer orders
+                Các đơn hàng mới nhất của khách hàng
               </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
+              Xem tất cả
             </button>
           </div>
         </div>
 
-        {/* Table Section */}
+        {/* Bảng dữ liệu */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50">
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Order ID
+                  Mã đơn hàng
                 </th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-600">
                   Khách hàng
@@ -121,7 +119,6 @@ function TableSection() {
                     key={index} 
                     className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
-                    {/* Order ID */}
                     <td className="p-4">
                         <span className="text-sm font-medium text-blue-600">
                         {order.orderId}
@@ -132,22 +129,16 @@ function TableSection() {
                         {order.receiverName}
                         </span>
                     </td>
-
-                    {/* Amount */}
                     <td className="p-4">
                         <span className="text-sm text-slate-800 dark:text-white">
                         {order.totalAmount}
                         </span>
                     </td>
-
-                    {/* Status */}
                     <td className="p-4">
                         <span className={`text-xs font-medium px-3 py-1 rounded-full ${getStatusColor(order.status)}`}>
                         {order.status}
                         </span>
                     </td>
-
-                    {/* Date & Action */}
                     <td className="p-4">
                         <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-800 dark:text-white">
@@ -166,42 +157,40 @@ function TableSection() {
 
         </div>
       </div>
-      {/* Top Products Section */}
+
+      {/* Sản phẩm bán chạy */}
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden">
         <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
             <div className="flex items-center justify-between">
             <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Top Products
+                Sản phẩm bán chạy
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                Best performing products
+                Các sản phẩm có hiệu suất tốt nhất
                 </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View All
+                Xem tất cả
             </button>
             </div>
         </div>
 
-        {/* Dynamic Data List */}
         <div className="p-6 space-y-4">
             {topProducts.map((product, index) => (
             <div 
                 key={index} 
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
-                {/* Left side: Name and Sales */}
                 <div className="flex-1">
                 <h4 className="text-sm font-semibold text-slate-800 dark:text-white">
                     {product.name}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {product.sales} Sales
+                    {product.sales} lượt bán
                 </p>
                 </div>
 
-                {/* Right side: Revenue and Trend */}
                 <div className="text-right">
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">
                     {product.revenue}

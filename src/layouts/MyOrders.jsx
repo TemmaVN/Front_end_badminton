@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { orderApi } from "../api";
+import { label } from "framer-motion/client";
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -294,6 +295,7 @@ const OrderCard = ({ order, onClick }) => {
 const FILTER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "⏳ Chờ xác nhận", value: "Chờ xác nhận" },
+  { label: "📦 Đang xử lý", value: "Đang xử lý"},
   { label: "🚚 Đang giao", value: "Đang giao hàng" },
   { label: "🎉 Hoàn tất", value: "Hoàn tất" },
   { label: "✖ Đã hủy", value: "Đã hủy" },
@@ -361,7 +363,7 @@ const MyOrders = () => {
       setCancelling(false);
     }
   };
-
+  console.log(orders);
   // ── Filter + search ──
   const filtered = orders.filter((o) => {
     const matchStatus = activeFilter === "all" || o.status === activeFilter;

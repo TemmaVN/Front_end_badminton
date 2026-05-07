@@ -3,10 +3,10 @@ import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const data = [
-  { name: "Electronics", value: 45, color: "#3b82f6" },
-  { name: "Clothing", value: 30, color: "#8b5cf6" },
-  { name: "Books", value: 15, color: "#10b981" },
-  { name: "Other", value: 10, color: "#f59e0b" },
+  { name: "Điện tử", value: 45, color: "#3b82f6" },
+  { name: "Thời trang", value: 30, color: "#8b5cf6" },
+  { name: "Sách", value: 15, color: "#10b981" },
+  { name: "Khác", value: 10, color: "#f59e0b" },
 ];
 
 function SalesChart() {
@@ -14,10 +14,10 @@ function SalesChart() {
     <div className="bg-white dark:bg-slate-900 backdrop-blur-xl rounded-b-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
       <div className="mb-6">
         <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-          Sales by Category
+          Doanh thu theo danh mục
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Production Distribution
+          Phân bổ sản phẩm
         </p>
       </div>
       <div className="h-48">
@@ -35,9 +35,9 @@ function SalesChart() {
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60} // Độ rỗng bên trong (biến Pie thành Donut)
-                outerRadius={80} // Độ lớn vòng ngoài
-                paddingAngle={5} // Khoảng cách giữa các phần
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
                 dataKey="value"
             >
                 {data.map((entry, index) => (

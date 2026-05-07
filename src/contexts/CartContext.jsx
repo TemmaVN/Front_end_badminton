@@ -19,7 +19,6 @@ export const CartProvider = ({ children }) => {
       setCart(res.data.items);
       setTotalItems(res.data.totalQuantity);
     } catch (err) {
-      // 404 = giỏ hàng trống, không phải lỗi thật
       if (err.response?.status !== 404) {
         setError(err.response?.data?.message || "Không thể tải giỏ hàng");
       }
@@ -29,11 +28,6 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Tự load khi mount nếu đã đăng nhập
-//   useEffect(() => {
-//     const token = localStorage.getItem("token");
-//     if (token) fetchCart();
-//   }, [fetchCart]);
 
   const extractItems = (data) => {
     if (Array.isArray(data?.data?.items)) return data.data.items;

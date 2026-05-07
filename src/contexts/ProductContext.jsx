@@ -64,13 +64,12 @@ export const ProductProvider = ({ children }) => {
     /**
      * params: { page, pagesize, keyword, minPrice, maxPrice }
      */
-    const fetchProductsBySlug = useCallback(async (categorySlug, params = {}) => {
+    const fetchProductsBySlug = useCallback(async (params = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await productApi.getProductsBySlug(categorySlug, params);
+            const response = await productApi.search(params);
             const data = response.data;
-
             setProducts(data.items ?? []);
             setPaginationFromResponse(data);
             return data;

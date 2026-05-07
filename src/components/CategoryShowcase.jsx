@@ -1,27 +1,33 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ProductFrame_Minh from "./ProductFrame_Minh";
+import FlashButton from "./FlashButton";
+import { useCategory } from "../contexts/CategoryContext";
 
 const CategoryShowcase = ({ category, products, categoryImage }) => {
+  const navigate = useNavigate();
+  const {pageCatagory, setPageCatagory} = useCategory();
   if (!category || !products || products.length === 0) {
     return null;
+  }
+
+  const handleClickAll = () => {
+    navigate(`/${category.slug}`);
+    setPageCatagory(category.categoryName.toUpperCase());
+    sessionStorage.setItem('pageCatagory', category.categoryName.toUpperCase());
   }
 
   const displayedProducts = products.slice(0, 6);
 
   return (
-    <div className="max-w-[1200px] mx-auto my-12 px-4">
+    <div className="max-w-300 mx-auto my-12 px-4">
       {/* Tiêu đề */}
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">
         <h2 className="text-3xl font-bold text-gray-800">
           {category.categoryName}
         </h2>
-        <Link
-          to={`/${category.slug}`}
-          className="text-orange-500 font-semibold hover:underline"
-        >
-          Xem Tất cả &raquo;
-        </Link>
+        <FlashButton itemName="Xem tất cả" onClick={() => handleClickAll()}>
+        </FlashButton>
       </div>
 
       {/* Sử dụng Flexbox để kiểm soát Banner và Grid Sản phẩm */}
@@ -36,7 +42,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
               src={categoryImage}
               alt={category.categoryName}
               // Sử dụng object-cover và h-full để lấp đầy thẻ chứa
-              className="w-full h-full min-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full min-h-125 object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
         </div>
