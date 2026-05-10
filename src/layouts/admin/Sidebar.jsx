@@ -58,8 +58,8 @@ const menuItems = [
 ];
 
 const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const [fullName, setFullName] = useState(user.fullName);
+  const user = JSON.parse(localStorage.getItem('user')) ?? {};
+  const [fullName, setFullName] = useState(user.fullName ?? '');
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,7 +79,8 @@ const Sidebar = ({ sideBarCollapsed, onToggleSidebar }) => {
   };
 
   useEffect(() => {
-    setFullName(user.fullName);
+    const stored = JSON.parse(localStorage.getItem('user')) ?? {};
+    setFullName(stored.fullName ?? '');
   }, []);
 
   return (

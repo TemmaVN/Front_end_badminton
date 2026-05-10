@@ -93,6 +93,9 @@ export const productApi = {
 
     delete: (id) =>
         api.delete(`/Product/${id}`),
+
+    addDetails: (productId, payload) =>
+        api.put(`/Product/${productId}`, payload),
 };
 
 // Category API

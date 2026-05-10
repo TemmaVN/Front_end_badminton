@@ -149,6 +149,23 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
+    // ─── Thêm detail (biến thể / serial) vào sản phẩm đã có (Admin) ─────────
+    /**
+     * payload: { productDetailRequests: [...] }
+     * return: { message, productId } | null
+     */
+    const addProductDetails = useCallback(async (productId, payload) => {
+        setError(null);
+        try {
+            const response = await productApi.addDetails(productId, payload);
+            return response.data;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+            return null;
+        }
+    }, []);
+
     // ─── Xóa error thủ công (dùng ở UI nếu cần) ──────────────────────────────
     const clearError = useCallback(() => setError(null), []);
     // ─── Lấy chi tiết 1 sản phẩm theo slug ───────────────────────────────────
@@ -183,6 +200,7 @@ export const ProductProvider = ({ children }) => {
         addProduct,
         updateProduct,
         deleteProduct,
+        addProductDetails,
         clearError,
     };
 

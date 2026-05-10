@@ -26,13 +26,13 @@ const ProductList = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const [filters, setFilters] = useState({
-        keyword: '',
-        categoryId: '',
-        brandId: '',
+        key: '',
+        categorySlug: '',
+        brandSlug: '',
         minPrice: '',
         maxPrice: '',
         page: 1,
-        pagesize: 10,
+        pageSize: 10,
     });
 
     const defaultForm = {
@@ -71,7 +71,7 @@ const ProductList = () => {
     };
 
     const resetFilters = () =>
-        setFilters({ keyword: '', categoryId: '', brandId: '', minPrice: '', maxPrice: '', page: 1, pagesize: 10 });
+        setFilters({ key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -247,12 +247,12 @@ const ProductList = () => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-                        <div className="relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                        <div className="relative lg:col-span-2">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                             <input
-                                name="keyword"
-                                value={filters.keyword}
+                                name="key"
+                                value={filters.key}
                                 onChange={handleFilterChange}
                                 placeholder="Tìm tên sản phẩm..."
                                 className="w-full pl-9 pr-4 py-2 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
@@ -260,37 +260,47 @@ const ProductList = () => {
                         </div>
 
                         <select
-                            name="brandId"
-                            value={filters.brandId}
+                            name="brandSlug"
+                            value={filters.brandSlug}
                             onChange={handleFilterChange}
                             className="py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
                         >
                             <option value="">Tất cả thương hiệu</option>
                             {brands.map((b) => (
-                                <option key={b.brandId} value={b.brandId}>{b.brandName}</option>
+                                <option key={b.brandId} value={b.slug}>{b.brandName}</option>
                             ))}
                         </select>
 
                         <select
-                            name="categoryId"
-                            value={filters.categoryId}
+                            name="categorySlug"
+                            value={filters.categorySlug}
                             onChange={handleFilterChange}
                             className="py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
                         >
                             <option value="">Tất cả danh mục</option>
                             {categories.map((cat) => (
-                                <option key={cat.categoryId} value={cat.categoryId}>{cat.categoryName}</option>
+                                <option key={cat.categoryId} value={cat.slug}>{cat.categoryName}</option>
                             ))}
                         </select>
 
-                        <input
-                            name="minPrice"
-                            type="number"
-                            value={filters.minPrice}
-                            onChange={handleFilterChange}
-                            placeholder="Giá từ..."
-                            className="py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
-                        />
+                        <div className="flex gap-2">
+                            <input
+                                name="minPrice"
+                                type="number"
+                                value={filters.minPrice}
+                                onChange={handleFilterChange}
+                                placeholder="Giá từ..."
+                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
+                            />
+                            <input
+                                name="maxPrice"
+                                type="number"
+                                value={filters.maxPrice}
+                                onChange={handleFilterChange}
+                                placeholder="đến..."
+                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
+                            />
+                        </div>
 
                         <button
                             onClick={resetFilters}
