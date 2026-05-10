@@ -24,17 +24,6 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const fetchUser = async () => {
-        try {
-            const response = await userApi.get_info();
-            setUser(response.data);
-            localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-
 
     const changePassword = async ({oldPassword, newPassword}) => {
         try {
@@ -46,24 +35,9 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const validateProfileData = ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => {
-        if (!fullName?.trim()) return 'Họ tên không được để trống';
-        if (!dateOfBirth) return 'Ngày sinh không được để trống';
-        if (!phoneNumber?.trim()) return 'Số điện thoại không được để trống';
-        if (!city) return 'Tỉnh/Thành phố không được để trống';
-        if (!district) return 'Quận/Huyện không được để trống';
-        if (!detailedAddress?.trim()) return 'Địa chỉ chi tiết không được để trống';
-        return null;
-    };
-
-    const UpdateProfile = async ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => {
-        const validationError = validateProfileData({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress });
-        if (validationError) {
-            return { success: false, message: validationError };
-        }
-
+    const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress}) => {
         try {
-            await userApi.UpdateProfile({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress });
+            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});    
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Cập nhật thông tin thất bại';
@@ -72,12 +46,18 @@ export const UserProvider = ({ children }) => {
     };
 
     const getUserInfo = async () => {
+        setLoading(true)
         try {
             const response = await userApi.get_info();
+            setUser(response.data);
+            localStorage.setItem('user', JSON.stringify(response.data));
             return { success: true, user: response.data };
         } catch (error) {
             const message = error.response?.data?.message || 'Get user info failed';
             return { success: false, message };
+        }
+        finally {
+            setLoading(false)
         }
     };
 
@@ -97,7 +77,6 @@ export const UserProvider = ({ children }) => {
         changePassword,
         getUserInfo,
         loading,
-        fetchUser,
     };
 
     return (

@@ -90,7 +90,7 @@ const Product = () => {
       if (!next[k] && next[k] !== 0) delete next[k];
     });
 
-    setSearchParams(next);
+    setSearchParams(next); // ✅ cập nhật URL trình duyệt
   };
 
   // ── Handlers ─────────────────────────────────────────────

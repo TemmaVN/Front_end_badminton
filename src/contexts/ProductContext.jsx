@@ -92,15 +92,13 @@ export const ProductProvider = ({ children }) => {
         setError(null);
         try {
             const response = await productApi.create(data);
-            const created = response.data;
-            console.log(created);
-
-            // Thêm vào đầu danh sách local (optimistic update)
-            setProducts((prev) => [created, ...prev]);
-            return created;
+            return response.data; // trả về { message, productId } cho caller
         } catch (err) {
-            const msg = err.response?.data?.message ?? err.message;
-            setError(msg);
+            const msg =
+                err.response?.data?.message  // message từ backend
+                ?? err.response?.data?.errors // ModelState errors
+                ?? err.message;
+            setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
             return null;
         } finally {
             setLoading(false);

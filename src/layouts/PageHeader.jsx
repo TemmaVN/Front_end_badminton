@@ -79,13 +79,6 @@ const PageHeader = () => {
           <Button size='icon' className='md:hidden' onClick={() => {setShowFullWidthSearch(true)}}>
             <Search/>
           </Button>
-          {isAuthenticated &&
-          <Link to="/orders">
-            <Button size='icon'>
-              <Package/>
-            </Button>
-          </Link>
-          }
 
           <Link 
             to={isAuthenticated ? "/user-info" : "/login"}           >

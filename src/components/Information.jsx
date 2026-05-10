@@ -8,35 +8,39 @@ import { foreignObject } from 'framer-motion/client'
 import { useAuth } from '../contexts/AuthContext'
 
 const Information = () => {
-    const [fullName, setFullName] = useState('');
-    const [birthDate, setBirthDate] = useState("");
-    const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const storedUser = localStorage.getItem('user');
+    const user = JSON.parse(storedUser);
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        return dateString.split('T')[0]; 
+    };
+    const [fullName, setFullName] = useState(user.fullName);
+    const [dateOfBirth, setDateOfBirth] = useState(formatDateForInput(user.dateOfBirth));
+    const [email, setEmail] = useState(user.email);
+    const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
 
-    const [province, setProvince] = useState('');
-    const [ward, setWard] = useState('');
-    const [address, setAddress] = useState('');
+    const [city, setCity] = useState(user.city || '');
+    const [district, setDistrict] = useState(user.district || '');
+    const [detailedAddress, setDetailedAddress] = useState(user.detailedAddress || '');
     const { UpdateProfile } = useUser();
     const {isAdmin} = useAuth();
-    const {  getUserInfo, fetchUser } = useUser();
+    const {  getUserInfo} = useUser();
     const [loading, setLoading] = useState(false);
 
-    const handleSaveInfo = async () => {
-        setLoading(true);
-
-        const result = await UpdateProfile({
-            fullName,
-            dateOfBirth: birthDate,
-            phoneNumber,
-            city: province,       // Đảm bảo province chứa đúng dữ liệu city
-            district: ward,       // Đảm bảo ward chứa đúng dữ liệu district
-            detailedAddress: address,
-        });
-
-        setLoading(false);
-
+    const handleSaveInfo = async (e) => {
+        e.preventDefault();
+        if (!fullName || !email) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+            return;
+        }
+        if ((!city || !district || !detailedAddress) && !isAdmin()) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+            return;
+        }
+        const result = await UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});
         if (result.success) {
-            alert('Cập nhật thành công');
+            alert('Thông tin đã được lưu thành công!');
+            getUserInfo();
         } else {
             alert('Lỗi:', result.message);
         }
@@ -46,46 +50,10 @@ const Information = () => {
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
 
-    const storedUser = localStorage.getItem('user');
-    const user = JSON.parse(storedUser);
-
-    const handleGetUserInfo = async () => {
-        const result = await getUserInfo();
-        console.log(result.user);
-        if (result.success) {
-            setFullName(result.user.fullName);
-            const formattedDate = formatDateForInput(result.user.dateOfBirth);
-            setBirthDate(formattedDate);
-            setEmail(result.user.email);
-            setPhoneNumber(result.user.phoneNumber);
-            setProvince(result.user.city);
-            setWard(result.user.district);
-            setAddress(result.user.detailedAddress);
-            if (user) {
-                user.fullName = fullName;
-                user.dateOfBirth = formattedDate;
-                user.phoneNumber = phoneNumber;
-                user.city = province;
-                user.district = ward;
-                user.detailedAddress = address;
-                localStorage.setItem(JSON.stringify(user), 'user');
-            }
-        }
-    };
-
-    useEffect(() => {
-        handleGetUserInfo();
-    }, []);
-
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return "";
-        return dateString.split('T')[0]; 
-    };
-    if (loading) {
-        return <div>Loading...</div>;
-    }
     return (
-        <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
+        <form 
+        onSubmit={handleSaveInfo}
+        className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
                 <div className='border-b-2 border-gray-300 pb-8'>
                     <h2 className='font-bold text-2xl pb-8'>Thông tin tài khoản</h2>
                     <div className='flex flex-wrap gap-3 justify-around items-center '>
@@ -110,8 +78,8 @@ const Information = () => {
                                     <MyInput 
                                     size="200" 
                                     type="date"
-                                    value={birthDate}
-                                    onChange={(e) => setBirthDate(e.target.value)}
+                                    value={dateOfBirth}
+                                    onChange={(e) => setDateOfBirth(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -139,7 +107,7 @@ const Information = () => {
                         </div>
                     </div>
                 </div>
-                {!isAdmin() &&                 <div className='pt-8 gap-8 flex flex-col'>
+                {!isAdmin() && <div className='pt-8 gap-8 flex flex-col'>
                     <h2 className='font-bold text-2xl'>Thông tin giao hàng</h2>
                     <div className={`flex flex-col grow ${isFlexData? '':'flex-wrap'} gap-3 justify-around items-center`}>
                         <div className={`flex grow ${isFlexData? 'flex-col':''} justify-around items-center gap-5 w-full`}>
@@ -151,8 +119,8 @@ const Information = () => {
                                 <MyInput 
                                 size="800" 
                                 placeHolder="Tỉnh/thành phố"
-                                value={province}
-                                onChange={(e) => setProvince(e.target.value)}
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
                                 />
                             </div>
                             <div className='w-full flex flex-col h-25'>
@@ -163,8 +131,8 @@ const Information = () => {
                                 <MyInput 
                                 size="800" 
                                 placeHolder="Phường/xã"
-                                value={ward}
-                                onChange={(e) => setWard(e.target.value)}
+                                value={district}
+                                onChange={(e) => setDistrict(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -176,8 +144,8 @@ const Information = () => {
                                 <MyInput 
                                 size="800" 
                                 placeHolder="Địa chỉ của bạn"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
+                                value={detailedAddress}
+                                onChange={(e) => setDetailedAddress(e.target.value)}
                                 />
                             </div>
                     </div>
@@ -187,7 +155,6 @@ const Information = () => {
                         <FlashButton 
                         type='submit'
                         itemName="Lưu thông tin"
-                        onClick={handleSaveInfo}
                         />
                     </div>
             </form>

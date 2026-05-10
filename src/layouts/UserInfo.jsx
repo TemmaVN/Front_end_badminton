@@ -4,7 +4,7 @@ import Button from '../components/Button'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import Information from '../components/Information'
 import ChangePass from '../components/ChangePass'
-import Orders from '../components/Orders'
+import MyOrders from './MyOrders'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -47,7 +47,7 @@ const UserInfo = () => {
             </div>
             {page === 'info' && <Information/>}
             {page === 'changePass' && <ChangePass/>}
-            {page === 'orders' && <Orders/>}
+            {page === 'orders' && <MyOrders/>}
         </div>
     </div>
   )
