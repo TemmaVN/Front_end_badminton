@@ -5,111 +5,136 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useProduct } from "../contexts/ProductContext";
 import { useCart } from "../contexts/CartContext";
 
-const testData = {
-  "productId": 1,
-  "productName": "Vợt Cầu Lông Yonex Astrox 100ZZ",
-  "basePrice": 4500000.00,
-  "sellingPrice": 3870000.00,
-  "discountPercent": 14,
-  "mainImageUrl": "https://example.com/images/astrox-100zz-main.jpg",
-  "description": "Yonex Astrox 100ZZ là cây vợt cầu lông cao cấp được thiết kế cho người chơi tấn công. Công nghệ Rotational Generator System tối ưu hóa sức mạnh và tốc độ.",
-  "isAvailable": true,
-  "images": [
-    {
-      "imageUrl": "https://example.com/images/astrox-100zz-1.jpg",
-      "displayOrder": 1
-    },
-    {
-      "imageUrl": "https://example.com/images/astrox-100zz-2.jpg",
-      "displayOrder": 2
-    },
-    {
-      "imageUrl": "https://example.com/images/astrox-100zz-3.jpg",
-      "displayOrder": 3
-    }
-  ],
-  "variants": [
-    {
-      "detailId": 1,
-      "productId": 1,
-      "weightClass": "3U",
-      "gripSize": "G5",
-      "balancePoint": "Head Heavy",
-      "stiffness": "Stiff",
-      "maxTension": 13,
-      "price": 4300000.00,
-      "stockQuantity": 15,
-      "serialNumber": "SP-1-1",
-      "inStock": true
-    },
-    {
-      "detailId": 2,
-      "productId": 1,
-      "weightClass": "4U",
-      "gripSize": "G5",
-      "balancePoint": "Head Heavy",
-      "stiffness": "Stiff",
-      "maxTension": 12,
-      "price": 4300000.00,
-      "stockQuantity": 8,
-      "serialNumber": "SP-1-2",
-      "inStock": true
-    },
-    {
-      "detailId": 3,
-      "productId": 1,
-      "weightClass": "3U",
-      "gripSize": "G4",
-      "balancePoint": "Head Heavy",
-      "stiffness": "Medium",
-      "maxTension": 13,
-      "price": 4100000.00,
-      "stockQuantity": 0,
-      "serialNumber": "SP-1-3",
-      "inStock": false
-    }
-  ]
-}
 
 const ProductDetail = (
 ) => {
-  const {productSlug} = useParams();
-  const [loading, setLoading] = useState(true);
-  const { getCart, addToCart,fetchCart} = useCart();
-  const { getProductDetaildBySlug } = useProduct();
-  const [activeTab, setActiveTab] = useState('description');
-  const [quantity, setQuantity] = useState(1);
-  const [product, setProduct] = useState(null);
-  const navigate = useNavigate();
+  const { productSlug } = useParams();
+const [loading, setLoading] = useState(true);
+const { getCart, addToCart, fetchCart } = useCart();
+const { getProductDetaildBySlug } = useProduct();
+const [activeTab, setActiveTab] = useState('description');
+const [quantity, setQuantity] = useState(1);
+const [product, setProduct] = useState(null);
+const navigate = useNavigate();
 
-  const tabs = [
-    { id: 'description', label: 'Mô tả sản phẩm' },
-    { id: 'specs', label: 'Thông số kỹ thuật' },
-    { id: 'reviews', label: 'Đánh giá 0 ⭐' },
-  ];
-    useEffect(() => {
-      const loadProduct = async () => {
-        fetchCart();
-        const result = await getProductDetaildBySlug(productSlug);
-        console.log(result);
-        if (result) {
-          setProduct(result);
-        }
-      };
-      loadProduct();
-      setLoading(false);
-    }, [productSlug]);
-    const handleAddToCart = async () => {
-      try {
-        const result = await addToCart(product.variants[0].detailId, quantity);
-        if (result) {
-          setQuantity(1);
-          navigate("/cart");
-        }
-      } catch (err) {
-        // lỗi thực hiện thêm vào giỏ
+const tabs = [
+  { id: 'description', label: 'Mô tả sản phẩm' },
+  { id: 'specs', label: 'Thông số kỹ thuật' },
+  { id: 'reviews', label: 'Đánh giá 0 ⭐' },
+];
+
+// Thêm state cho variant
+const [selectedWeight, setSelectedWeight] = useState(null);
+const [selectedGrip, setSelectedGrip] = useState(null);
+
+useEffect(() => {
+  const loadProduct = async () => {
+    setLoading(true); // ✅ Thêm loading khi bắt đầu fetch
+    try {
+      const result = await getProductDetaildBySlug(productSlug);
+      if (result) {
+        setProduct(result);
+        console.log('Product loaded:', result);
       }
-    };
+    } catch (error) {
+      console.error('Failed to load product:', error);
+    } finally {
+      setLoading(false); // ✅ Set loading false sau khi fetch xong
+    }
+  };
+  loadProduct();
+}, [productSlug]);
+
+// ✅ Khởi tạo variant mặc định khi product load xong
+useEffect(() => {
+  if (product?.variants?.length > 0) {
+    // Chỉ set nếu chưa có variant được chọn
+    if (!selectedWeight || !selectedGrip) {
+      setSelectedWeight(product.variants[0].weightClass);
+      setSelectedGrip(product.variants[0].gripSize);
+    }
+  }
+}, [product]);
+
+// Helper functions với kiểm tra null an toàn
+const weightOptions = [...new Set(product?.variants?.map(v => v.weightClass) ?? [])];
+const gripOptions = [...new Set(product?.variants?.map(v => v.gripSize) ?? [])];
+
+const isWeightAvailable = (w) => {
+  if (!product?.variants) return false;
+  return product.variants.some(v => v.weightClass === w && v.gripSize === selectedGrip);
+};
+
+const isGripAvailable = (g) => {
+  if (!product?.variants) return false;
+  return product.variants.some(v => v.gripSize === g && v.weightClass === selectedWeight);
+};
+
+// ✅ selectedVariant với fallback an toàn
+const selectedVariant = product?.variants?.find(
+  v => v.weightClass === selectedWeight && v.gripSize === selectedGrip
+) || product?.variants?.[0]; // Fallback về variant đầu tiên nếu không tìm thấy
+
+console.log('Selected variant:', selectedVariant);
+
+const handleSelectWeight = (w) => {
+  if (!isWeightAvailable(w)) return;
+  setSelectedWeight(w);
+  // Fallback grip nếu combo không tồn tại
+  if (!product.variants.find(v => v.weightClass === w && v.gripSize === selectedGrip)) {
+    const fallback = product.variants.find(v => v.weightClass === w);
+    if (fallback) setSelectedGrip(fallback.gripSize);
+  }
+};
+
+const handleSelectGrip = (g) => {
+  if (!isGripAvailable(g)) return;
+  setSelectedGrip(g);
+};
+
+// ✅ Xử lý add to cart an toàn
+const handleAddToCart = async () => {
+  // Kiểm tra variant tồn tại
+  if (!selectedVariant?.detailId) {
+    alert('Vui lòng chọn phân loại sản phẩm!');
+    return;
+  }
+  
+  try {
+    const result = await addToCart(selectedVariant.detailId, quantity);
+    if (result) {
+      fetchCart();
+      setQuantity(1);
+      alert('Đã thêm vào giỏ hàng!');
+    }
+  } catch (err) {
+    console.error('Failed to add to cart:', err);
+    alert('Không thể thêm vào giỏ hàng. Vui lòng thử lại!');
+  }
+};
+
+// ✅ Xử lý order an toàn
+const handleOrder = () => {
+  // Kiểm tra variant tồn tại
+  if (!selectedVariant?.detailId) {
+    alert('Vui lòng chọn phân loại sản phẩm!');
+    return;
+  }
+
+  navigate("/cart", {
+    state: {
+      productItem: {
+        detailId: selectedVariant.detailId,
+        imageUrl: product.image,
+        productName: product.productName,
+        variantInfo: `${selectedVariant.weightClass} / ${selectedVariant.gripSize}`,
+        quantity: quantity,
+        unitPrice: product.sellingPrice,
+        subTotal: product.sellingPrice * quantity,
+      }
+    }
+  });
+};
   if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
   if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
   return (
@@ -122,10 +147,10 @@ const ProductDetail = (
           {/* Left: Images */}
           <div>
             <div className="border border-gray-100 rounded-xl p-4 flex justify-center mb-4">
-              <img src={product.image} alt="Yonex BG80 Power" className="max-h-[500px] object-contain" />
+              <img src={product.image} alt="Yonex BG80 Power" className="max-h-125 object-contain" />
             </div>
             <div className="flex gap-3 overflow-x-auto">
-               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 flex-shrink-0 cursor-pointer hover:border-orange-500" />
+               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
             </div>
           </div>
 
@@ -139,7 +164,7 @@ const ProductDetail = (
             <div className="flex gap-6 text-sm mb-6 pb-6 border-b border-gray-100">
               <p>Xuất xứ: <span className="font-bold text-gray-900">Nhật Bản</span></p>
               <p>Tình trạng: {
-                !product.variants[0].inStock ? <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100">Hết hàng</span> : <span className="bg-green-50 text-green-500 px-3 py-1 rounded-full text-xs border border-green-100">Còn hàng</span>
+                !selectedVariant.inStock ? <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100">Hết hàng</span> : <span className="bg-green-50 text-green-500 px-3 py-1 rounded-full text-xs border border-green-100">Còn hàng</span>
                   }</p>
             </div>
 
@@ -152,26 +177,95 @@ const ProductDetail = (
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-orange-800 mb-8">
               Liên hệ hotline <span className="font-bold">0979.170.274</span> để được tư vấn và đặt hàng nhanh nhất!
             </div>
+            {/* Variant Selector */}
+        <div className="mb-6 space-y-5">
+          {/* Weight Class */}
+          <div>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Trọng lượng: <span className="text-gray-900">{selectedWeight}</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {weightOptions.map(w => {
+                const avail = isWeightAvailable(w);
+                return (
+                  <button
+                    key={w}
+                    onClick={() => handleSelectWeight(w)}
+                    disabled={!avail}
+                    className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all
+                      ${selectedWeight === w
+                        ? 'border-orange-500 bg-orange-50 text-orange-500'
+                        : avail
+                          ? 'border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-400'
+                          : 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
+                      }`}
+                  >
+                    {w}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+      {/* Grip Size */}
+      <div>
+        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          Cỡ cán: <span className="text-gray-900">{selectedGrip}</span>
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {gripOptions.map(g => {
+            const avail = isGripAvailable(g);
+            return (
+              <button
+                key={g}
+                onClick={() => handleSelectGrip(g)}
+                disabled={!avail}
+                className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all
+                  ${selectedGrip === g
+                    ? 'border-orange-500 bg-orange-50 text-orange-500'
+                    : avail
+                      ? 'border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-400'
+                      : 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
+                  }`}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Thông tin variant được chọn */}
+      {selectedVariant && (
+        <div className="flex flex-wrap gap-4 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500">
+          <span>Cân bằng: <strong className="text-gray-800">{selectedVariant.balancePoint}</strong></span>
+          <span>Độ cứng: <strong className="text-gray-800">{selectedVariant.stiffness}</strong></span>
+          <span>Căng max: <strong className="text-gray-800">{selectedVariant.maxTension} lbs</strong></span>
+          <span>Tồn kho: <strong className="text-gray-800">{selectedVariant.stockQuantity} cái</strong></span>
+        </div>
+      )}
+    </div>
 
             <div className="flex items-center gap-6 mb-8">
               <span className="font-medium">Số lượng:</span>
               <div className="flex items-center border rounded-full px-4 py-2 w-32 justify-between">
                 <button onClick={() => setQuantity(Math.max(1, quantity-1))}>-</button>
                 <span className="font-bold">{quantity < 10 ? `0${quantity}` : quantity}</span>
-                <button onClick={() => setQuantity(quantity+1)}>+</button>
+                <button onClick={() => setQuantity(Math.min(quantity+1, selectedVariant.stockQuantity))}>+</button>
               </div>
             </div>
-            {product.variants[0].inStock? 
+            {selectedVariant.inStock?
                 <div className='flex gap-4'>
                 <Button 
                 onClick={() => {
                   handleAddToCart();
-                  navigate("/cart")
                 }}
                 className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`}>
                   Thêm vào giỏ
                 </Button>
-                <Button className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`} >
+                <Button 
+                onClick={() => handleOrder()}
+                className={`w-50 rounded-2xl text-white bg-orange-default hover:bg-orange-dark`} >
                   Mua ngay
                 </Button>
               </div>

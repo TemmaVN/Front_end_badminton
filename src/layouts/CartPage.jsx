@@ -8,30 +8,46 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useUser } from '../contexts/UserContext';
 import {useCart} from '../contexts/CartContext'
 import { orderApi } from '../api';
+import { useNavigate, useLocation } from 'react-router-dom';
 const CartPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Lấy productItem từ route state, null = order từ cart
+  const productItem = location.state?.productItem ?? null;
+  const isSingleItem = productItem !== null;
   // 1. STATE QUẢN LÝ BƯỚC & THANH TOÁN
   const [step, setStep] = useState(1); 
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const {getUserInfo} = useUser()
   const [fullName, setFullName] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
 
-  const {cart} = useCart();
+  const {cart, deleteCartItem, fetchCart} = useCart();
+  const displayItems = isSingleItem
+    ? [{
+        cartItemId: productItem.detailId,
+        imageUrl: productItem.imageUrl,
+        productName: productItem.productName,
+        variantInfo: productItem.variantInfo,
+        quantity: productItem.quantity,
+        unitPrice: productItem.unitPrice,
+        subTotal: productItem.unitPrice * productItem.quantity,
+        detailId: productItem.detailId,
+      }]
+    : cart;
 
-  const cartItems = cart;
-  const subtotal = cartItems.reduce((acc, item) => acc + item.subTotal, 0);
-  const totalQuantity = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
-  // 2. STATE QUẢN LÝ FORM THÔNG TIN (Giải quyết vấn đề thiếu thông tin)
+  const subtotal = displayItems.reduce((acc, item) => acc + item.subTotal, 0);
+  const totalQuantity = displayItems.reduce((acc, item) => acc + item.quantity, 0);
+  const user = JSON.parse(localStorage.getItem('user'));
+  console.log(user)
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    city: 'TP. Hồ Chí Minh',
-    district: 'Quận 5',
-    ward: 'Phường 2',
-    address: '123 Nguyễn Trãi',
+    fullName: user.fullName || '',
+    phoneNumber: user.phoneNumber || '',
+    city: user.city || '',
+    district: user.district || '',
+    address: user.detailedAddress || '',
     note: ''
   });
 
@@ -40,58 +56,54 @@ const CartPage = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-    const handleGetUserInfo = async () => {
-          const result = await getUserInfo();
-          if (result.success) {
-              setFormData(prev => ({ ...prev, fullName: result.user.fullName, phoneNumber: result.user.phoneNumber }));
-          }
-      };
-  
-      useEffect(() => {
-          handleGetUserInfo();
-      }, []);
-
-  // Hàm xử lý nút bấm dưới cùng
-  const handleNextAction = async () => {
-  if (step === 1) {
-    // Validate form trước khi sang bước 2
-    if (!formData.fullName || !formData.phoneNumber || !formData.address) {
-      alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
-      return;
-    }
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else {
-    // Gọi API tạo đơn hàng
-    setIsLoading(true);
-    setOrderError('');
-    try {
-      const orderPayload = {
-        receiverName: formData.fullName,
-        phoneNumber: formData.phoneNumber,
-        shippingAddress: `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`,
-        note: formData.note,
-        paymentMethod: paymentMethod,
-        orderDetails: cartItems.map(item => ({
-          detailId: item.detailId,       // tuỳ theo DTO backend yêu cầu
-          quantity: item.quantity,
-        }))
-      };
-
-      const response = await orderApi.create(orderPayload);
-      if (response.status === 200 || response.status === 201) {
-        alert('Đặt hàng thành công! 🎉');
-        // Có thể navigate sang trang lịch sử đơn hàng hoặc trang chủ
+    const handleNextAction = async () => {
+    if (step === 1) {
+      if (!formData.fullName || !formData.phoneNumber || !formData.address) {
+        alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+        return;
       }
-    } catch (error) {
-      const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
-      setOrderError(msg);
-    } finally {
-      setIsLoading(false);
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setIsLoading(true);
+      setOrderError('');
+      try {
+        const orderPayload = {
+          receiverName: formData.fullName,
+          phoneNumber: formData.phoneNumber,
+          shippingAddress: `${formData.address}, ${formData.district}, ${formData.city}`,
+          note: formData.note,
+          paymentMethod: paymentMethod,
+          orderDetails: displayItems.map(item => ({
+            detailId: item.detailId,
+            quantity: item.quantity,
+          })),
+        };
+
+        const response = await orderApi.create(orderPayload);
+
+        if (response.status === 200 || response.status === 201) {
+          // Xóa cart riêng, KHÔNG để lỗi ở đây block UX
+          if (!isSingleItem) {
+            try {
+              await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
+              await fetchCart();
+            } catch (cartError) {
+              fetchCart().catch(() => {});
+            }
+          }
+          
+          alert('Đặt hàng thành công! 🎉');
+          navigate('/');
+        }
+      } catch (error) {
+        const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
+        setOrderError(msg);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-[#fcfcfc] py-10 px-4 text-gray-900">
@@ -122,7 +134,7 @@ const CartPage = () => {
             <span className={`text-sm font-semibold ${step >= 1 ? 'text-orange-default' : 'text-gray-400'}`}>Thông tin</span>
           </div>
 
-          <div className={`absolute top-5 left-0 right-0 h-[2px] -z-10 transition-colors duration-300 ${step > 1 ? 'bg-orange-default' : 'bg-gray-100'}`}></div>
+          <div className={`absolute top-5 left-0 right-0 h-0.5 -z-10 transition-colors duration-300 ${step > 1 ? 'bg-orange-default' : 'bg-gray-100'}`}></div>
 
           <div className="flex items-center gap-3 z-10 bg-[#fcfcfc] pl-4 ml-auto">
             <span className={`text-sm font-semibold ${step === 2 ? 'text-orange-default' : 'text-gray-400'}`}>Xác nhận</span>
@@ -150,15 +162,14 @@ const CartPage = () => {
 
                 <div className="space-y-6">
                   <InputField label="Họ và tên" name="fullName" value={formData.fullName} onChange={handleInputChange} icon={UserIcon} placeholder="VD: Nguyễn Văn An" required />
-                  <InputField label="Số điện thoại" name="phone" value={formData.phoneNumber} onChange={handleInputChange} icon={PhoneIcon} placeholder="VD: 0901234567" required />
+                  <InputField label="Số điện thoại" name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} icon={PhoneIcon} placeholder="VD: 0901234567" required />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {/* Có thể thay thành thẻ <select> thật nếu bạn có danh sách API */}
                     <InputField label="Tỉnh / Thành phố" name="city" value={formData.city} onChange={handleInputChange} placeholder="VD: TP. Hồ Chí Minh" required />
-                    <InputField label="Quận / Huyện" name="district" value={formData.district} onChange={handleInputChange} placeholder="VD: Quận 5" required />
+                    <InputField label="Phường / Xã" name="district" value={formData.district} onChange={handleInputChange} icon={MapIcon} placeholder="VD: Phường 2" required />
                   </div>
 
-                  <InputField label="Phường / Xã" name="ward" value={formData.ward} onChange={handleInputChange} icon={MapIcon} placeholder="VD: Phường 2" required />
                   <InputField label="Số nhà, tên đường" name="address" value={formData.address} onChange={handleInputChange} icon={HomeIcon} placeholder="VD: 123 Nguyễn Trãi" required />
 
                   <div className="space-y-1.5">
@@ -194,7 +205,7 @@ const CartPage = () => {
                     <p className="text-gray-600 flex items-center gap-2"><PhoneIcon className="w-4 h-4" /> {formData.phoneNumber }</p>
                     <p className="text-gray-600 flex items-start gap-2 mt-2">
                       <MapPinIcon className="w-4 h-4 shrink-0 mt-0.5" /> 
-                      <span>{formData.address}, {formData.ward}, {formData.district}, {formData.city}</span>
+                      <span>{formData.address}, {formData.district}, {formData.city}</span>
                     </p>
                     {formData.note && <p className="text-gray-500 italic mt-2">- Ghi chú: {formData.note}</p>}
                   </div>
@@ -234,8 +245,8 @@ const CartPage = () => {
              </div>
 
              {/* Danh sách sản phẩm - Giải quyết vấn đề bị rớt dòng */}
-             <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-               {cartItems.map(item => (
+             <div className="space-y-4 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
+               {displayItems.map(item => (
                 <div key={item.cartItemId} className="flex flex-row items-center gap-4 py-3 border-b border-gray-50 last:border-0">
                   <div className="relative shrink-0">
                     <img 

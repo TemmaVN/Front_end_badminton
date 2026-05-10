@@ -3,7 +3,7 @@ import MainHeader from "./layouts/MainHeader";
 import { useMediaQuery } from "./mystate/useMediaQuery";
 import Login from "./layouts/Login";
 import Register from "./layouts/Register";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate,useNavigate, useLocation} from "react-router-dom";
 import Advertisement from "./components/Advertisement";
 import Contract from "./layouts/Contract";
 import Sales from "./layouts/Sales";
@@ -30,26 +30,23 @@ import { CartProvider } from "./contexts/CartContext";
 import CartPage from "./layouts/CartPage";
 import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
+import MyOrders from "./layouts/MyOrders";
+import AdminProductDetail from "./components/admin/AdminProductDetail";
+
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  if (loading) {
-    return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "100vh" }}
-      >
-        <div className="spinner-border text-primary" role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
-      </div>
-    );
-  }
   return children;
 };
 
 function AppRoutes() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const adminRedirectPaths = ['/', '/login', '/register'];
+  
+  if (isAdmin() && adminRedirectPaths.includes(location.pathname)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
   return (
     <Routes>
       {/* Public Routes */}
@@ -111,15 +108,15 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+      {/* User Routes */}
       <Route
         path="/cart"
         element={
-          <PublicRoute>
+          <ProtectedRoute>
               <CartPage/>
-          </PublicRoute>
+          </ProtectedRoute>
         }
       />
-      {/* User Routes */}
       <Route
         path="user-info"
         element={
@@ -139,15 +136,20 @@ function AppRoutes() {
       >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        
+
         <Route path="catalog" element={<Catalog />} />
-        <Route path="product" element={<ProductList />} />
+
+        {/* ✅ Nhóm bằng pathless route */}
+        <Route path="product">
+          <Route index element={<ProductList />} />
+          <Route path=":productSlug" element={<AdminProductDetail />} />
+        </Route>
+
         <Route path="categories" element={<Categories />} />
         <Route path="brands" element={<Brand />} />
-        
         <Route path="sales-overview" element={<SalesOverview />} />
         <Route path="orders" element={<OrderList />} />
-        <Route path="users-list" element={<UserList/>}/>
+        <Route path="users-list" element={<UserList />} />
         <Route path="payment" element={<Payment />} />
         <Route path="admin-info" element={<UserInfo />} />
       </Route>
@@ -167,32 +169,25 @@ function AppRoutes() {
 }
 
 function App() {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const isHidePageHeader = !isAdmin();
   const isHideMainHeader = useMediaQuery("(min-width: 1250px)") && !isAdmin();
-  const linkAdvertisement = [
-    "https://static.fbshop.vn/wp-content/uploads/2025/12/mua-do.png",
-    "https://static.fbshop.vn/wp-content/uploads/2025/12/he-thong-cau-long.png",
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-4-min.webp",
-    "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-6-min.webp",
-    "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
-    "https://static.fbshop.vn/wp-content/uploads/2026/01/anh-banner-website-4000x1425-1-1920x684.jpg",
-  ];
+
   return (
     <BrowserRouter>
       <UserProvider>
         <CategoryProvider>
           <CartProvider>
-          <div className="bg-white h-auto w-full">
-          {!isAdmin() && <PageHeader></PageHeader>}
-          {isHideMainHeader && <MainHeader></MainHeader>}
-            <ProductProvider>
-              <AppRoutes />
-            </ProductProvider>
-          {/* Nhúng Footer vào cuối ứng dụng */}
-          <Footer />
-        </div>
-        </CartProvider>
-      </CategoryProvider>
+            <div className="bg-white h-auto w-full">
+              {isHidePageHeader && <PageHeader />}
+              {isHideMainHeader && <MainHeader />}
+              <ProductProvider>
+                <AppRoutes />
+              </ProductProvider>
+              <Footer />
+            </div>
+          </CartProvider>
+        </CategoryProvider>
       </UserProvider>
     </BrowserRouter>
   );

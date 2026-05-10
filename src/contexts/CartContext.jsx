@@ -12,11 +12,11 @@ export const CartProvider = ({ children }) => {
   const [totalItems, setTotalItems] = useState(0);
   const fetchCart = useCallback(async () => {
     try {
+      if (!localStorage.getItem("token")) return;
       setLoading(true);
       setError(null);
       const res = await cartApi.getMyCart();
       setCart(res.data.items);
-      console.log(res.data);
       setTotalItems(res.data.totalQuantity);
     } catch (err) {
       // 404 = giỏ hàng trống, không phải lỗi thật

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MyInput from '../components/MyInput'
 import Button from '../components/Button'
 import FlashButton from '../components/FlashButton'
@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { jwtDecode } from 'jwt-decode';
+import { useUser } from '../contexts/UserContext';
 
 const Login = () => {
   const isShowPic = useMediaQuery("(min-width: 700px)");
@@ -15,13 +16,23 @@ const Login = () => {
       const [error, setError] = useState('');
       const [loading, setLoading] = useState(false);
       const navigate = useNavigate();
-      const { login } = useAuth();
+      const { login, isAdmin, isAuthenticated } = useAuth();
+      const {getUserInfo} = useUser();
+
+      useEffect(() => {
+        if (isAuthenticated) {
+          if (isAdmin()) {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/');
+          }
+        }
+      }, [isAuthenticated]);
   
       const handleSubmit = async (e) => {
           e.preventDefault();
           setError('');
           setLoading(true);
-  
           const result = await login(email, password);
           const userRoles = result.user?.role;
           const isUserAdmin = Array.isArray(userRoles) 
@@ -29,13 +40,7 @@ const Login = () => {
             : userRoles?.toLowerCase() === 'admin';
           if (result.success) {
               alert("Đăng nhập thành công!");
-              const user = result.user;
-              if (isUserAdmin) {
-                  navigate('/admin');
-              }
-              else {
-                  navigate('/');
-              }
+              getUserInfo();
           } else {
               setError(result.message);
               alert(result.message);

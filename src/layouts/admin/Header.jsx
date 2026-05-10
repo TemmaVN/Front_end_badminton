@@ -8,25 +8,11 @@ import {useUser} from "../../contexts/UserContext"
 const Header = ({sideBarCollapsed, onToggleSidebar}) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef(null);
-    const {isAuthenticated, logout} = useAuth();
+    const {isAuthenticated, logout, loading} = useAuth();
     const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
     const navigate = useNavigate();
-    const {getUserInfo} = useUser();
-    const [user, setUser] = useState(null);
-    const [fullName, setFullName] = useState('');
-
-    const handleGetUserInfo = async () => {
-        const result = await getUserInfo();
-        if (result.success) {
-            setFullName(result.user.fullName);
-        }
-    };
-
-    useEffect(() => {
-        handleGetUserInfo();
-    }, []);
-  // Đóng dropdown khi click ra ngoài
+    const user = JSON.parse(localStorage.getItem('user'));
+    const [fullName, setFullName] = useState(user.fullName);
     useEffect(() => {
         const handleClickOutside = (event) => {
           if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,13 +23,9 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-
-  
     const handleLogout = async (e) => {
         e.preventDefault();
-        setError('')
-        setLoading(true);
-        
+        setError('')        
         const result = await logout();
         
         if (result.success) {

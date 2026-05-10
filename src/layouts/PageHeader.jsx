@@ -27,9 +27,6 @@ const PageHeader = () => {
   const navigate = useNavigate();
 
   const {cart, totalItems, addToCart, fetchCart,updateCartItem, setCart ,deleteCartItem, clearCartState} = useCart()
-  useEffect (() => {
-    fetchCart();
-  },[])
   const handleLogout = async (e) => {
     e.preventDefault();
     setError('')
@@ -81,9 +78,6 @@ const PageHeader = () => {
           <Button size='icon' className='md:hidden' onClick={() => {setShowFullWidthSearch(true)}}>
             <Search/>
           </Button>
-          <Button size='icon'>
-            <Heart/>
-          </Button>
 
           <Link 
             to={isAuthenticated ? "/user-info" : "/login"}           >
@@ -91,6 +85,7 @@ const PageHeader = () => {
               {isAuthenticated? <img src="https://static.fbshop.vn/template/assets/images/im-des.png" className='rounded-full'/>:<User2/>}
             </Button>
           </Link>
+          {isAuthenticated &&
           <Button 
             size='icon'
             onClick={() => setShowCartDrawer(true)}
@@ -102,6 +97,7 @@ const PageHeader = () => {
                 </span>
               )}
           </Button>
+          }
           {isAuthenticated && <Button size='icon'>
             <Link 
               to="/login"

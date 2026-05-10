@@ -8,43 +8,19 @@ import { useUser } from '../../contexts/UserContext';
 import { a } from 'framer-motion/client';
 
 const AdminInfo = () => {
+    const userLoad = localStorage.getItem('user');
+    const user = JSON.parse(userLoad);
     const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'edit', 'password'
-    const [adminData, setAdminData] = useState(null);
+    const [adminData, setAdminData] = useState(user);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    // State cho Form Edit & Password
-    const [editForm, setEditForm] = useState({ fullName: '', phoneNumber: '', dateOfBirth: '' });
+    const [editForm, setEditForm] = useState({ fullName: user.fullName, phoneNumber: user.phoneNumber, dateOfBirth: user.dateOfBirth });
     const [pwdForm, setPwdForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [showPwd, setShowPwd] = useState({ old: false, new: false, confirm: false });
 
-    //
-    const {user, changePassword, UpdateProfile, getUserInfo} = useUser();
-
-    useEffect(() => {
-        fetchAdminInfo();
-    }, []);
-
-    const fetchAdminInfo = async () => {
-        try {
-            setLoading(true);
-            const result = await getUserInfo();
-            if (result.success) {
-                setAdminData(result.user);
-                setEditForm({
-                    fullName: result.user.fullName || '',
-                    phoneNumber: result.user.phoneNumber || '',
-                    dateOfBirth: result.user.dateOfBirth ? result.user.dateOfBirth.split('T')[0] : ''
-                });
-            }
-        } catch (err) {
-            alert(err);
-            setMessage({ type: 'error', text: 'Không thể tải thông tin Admin.' });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { changePassword, UpdateProfile} = useUser();
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
@@ -102,7 +78,7 @@ const AdminInfo = () => {
         <div className="max-w-5xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                <div className="bg-gradient-to-r from-orange-500 to-red-500 h-32 relative">
+                <div className="bg-linear-to-r from-orange-500 to-red-500 h-32 relative">
                     <div className="absolute -bottom-12 left-8">
                         <div className="w-24 h-24 bg-white rounded-2xl shadow-md flex items-center justify-center border-4 border-white">
                             <User size={48} className="text-orange-500" />

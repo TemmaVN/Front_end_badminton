@@ -187,7 +187,7 @@ const OrderList = () => {
                     </td>
                     <td className="p-4">
                       <p
-                        className="font-medium text-slate-700 truncate max-w-[200px]"
+                        className="font-medium text-slate-700 truncate max-w-50"
                         title={firstProduct}
                       >
                         {firstProduct}

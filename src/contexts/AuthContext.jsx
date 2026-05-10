@@ -13,43 +13,38 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(() => {
-        const storedUser = localStorage.getItem('user');
-        return storedUser ? JSON.parse(storedUser) : null;
+    const [loading, setLoading] = useState(false);
+    // ✅ Dùng state thay vì đọc localStorage trực tiếp
+    const [userRole, setUserRole] = useState(() => {
+        const raw = localStorage.getItem('userRole');
+        if (!raw) return null;
+        try { return JSON.parse(raw); } 
+        catch { return null; }
     });
-    
-    const [loading, setLoading] = useState(true);
 
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setUser(null);
-        }
-        setLoading(false);
-    }, []);
     const login = async (email, password) => {
+        setLoading(true);
         try {
             const response = await authApi.login(email, password);
-            const userData = response.data;
-            const token = userData.token;
+            const token = response.data?.token;
             if (token) {
                 const decodedUser = jwtDecode(token);
                 localStorage.setItem('token', token);
-                localStorage.setItem('user', JSON.stringify(decodedUser));
-                setUser(decodedUser);
+                localStorage.setItem('userRole', JSON.stringify(decodedUser));
+                setUserRole(decodedUser); // ✅ cập nhật state → trigger re-render
                 return { success: true, user: decodedUser };
             }
-            else {
-                return { success: false, message: 'Login failed' };
-            }
+            return { success: false, message: 'Login failed' };
         } catch (error) {
-            const message = error.response?.data?.message || 'Login failed';
-            return { success: false, message };
+            return { success: false, message: error.response?.data?.message || 'Login failed' };
+        }
+        finally {
+            setLoading(false)
         }
     };
 
     const register = async (userData) => {
+        setLoading(true);
         try {
             const response = await authApi.register({ email: userData.email, password: userData.password});
             return { success: true };
@@ -57,43 +52,43 @@ export const AuthProvider = ({ children }) => {
             const message = error.response?.data?.message || 'Registration failed';
             return { success: false, message };
         }
+        finally {
+            setLoading(false)
+        }
     }
 
     const logout = () => {
+        setLoading(true);
         try {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
-            setUser(null);
-            return {success: true}
-        } catch(error) {
-            const message = error.response?.data.message || "Logout failed";
-            return { success: false, message};
+            localStorage.removeItem('userRole');
+            setUserRole(null); // ✅ cập nhật state → trigger re-render
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: 'Logout failed' };
+        }
+        finally {
+            setLoading(false)
         }
     };
 
     const isAdmin = () => {
-        if (!user) return false;
-
-        const roleData = user.role || 
-                        user.roles || 
-                        user["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        if (!userRole) return false; // ✅ đọc từ state thay vì localStorage
+        const roleData = userRole.role || userRole.roles;
         if (!roleData) return false;
-
         if (Array.isArray(roleData)) {
             return roleData.map(r => r.toLowerCase()).includes('admin');
         }
-
         return roleData.toLowerCase() === 'admin';
     };
 
-
     const value = {
-        user,
         login,
         register,
         logout,
         isAdmin,
-        isAuthenticated: !!user,
+        isAuthenticated: !!userRole, // ✅ reactive theo state
         loading,
     };
 
@@ -103,5 +98,3 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
-export default AuthContext;

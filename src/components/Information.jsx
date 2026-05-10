@@ -5,30 +5,42 @@ import FlashButton from '../components/FlashButton'
 import { UserCircleIcon } from 'lucide-react'
 import { useUser } from '../contexts/UserContext'
 import { foreignObject } from 'framer-motion/client'
+import { useAuth } from '../contexts/AuthContext'
 
 const Information = () => {
-    const [fullName, setFullName] = useState('');
-    const [birthDate, setBirthDate] = useState("");
-    const [email, setEmail] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
+    const storedUser = localStorage.getItem('user');
+    const user = JSON.parse(storedUser);
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return "";
+        return dateString.split('T')[0]; 
+    };
+    const [fullName, setFullName] = useState(user.fullName);
+    const [dateOfBirth, setDateOfBirth] = useState(formatDateForInput(user.dateOfBirth));
+    const [email, setEmail] = useState(user.email);
+    const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
 
-    const [province, setProvince] = useState('');
-    const [district, setDistrict] = useState('');
-    const [ward, setWard] = useState('');
-    const [address, setAddress] = useState('');
+    const [city, setCity] = useState(user.city || '');
+    const [district, setDistrict] = useState(user.district || '');
+    const [detailedAddress, setDetailedAddress] = useState(user.detailedAddress || '');
     const { UpdateProfile } = useUser();
+    const {isAdmin} = useAuth();
+    const {  getUserInfo} = useUser();
+    const [loading, setLoading] = useState(false);
 
-    const {  getUserInfo } = useUser();
-
-    const handleSaveInfo = async () => {
-        // Validate input fields
+    const handleSaveInfo = async (e) => {
+        e.preventDefault();
         if (!fullName || !email) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
             return;
         }
-        const result = await UpdateProfile({fullName, birthDate, phoneNumber});
+        if ((!city || !district || !detailedAddress) && !isAdmin()) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+            return;
+        }
+        const result = await UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});
         if (result.success) {
             alert('Thông tin đã được lưu thành công!');
+            getUserInfo();
         } else {
             alert(result.message);
         }
@@ -39,37 +51,10 @@ const Information = () => {
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
 
-    const storedUser = localStorage.getItem('user');
-    const user = JSON.parse(storedUser);
-
-    const handleGetUserInfo = async () => {
-        const result = await getUserInfo();
-        if (result.success) {
-            setFullName(result.user.fullName);
-            const formattedDate = formatDateForInput(result.user.dateOfBirth);
-            setBirthDate(formattedDate);
-            setEmail(result.user.email);
-            setPhoneNumber(result.user.phoneNumber);
-            if (user) {
-                user.fullName = fullName;
-                user.dateOfBirth = formattedDate;
-                user.phoneNumber = phoneNumber;
-                localStorage.setItem(JSON.stringify(user), 'user');
-            }
-        }
-    };
-
-    useEffect(() => {
-        handleGetUserInfo();
-    }, []);
-
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return "";
-        return dateString.split('T')[0]; 
-    };
-
     return (
-        <form className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
+        <form 
+        onSubmit={handleSaveInfo}
+        className={`w-full h-full p-8 flex flex-col border-gray-300 ${isMini? 'border-y-2':'border-l-2'}`}>
                 <div className='border-b-2 border-gray-300 pb-8'>
                     <h2 className='font-bold text-2xl pb-8'>Thông tin tài khoản</h2>
                     <div className='flex flex-wrap gap-3 justify-around items-center '>
@@ -94,8 +79,8 @@ const Information = () => {
                                     <MyInput 
                                     size="200" 
                                     type="date"
-                                    value={birthDate}
-                                    onChange={(e) => setBirthDate(e.target.value)}
+                                    value={dateOfBirth}
+                                    onChange={(e) => setDateOfBirth(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -123,7 +108,7 @@ const Information = () => {
                         </div>
                     </div>
                 </div>
-                <div className='pt-8 gap-8 flex flex-col'>
+                {!isAdmin() && <div className='pt-8 gap-8 flex flex-col'>
                     <h2 className='font-bold text-2xl'>Thông tin giao hàng</h2>
                     <div className={`flex flex-col grow ${isFlexData? '':'flex-wrap'} gap-3 justify-around items-center`}>
                         <div className={`flex grow ${isFlexData? 'flex-col':''} justify-around items-center gap-5 w-full`}>
@@ -132,21 +117,24 @@ const Information = () => {
                                     <label htmlFor="">Tỉnh/thành phố </label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Tỉnh/thành phố"/>
-                            </div>
-                            <div className='w-full flex flex-col h-25'>
-                                <div className='flex pb-2 gap-2'>
-                                    <label htmlFor="">Quận/huyện </label>
-                                    <span className='text-orange-default'></span>  
-                                </div>
-                                <MyInput size="800" placeHolder="Quận/huyện"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Tỉnh/thành phố"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                />
                             </div>
                             <div className='w-full flex flex-col h-25'>
                                 <div className='flex pb-2 gap-2'>
                                     <label htmlFor="">Phường/xã</label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Phường/xã"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Phường/xã"
+                                value={district}
+                                onChange={(e) => setDistrict(e.target.value)}
+                                />
                             </div>
                         </div>
                         <div className='w-full flex flex-col h-25'>
@@ -154,17 +142,22 @@ const Information = () => {
                                     <label htmlFor="">Địa chỉ</label>
                                     <span className='text-orange-default'></span>  
                                 </div>
-                                <MyInput size="800" placeHolder="Địa chỉ của bạn"/>
+                                <MyInput 
+                                size="800" 
+                                placeHolder="Địa chỉ của bạn"
+                                value={detailedAddress}
+                                onChange={(e) => setDetailedAddress(e.target.value)}
+                                />
                             </div>
                     </div>
-                    <div className='flex w-full justify-center'>
+                    
+                </div>}
+                <div className='flex w-full justify-center mt-4'>
                         <FlashButton 
                         type='submit'
                         itemName="Lưu thông tin"
-                        onClick={handleSaveInfo}
                         />
                     </div>
-                </div>
             </form>
   )
 }

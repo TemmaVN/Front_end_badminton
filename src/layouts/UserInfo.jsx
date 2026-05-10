@@ -4,7 +4,7 @@ import Button from '../components/Button'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import Information from '../components/Information'
 import ChangePass from '../components/ChangePass'
-import Orders from '../components/Orders'
+import MyOrders from './MyOrders'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -13,7 +13,7 @@ const UserInfo = () => {
     const isMini = useMediaQuery('(max-width: 768px)');
     const isFlexData = useMediaQuery('(max-width: 1030px)');
     const [page, setPage] = useState('info');
-    const { logout } = useAuth();
+    const { logout, isAdmin } = useAuth();
     return (
     <div className='text-black flex justify-center '>
         <div className={`w-300 h-auto my-30 p-15 flex ${isMini? 'flex-col':''} gap-8 shadow-2xl`}>
@@ -37,15 +37,17 @@ const UserInfo = () => {
                     onClick={() => setPage('changePass')} 
                     className={`flex gap-2 justify-center hover:bg-orange-light ${page === 'changePass' ? 'bg-orange-light font-bold' : ''} rounded-full`}
                     ><LockKeyhole/> Thay đổi mật khẩu</Button>
+                    {!isAdmin() && 
                     <Button 
                     onClick={() => setPage('orders')} 
                     className={`flex gap-2 justify-center hover:bg-orange-light ${page === 'orders' ? 'bg-orange-light font-bold' : ''} rounded-full`}
                     ><PackageMinus/> Lịch sử đơn hàng</Button>
+                    }
                 </div>
             </div>
             {page === 'info' && <Information/>}
             {page === 'changePass' && <ChangePass/>}
-            {page === 'orders' && <Orders/>}
+            {page === 'orders' && <MyOrders/>}
         </div>
     </div>
   )
