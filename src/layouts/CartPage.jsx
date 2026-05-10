@@ -19,7 +19,6 @@ const CartPage = () => {
   // 1. STATE QUẢN LÝ BƯỚC & THANH TOÁN
   const [step, setStep] = useState(1); 
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const {getUserInfo} = useUser()
   const [fullName, setFullName] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false);
@@ -39,18 +38,16 @@ const CartPage = () => {
       }]
     : cart;
 
-  // Gán lại để các chỗ tính subtotal, totalQuantity dùng đúng nguồn
   const subtotal = displayItems.reduce((acc, item) => acc + item.subTotal, 0);
   const totalQuantity = displayItems.reduce((acc, item) => acc + item.quantity, 0);
-
-  // 2. STATE QUẢN LÝ FORM THÔNG TIN (Giải quyết vấn đề thiếu thông tin)
+  const user = JSON.parse(localStorage.getItem('user'));
+  console.log(user)
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    city: 'TP. Hồ Chí Minh',
-    district: 'Quận 5',
-    ward: 'Phường 2',
-    address: '123 Nguyễn Trãi',
+    fullName: user.fullName || '',
+    phoneNumber: user.phoneNumber || '',
+    city: user.city || '',
+    district: user.district || '',
+    address: user.detailedAddress || '',
     note: ''
   });
 
@@ -59,19 +56,6 @@ const CartPage = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-    const handleGetUserInfo = async () => {
-          const result = await getUserInfo();
-          if (result.success) {
-              setFormData(prev => ({ ...prev, fullName: result.user.fullName, phoneNumber: result.user.phoneNumber }));
-          }
-      };
-  
-      useEffect(() => {
-          handleGetUserInfo();
-      }, []);
-
-  // Hàm xử lý nút bấm dưới cùng
     const handleNextAction = async () => {
     if (step === 1) {
       if (!formData.fullName || !formData.phoneNumber || !formData.address) {
@@ -87,7 +71,7 @@ const CartPage = () => {
         const orderPayload = {
           receiverName: formData.fullName,
           phoneNumber: formData.phoneNumber,
-          shippingAddress: `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`,
+          shippingAddress: `${formData.address}, ${formData.district}, ${formData.city}`,
           note: formData.note,
           paymentMethod: paymentMethod,
           orderDetails: displayItems.map(item => ({
@@ -183,10 +167,9 @@ const CartPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {/* Có thể thay thành thẻ <select> thật nếu bạn có danh sách API */}
                     <InputField label="Tỉnh / Thành phố" name="city" value={formData.city} onChange={handleInputChange} placeholder="VD: TP. Hồ Chí Minh" required />
-                    <InputField label="Quận / Huyện" name="district" value={formData.district} onChange={handleInputChange} placeholder="VD: Quận 5" required />
+                    <InputField label="Phường / Xã" name="district" value={formData.district} onChange={handleInputChange} icon={MapIcon} placeholder="VD: Phường 2" required />
                   </div>
 
-                  <InputField label="Phường / Xã" name="ward" value={formData.ward} onChange={handleInputChange} icon={MapIcon} placeholder="VD: Phường 2" required />
                   <InputField label="Số nhà, tên đường" name="address" value={formData.address} onChange={handleInputChange} icon={HomeIcon} placeholder="VD: 123 Nguyễn Trãi" required />
 
                   <div className="space-y-1.5">
@@ -222,7 +205,7 @@ const CartPage = () => {
                     <p className="text-gray-600 flex items-center gap-2"><PhoneIcon className="w-4 h-4" /> {formData.phoneNumber }</p>
                     <p className="text-gray-600 flex items-start gap-2 mt-2">
                       <MapPinIcon className="w-4 h-4 shrink-0 mt-0.5" /> 
-                      <span>{formData.address}, {formData.ward}, {formData.district}, {formData.city}</span>
+                      <span>{formData.address}, {formData.district}, {formData.city}</span>
                     </p>
                     {formData.note && <p className="text-gray-500 italic mt-2">- Ghi chú: {formData.note}</p>}
                   </div>

@@ -24,17 +24,6 @@ export const UserProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
-    const fetchUser = async () => {
-        try {
-            const response = await userApi.get_info();
-            setUser(response.data);
-            localStorage.setItem('user', JSON.stringify(response.data));
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-
 
     const changePassword = async ({oldPassword, newPassword}) => {
         try {
@@ -46,9 +35,9 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber}) => {
+    const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress}) => {
         try {
-            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber});
+            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});    
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Update profile failed';
@@ -57,12 +46,18 @@ export const UserProvider = ({ children }) => {
     };
 
     const getUserInfo = async () => {
+        setLoading(true)
         try {
             const response = await userApi.get_info();
+            setUser(response.data);
+            localStorage.setItem('user', JSON.stringify(response.data));
             return { success: true, user: response.data };
         } catch (error) {
             const message = error.response?.data?.message || 'Get user info failed';
             return { success: false, message };
+        }
+        finally {
+            setLoading(false)
         }
     };
 
@@ -82,7 +77,6 @@ export const UserProvider = ({ children }) => {
         changePassword,
         getUserInfo,
         loading,
-        fetchUser,
     };
 
     return (

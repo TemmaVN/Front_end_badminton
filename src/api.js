@@ -51,7 +51,7 @@ export const authApi = {
 // User API
 export const userApi = {
     changePassword: ({ oldPassword, newPassword }) => api.put('/user/change-password', { oldPassword, newPassword }),
-    UpdateProfile: ({ fullName, dateOfBirth, phoneNumber }) => api.put('/User/profile', { fullName, dateOfBirth, phoneNumber }),
+    UpdateProfile: ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => api.put('/User/profile', { fullName, dateOfBirth, phoneNumber, city, district, detailedAddress}),
     get_info: () => api.get('/User/user-info'),
     getAll: (keyword = '') => api.get(`/User?keyword=${keyword}`),    
     create: (userData) => api.post('/User', userData),

@@ -8,43 +8,19 @@ import { useUser } from '../../contexts/UserContext';
 import { a } from 'framer-motion/client';
 
 const AdminInfo = () => {
+    const userLoad = localStorage.getItem('user');
+    const user = JSON.parse(userLoad);
     const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'edit', 'password'
-    const [adminData, setAdminData] = useState(null);
+    const [adminData, setAdminData] = useState(user);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    // State cho Form Edit & Password
-    const [editForm, setEditForm] = useState({ fullName: '', phoneNumber: '', dateOfBirth: '' });
+    const [editForm, setEditForm] = useState({ fullName: user.fullName, phoneNumber: user.phoneNumber, dateOfBirth: user.dateOfBirth });
     const [pwdForm, setPwdForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [showPwd, setShowPwd] = useState({ old: false, new: false, confirm: false });
 
-    //
-    const {user, changePassword, UpdateProfile, getUserInfo} = useUser();
-
-    useEffect(() => {
-        fetchAdminInfo();
-    }, []);
-
-    const fetchAdminInfo = async () => {
-        try {
-            setLoading(true);
-            const result = await getUserInfo();
-            if (result.success) {
-                setAdminData(result.user);
-                setEditForm({
-                    fullName: result.user.fullName || '',
-                    phoneNumber: result.user.phoneNumber || '',
-                    dateOfBirth: result.user.dateOfBirth ? result.user.dateOfBirth.split('T')[0] : ''
-                });
-            }
-        } catch (err) {
-            alert(err);
-            setMessage({ type: 'error', text: 'Không thể tải thông tin Admin.' });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { changePassword, UpdateProfile} = useUser();
 
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
