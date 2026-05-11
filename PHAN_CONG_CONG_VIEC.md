@@ -43,13 +43,13 @@ graph TB
     end
 
     subgraph Backend["🖥️ Backend - localhost:5106"]
-        AUTH[/auth]
-        PROD[/Product]
-        CAT[/Category]
-        BRAND[/Brand]
-        CART[/Cart]
-        ORDER[/Order]
-        USER[/User]
+        AUTH["/auth"]
+        PROD["/Product"]
+        CAT["/Category"]
+        BRAND["/Brand"]
+        CART["/Cart"]
+        ORDER["/Order"]
+        USER["/User"]
     end
 
     AC -->|JWT Token| AUTH
@@ -425,33 +425,33 @@ graph TD
 ## Luồng routing toàn ứng dụng
 
 ```mermaid
-flowchart TD
-    START([Người dùng truy cập]) --> APP[App.jsx]
+graph TD
+    START((Người dùng truy cập)) --> APP[App.jsx]
     
     APP --> PUB{Public Routes}
     APP --> PROT{ProtectedRoute}
     APP --> ADMIN_R{Admin Routes}
 
-    PUB --> HOME[/ → HomePage]
-    PUB --> LOGIN[/login → Login]
-    PUB --> REG[/register → Register]
-    PUB --> CONTRACT[/contract → Contract]
-    PUB --> SALES_P[/sales → Sales]
-    PUB --> CAT_ROUTE["/:categorySlug → Product List"]
-    PUB --> PROD_ROUTE["/p/:productSlug → ProductDetail"]
+    PUB --> HOME["/ : HomePage"]
+    PUB --> LOGIN["/login : Login"]
+    PUB --> REG["/register : Register"]
+    PUB --> CONTRACT["/contract : Contract"]
+    PUB --> SALES_P["/sales : Sales"]
+    PUB --> CAT_ROUTE["/:categorySlug : Product List"]
+    PUB --> PROD_ROUTE["/p/:productSlug : ProductDetail"]
 
-    PROT -->|isAuthenticated| CART_R[/cart → CartPage]
-    PROT -->|isAuthenticated| USER_R[/user-info → UserInfo]
-    PROT -->|NOT authenticated| REDIR_LOGIN[Redirect /login]
+    PROT -->|isAuthenticated| CART_R["/cart : CartPage"]
+    PROT -->|isAuthenticated| USER_R["/user-info : UserInfo"]
+    PROT -->|NOT authenticated| REDIR_LOGIN["Redirect /login"]
 
-    ADMIN_R -->|isAdmin| DB_R[/admin/dashboard]
-    ADMIN_R -->|isAdmin| PROD_ADM[/admin/product]
-    ADMIN_R -->|isAdmin| CAT_ADM[/admin/categories]
-    ADMIN_R -->|isAdmin| BRAND_ADM[/admin/brands]
-    ADMIN_R -->|isAdmin| ORDER_ADM[/admin/orders]
-    ADMIN_R -->|isAdmin| USER_ADM[/admin/users-list]
-    ADMIN_R -->|isAdmin| SO_ADM[/admin/sales-overview]
-    ADMIN_R -->|NOT admin| REDIR_HOME[Redirect /]
+    ADMIN_R -->|isAdmin| DB_R["/admin/dashboard"]
+    ADMIN_R -->|isAdmin| PROD_ADM["/admin/product"]
+    ADMIN_R -->|isAdmin| CAT_ADM["/admin/categories"]
+    ADMIN_R -->|isAdmin| BRAND_ADM["/admin/brands"]
+    ADMIN_R -->|isAdmin| ORDER_ADM["/admin/orders"]
+    ADMIN_R -->|isAdmin| USER_ADM["/admin/users-list"]
+    ADMIN_R -->|isAdmin| SO_ADM["/admin/sales-overview"]
+    ADMIN_R -->|NOT admin| REDIR_HOME["Redirect /"]
 
     style START fill:#6366f1,color:#fff
     style REDIR_LOGIN fill:#ef4444,color:#fff
