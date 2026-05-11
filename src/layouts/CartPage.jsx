@@ -41,7 +41,6 @@ const CartPage = () => {
   const subtotal = displayItems.reduce((acc, item) => acc + item.subTotal, 0);
   const totalQuantity = displayItems.reduce((acc, item) => acc + item.quantity, 0);
   const user = JSON.parse(localStorage.getItem('user'));
-  console.log(user)
   const [formData, setFormData] = useState({
     fullName: user.fullName || '',
     phoneNumber: user.phoneNumber || '',
@@ -217,12 +216,10 @@ const CartPage = () => {
                     <CreditCardIcon className="w-6 h-6 text-orange-default" />
                     <h2 className="text-lg font-black">Phương thức thanh toán</h2>
                   </div>
-
                   <div className="space-y-4">
                     <PaymentOption id="COD" title="Thanh toán khi nhận hàng" desc="Trả tiền mặt khi nhận hàng (COD)" icon={<BanknotesIcon className="w-6 h-6" />} selected={paymentMethod === 'COD'} onSelect={() => setPaymentMethod('COD')} />
-                    <PaymentOption id="bank" title="Chuyển khoản ngân hàng" desc="Vietcombank, BIDV, Techcombank..." icon={<CreditCardIcon className="w-6 h-6" />} selected={paymentMethod === 'bank'} onSelect={() => setPaymentMethod('bank')} />
-                    <PaymentOption id="momo" title="Ví MoMo" desc="Thanh toán nhanh qua ví MoMo" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'momo'} onSelect={() => setPaymentMethod('momo')} />
-                    <PaymentOption id="zalopay" title="ZaloPay" desc="Thanh toán qua ứng dụng ZaloPay" icon={<DevicePhoneMobileIcon className="w-6 h-6" />} selected={paymentMethod === 'zalopay'} onSelect={() => setPaymentMethod('zalopay')} />
+                    <PaymentOption id="Bank Transfer" title="Chuyển khoản ngân hàng" desc="Vietcombank, BIDV, Techcombank..." icon={<CreditCardIcon className="w-6 h-6" />} selected={paymentMethod === 'Bank Transfer'} onSelect={() => setPaymentMethod('Bank Transfer')} />
+                    <PaymentOption id="E-Wallet" title="Ví điện tử" desc="Thanh toán nhanh qua ví điện tử" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'E-Wallet'} onSelect={() => setPaymentMethod('E-Wallet')} />
                   </div>
                 </div>
 

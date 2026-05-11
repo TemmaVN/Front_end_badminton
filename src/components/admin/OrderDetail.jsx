@@ -53,10 +53,8 @@ const NEXT_ACTIONS = {
 const OrderDetail = ({ order, onClose, onUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // SỬA LỖI 1: Khởi tạo state nội bộ để khi API thành công, cập nhật lập tức Form mà không cần chờ List cha
   const [localOrder, setLocalOrder] = useState(order);
 
-  // Phân tích trạng thái hiện tại từ localOrder (thay vì order prop)
   let currentStatusId = 1;
   const rawStatus = localOrder.status;
 

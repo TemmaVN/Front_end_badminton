@@ -34,7 +34,6 @@ useEffect(() => {
       const result = await getProductDetaildBySlug(productSlug);
       if (result) {
         setProduct(result);
-        console.log('Product loaded:', result);
       }
     } catch (error) {
       console.error('Failed to load product:', error);
@@ -75,7 +74,6 @@ const selectedVariant = product?.variants?.find(
   v => v.weightClass === selectedWeight && v.gripSize === selectedGrip
 ) || product?.variants?.[0]; // Fallback về variant đầu tiên nếu không tìm thấy
 
-console.log('Selected variant:', selectedVariant);
 
 const handleSelectWeight = (w) => {
   if (!isWeightAvailable(w)) return;

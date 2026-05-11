@@ -34,13 +34,6 @@ export const ProductProvider = ({ children }) => {
             currentPage: page,
         });
     };
-
-    // ─── Search / Filter (trang danh sách chính) ─────────────────────────────
-    /**
-     * params: { keyword, categorySlug, brandSlug,
-     *           minPrice, maxPrice, Voucher, page, pagesize }
-     * return: { items, totalCount, totalPages, page } | null
-     */
     const searchProducts = useCallback(async (params = {}) => {
         setLoading(true);
         setError(null);
@@ -60,10 +53,6 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── Lấy sản phẩm theo danh mục (slug) ───────────────────────────────────
-    /**
-     * params: { page, pagesize, keyword, minPrice, maxPrice }
-     */
     const fetchProductsBySlug = useCallback(async (categorySlug, params = {}) => {
         setLoading(true);
         setError(null);
@@ -83,11 +72,28 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── Tạo sản phẩm mới (Admin) ─────────────────────────────────────────────
-    /**
-     * data: CreateProductRequest (xem swagger / controller)
-     * return: { productId } | null
-     */
+    // ─── Tìm kiếm sản phẩm cho trang Admin (trả về brandName, categoryName) ───
+    const searchProductsAdmin = useCallback(async (params = {}) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await productApi.getForAdmin(params);
+            const data = response.data;
+            setProducts(data.items ?? []);
+            setPaginationFromResponse({
+                totalCount: data.totalCount,
+                totalPages: data.totalPages,
+                page: data.page,
+            });
+            return data;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
     const addProduct = useCallback(async (data) => {
         setLoading(true);
         setError(null);
@@ -105,11 +111,6 @@ export const ProductProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
-
-    // ─── Cập nhật sản phẩm (Admin) ────────────────────────────────────────────
-    /**
-     * return: updated product | null
-     */
     const updateProduct = useCallback(async (id, data) => {
         setLoading(true);
         setError(null);
@@ -180,6 +181,7 @@ export const ProductProvider = ({ children }) => {
         // actions
         getProductDetaildBySlug,
         searchProducts,
+        searchProductsAdmin,
         fetchProductsBySlug,
         addProduct,
         updateProduct,

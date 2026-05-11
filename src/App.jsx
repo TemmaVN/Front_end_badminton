@@ -142,7 +142,7 @@ function AppRoutes() {
         {/* ✅ Nhóm bằng pathless route */}
         <Route path="product">
           <Route index element={<ProductList />} />
-          <Route path=":productSlug" element={<AdminProductDetail />} />
+          <Route path=":productId" element={<AdminProductDetail />} />
         </Route>
 
         <Route path="categories" element={<Categories />} />

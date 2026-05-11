@@ -85,6 +85,9 @@ export const productApi = {
     getProductDetaildBySlug: (slug) =>
         api.get(`/Product/${slug}`),
 
+    getForAdmin: (params = {}) =>
+        api.get('/Product/product-management', { params }),
+
     create: (data) =>
         api.post('/Product', data),
 
@@ -93,6 +96,25 @@ export const productApi = {
 
     delete: (id) =>
         api.delete(`/Product/${id}`),
+
+    getVariants: (productId, params = {}) =>
+        api.get(`/Product/${productId}/management-details`, { params }),
+
+    addVariant: (productId, data) =>
+        api.post(`/Product/${productId}/management-details`, data),
+
+    deleteVariant: (detailId) =>
+        api.delete(`/Product/management-details/${detailId}`),
+
+    getSerials: (detailId, params = {}) =>
+        api.get(`/Product/management-details/${detailId}/serials`, { params }),
+
+    addSerial: (detailId, data) =>
+        api.post(`/Product/management-details/${detailId}/serials`, data),
+};
+
+export const metaDataApi = {
+    get: () => api.get('/MetaData'),
 };
 
 // Category API

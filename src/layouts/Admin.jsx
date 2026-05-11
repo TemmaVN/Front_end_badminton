@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./admin/Sidebar";
 import Header from "./admin/Header";
@@ -6,6 +6,11 @@ import { useUser } from "../contexts/UserContext";
 
 const Admin = () => {
   const [sideBarCollapsed, setSideBarCollapsed] = React.useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  useEffect(() => {
+
+    setIsSidebarOpen(sideBarCollapsed);
+  }, [sideBarCollapsed]);
   const {loading} = useUser();
   if (loading) return (<div>
     Loading
@@ -17,7 +22,10 @@ const Admin = () => {
         onToggleSidebar={setSideBarCollapsed}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <Header />
+        <Header
+        sideBarCollapsed={sideBarCollapsed}
+        onToggleSidebar={setSideBarCollapsed}
+        />
         <main className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <Outlet />
         </main>

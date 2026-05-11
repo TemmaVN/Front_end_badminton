@@ -294,6 +294,8 @@ const OrderCard = ({ order, onClick }) => {
 const FILTER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "⏳ Chờ xác nhận", value: "Chờ xác nhận" },
+  { label: "✅ Đã xác nhận", value: "Đã xác nhận" },
+  { label: "🏸 Đang đan lưới", value: "Đang đan lưới" },
   { label: "🚚 Đang giao", value: "Đang giao hàng" },
   { label: "🎉 Hoàn tất", value: "Hoàn tất" },
   { label: "✖ Đã hủy", value: "Đã hủy" },
@@ -380,7 +382,7 @@ const MyOrders = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/70">
+    <div className="w-full h-full bg-gray-50/70">
       {/* ── Inline styles for animations ── */}
       <style>{`
         @keyframes slide-up {
@@ -395,7 +397,7 @@ const MyOrders = () => {
         .animate-fade-in { animation: fade-in 0.3s ease both; }
       `}</style>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-full mx-auto px-4 py-8">
         {/* ── Page header ── */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Đơn hàng của tôi</h1>
