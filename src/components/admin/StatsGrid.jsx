@@ -3,9 +3,9 @@ import React from 'react'
 
 const stats = [
   {
-    title: "Total Revenue",
-    value: "$124,563",
-    change: "+12.5%",
+    title: "Tổng doanh thu",
+    value: "856 triệu đ",
+    change: "+18,1%",
     trend: "up",
     icon: DollarSign,
     color: "from-emerald-500 to-teal-600",
@@ -13,9 +13,9 @@ const stats = [
     textColor: "text-emerald-600 dark:text-emerald-400",
   },
   {
-    title: "Active Users",
-    value: "8,549",
-    change: "+8.2%",
+    title: "Khách hàng",
+    value: "1.247",
+    change: "+8,2%",
     trend: "up",
     icon: Users,
     color: "from-blue-500 to-indigo-600",
@@ -23,9 +23,9 @@ const stats = [
     textColor: "text-blue-600 dark:text-blue-400",
   },
   {
-    title: "Total Orders",
-    value: "2,847",
-    change: "+15.3%",
+    title: "Đơn hàng",
+    value: "2.847",
+    change: "+15,3%",
     trend: "up",
     icon: ShoppingCart,
     color: "from-purple-500 to-pink-600",
@@ -33,9 +33,9 @@ const stats = [
     textColor: "text-purple-600 dark:text-purple-400",
   },
   {
-    title: "Page Views",
-    value: "45,892",
-    change: "-2.1%",
+    title: "Lượt xem trang",
+    value: "45.892",
+    change: "-2,1%",
     trend: "down",
     icon: Eye,
     color: "from-orange-500 to-red-600",
@@ -67,11 +67,10 @@ const StatsGrid = () => {
                                 <ArrowUpRight className='w-4 h-4 text-emerald-500'/> :
                                 <ArrowDownRight className='w-4 h-4 text-red-500'/>
                                 }
-                                <span
-                                className={``}
-                                >Stats Change</span>
-                                <span className='text-sm text-slate-500 dark:text-slate-400'
-                                >vs Last month</span>
+                                <span className={`text-sm font-semibold ${stats.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                  {stats.change}
+                                </span>
+                                <span className='text-sm text-slate-500 dark:text-slate-400'>so với tháng trước</span>
                             </div>
                         </div>
                         <div className={`p-3 rounded-xl group-hover:scale-110 transition-all duration-300`}>

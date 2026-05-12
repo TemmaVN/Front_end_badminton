@@ -32,6 +32,8 @@ import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
 import MyOrders from "./layouts/MyOrders";
 import AdminProductDetail from "./components/admin/AdminProductDetail";
+import WarrantyManagement from "./components/admin/WarrantyManagement";
+import Statistics from "./components/admin/Statistics";
 
 
 const PublicRoute = ({ children }) => {
@@ -152,6 +154,8 @@ function AppRoutes() {
         <Route path="users-list" element={<UserList />} />
         <Route path="payment" element={<Payment />} />
         <Route path="admin-info" element={<UserInfo />} />
+        <Route path="warranty" element={<WarrantyManagement />} />
+        <Route path="statistics" element={<Statistics />} />
       </Route>
 
       <Route

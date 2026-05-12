@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { orderApi } from "../api";
+import WarrantyFormModal from "../components/WarrantyFormModal";
+import { warrantyService, getSerialNumber } from "../services/warrantyService";
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -101,9 +103,17 @@ const StatusBadge = ({ status }) => {
 };
 
 // ─── ORDER DETAIL PANEL ───────────────────────────────────────────────────────
-const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
+const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) => {
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
+  const canWarranty = order.status === "Hoàn tất";
+
+  // track which orderDetails already have a warranty claim
+  const [claimedIds, setClaimedIds] = useState(() =>
+    (order.orderDetails || [])
+      .filter((od) => warrantyService.getByOrderDetail(od.orderDetailId))
+      .map((od) => od.orderDetailId)
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -161,32 +171,58 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
               Sản phẩm
             </h3>
             <div className="space-y-2">
-              {order.orderDetails.map((od) => (
-                <div
-                  key={od.orderDetailId}
-                  className="flex items-start gap-3 bg-gray-50 rounded-xl p-3"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
-                    {od.isStringingService ? "🏸" : "📦"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {od.productName || "Sản phẩm"}
-                    </p>
-                    {od.isStringingService && (
-                      <p className="text-xs text-fuchsia-600 mt-0.5">
-                        Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+              {order.orderDetails.map((od) => {
+                const serial = getSerialNumber(od.orderDetailId);
+                const isClaimed = claimedIds.includes(od.orderDetailId);
+                return (
+                  <div key={od.orderDetailId} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
+                        {od.isStringingService ? "🏸" : "📦"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {od.productName || "Sản phẩm"}
+                        </p>
+                        {od.isStringingService && (
+                          <p className="text-xs text-fuchsia-600 mt-0.5">
+                            Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          SL: {od.quantity} × {formatCurrency(od.unitPrice)}
+                        </p>
+                        {/* Serial number badge */}
+                        {!od.isStringingService && canWarranty && (
+                          <div className="mt-1 inline-flex items-center gap-1 bg-white border border-gray-200 rounded-md px-2 py-0.5">
+                            <span className="text-xs text-gray-400">Seri:</span>
+                            <span className="text-xs font-mono font-semibold text-gray-700 tracking-wider">{serial}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 shrink-0">
+                        {formatCurrency(od.quantity * od.unitPrice)}
                       </p>
+                    </div>
+
+                    {/* Warranty button for completed orders */}
+                    {canWarranty && !od.isStringingService && (
+                      isClaimed ? (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-1">
+                          <span>✅</span> Đã gửi yêu cầu bảo hành
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => onWarranty(order, od, serial)}
+                          className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                        >
+                          🔧 Yêu cầu bảo hành
+                        </button>
+                      )
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      SL: {od.quantity} × {formatCurrency(od.unitPrice)}
-                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 shrink-0">
-                    {formatCurrency(od.quantity * od.unitPrice)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -328,6 +364,11 @@ const MyOrders = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  // warranty: { order, orderDetail, serial }
+  const [warrantyTarget, setWarrantyTarget] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user?.id || user?.userId || user?.Id;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -488,6 +529,22 @@ const MyOrders = () => {
           onClose={() => setSelectedOrder(null)}
           onCancel={handleCancel}
           cancelling={cancelling}
+          onWarranty={(order, od, serial) => setWarrantyTarget({ order, orderDetail: od, serial })}
+        />
+      )}
+
+      {/* ── Warranty form modal ── */}
+      {warrantyTarget && (
+        <WarrantyFormModal
+          order={warrantyTarget.order}
+          orderDetail={warrantyTarget.orderDetail}
+          serialNumber={warrantyTarget.serial}
+          userId={userId}
+          onClose={() => setWarrantyTarget(null)}
+          onSuccess={() => {
+            // refresh selected order so the button updates to "Đã gửi"
+            setSelectedOrder((prev) => prev ? { ...prev } : prev);
+          }}
         />
       )}
     </div>

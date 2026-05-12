@@ -6,33 +6,33 @@ import OrderDetail from './OrderDetail';
 
 const topProducts = [
   {
-    name: 'MacBook Pro 16"',
-    sales: 1247,
-    revenue: "$2,987,530",
+    name: "Vợt Yonex Astrox 88D",
+    sales: 234,
+    revenue: "1.170.000.000 đ",
+    trend: "up",
+    change: "+18%",
+  },
+  {
+    name: "Vợt Victor Thruster K 12M",
+    sales: 186,
+    revenue: "892.800.000 đ",
     trend: "up",
     change: "+12%",
   },
   {
-    name: "iPhone 15 Pro",
-    sales: 842,
-    revenue: "$925,300",
+    name: "Cầu RSL Gold (hộp 12 quả)",
+    sales: 1520,
+    revenue: "760.000.000 đ",
     trend: "up",
-    change: "+8%",
+    change: "+24%",
   },
   {
-    name: "AirPods Pro",
-    sales: 642,
-    revenue: "$160,250",
+    name: "Giày Yonex SHB 65Z3",
+    sales: 142,
+    revenue: "567.000.000 đ",
     trend: "down",
     change: "-5%",
   },
-  {
-    name: "iPad Air",
-    sales: 442,
-    revenue: "$265,150",
-    trend: "up",
-    change: "+10%",
-  }
 ];
 
 const STATUSES = {
@@ -80,14 +80,14 @@ function TableSection() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Recent Orders
+                Đơn hàng gần đây
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Latest customer orders
+                Các đơn hàng mới nhất của khách hàng
               </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
+              Xem tất cả
             </button>
           </div>
         </div>
@@ -172,14 +172,14 @@ function TableSection() {
             <div className="flex items-center justify-between">
             <div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                Top Products
+                Sản phẩm bán chạy
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                Best performing products
+                Hiệu suất bán hàng tốt nhất
                 </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                View All
+                Xem tất cả
             </button>
             </div>
         </div>
@@ -197,7 +197,7 @@ function TableSection() {
                     {product.name}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {product.sales} Sales
+                    {product.sales.toLocaleString()} lượt bán
                 </p>
                 </div>
 

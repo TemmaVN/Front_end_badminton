@@ -2,23 +2,35 @@ import React from 'react';
 import { Clock } from 'lucide-react'; 
 const activities = [
   {
-    title: "New Order Received",
-    description: "Order #3852 from John Smith",
-    time: "2 minutes ago",
-    color: "bg-blue-500"
+    title: "Đơn hàng mới",
+    description: "Đơn #3852 – Nguyễn Văn An đặt Vợt Yonex Astrox 88D",
+    time: "2 phút trước",
+    color: "bg-blue-500",
   },
   {
-    title: "Server Update",
-    description: "System kernel updated to v2.4.0",
-    time: "1 hour ago",
-    color: "bg-emerald-500"
+    title: "Yêu cầu bảo hành",
+    description: "Trần Thị Bình gửi yêu cầu BH cho Vợt Victor Thruster K",
+    time: "35 phút trước",
+    color: "bg-amber-500",
   },
   {
-    title: "New Customer",
-    description: "Sarah Johnson created an account",
-    time: "3 hours ago",
-    color: "bg-amber-500"
-  }
+    title: "Khách hàng mới",
+    description: "Lê Minh Quân đăng ký tài khoản",
+    time: "1 giờ trước",
+    color: "bg-emerald-500",
+  },
+  {
+    title: "Sản phẩm sắp hết hàng",
+    description: "Cầu RSL Gold còn 8 hộp – cần nhập thêm",
+    time: "2 giờ trước",
+    color: "bg-rose-500",
+  },
+  {
+    title: "Đơn hàng hoàn tất",
+    description: "Đơn #3847 đã giao thành công đến Phạm Hồng Sơn",
+    time: "3 giờ trước",
+    color: "bg-purple-500",
+  },
 ];
 
 function ActivityFeed() {
@@ -29,14 +41,14 @@ function ActivityFeed() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-              Activity Feed
+              Hoạt động gần đây
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Recent System Activities
+              Hoạt động hệ thống mới nhất
             </p>
           </div>
           <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-            View All
+            Xem tất cả
           </button>
         </div>
       </div>

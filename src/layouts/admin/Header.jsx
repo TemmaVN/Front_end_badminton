@@ -3,6 +3,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import {useAuth} from  "../../contexts/AuthContext"
 import {useNavigate, Link, useLocation} from "react-router-dom"
 import {useUser} from "../../contexts/UserContext"
+import {useMediaQuery} from '../../mystate/useMediaQuery';
 
 
 const Header = ({sideBarCollapsed, onToggleSidebar}) => {
@@ -13,6 +14,7 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
     const [fullName, setFullName] = useState(user.fullName);
+    const isMedium = useMediaQuery('(min-width: 1280px)');
     useEffect(() => {
         const handleClickOutside = (event) => {
           if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -45,7 +47,7 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                 <button 
                 className='p-2 rounded-lg text-slate-600 dark:text-slate-300
                 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'
-                onClick={() => onToggleSidebar(!sideBarCollapsed)}
+                onClick={onToggleSidebar}
                 >
                     <Menu className='w-5 h-5'/>
                 </button>
@@ -56,7 +58,8 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                 </div>
             </div>
             {/*Center*/}
-            <div className='flex-1 max-w-md mx-8'>
+            {isMedium && (
+              <div className='flex-1 max-w-md mx-8'>
                 <div className='relative'>
                     <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400'/>
                     <input 
@@ -72,6 +75,7 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                     </button>
                 </div>
             </div>
+            )}
             {/*Right side*/}
             <div className='flex items-center space-x-3'>
                 {/*Quick action*/}
