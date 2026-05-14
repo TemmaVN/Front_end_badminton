@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { jwtDecode } from 'jwt-decode';
 import { useUser } from '../contexts/UserContext';
+import { useLocation } from 'react-router-dom';
 
 const Login = () => {
   const isShowPic = useMediaQuery("(min-width: 700px)");

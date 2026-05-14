@@ -10,7 +10,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
   const displayedProducts = products.slice(0, 6);
 
   return (
-    <div className="max-w-[1200px] mx-auto my-12 px-4">
+    <div className="max-w-300 mx-auto my-12 px-4">
       {/* Tiêu đề */}
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">
         <h2 className="text-3xl font-bold text-gray-800">
@@ -36,7 +36,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
               src={categoryImage}
               alt={category.categoryName}
               // Sử dụng object-cover và h-full để lấp đầy thẻ chứa
-              className="w-full h-full min-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full min-h-125 object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>
         </div>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { warrantyService } from '../../services/warrantyService';
+import React, { useState, useEffect } from 'react';
+import { useWarranty } from '../../contexts/WarrantyContext';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -19,70 +19,6 @@ const FILTER_TABS = [
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-// ─── MOCK DATA (seed nếu localStorage trống) ──────────────────────────────────
-const MOCK_SEED = [
-  {
-    warrantyId: 1000001,
-    orderId: 1001,
-    orderDetailId: 2001,
-    productName: 'Vợt Yonex Astrox 99 Pro',
-    serialNumber: 'SN-00628730',
-    reasonCategory: 'manufacturing',
-    reasonLabel: 'Lỗi sản xuất',
-    description: 'Khung vợt bị nứt dọc sau 2 tuần sử dụng nhẹ.',
-    images: [],
-    videoName: 'unboxing_yonex.mp4',
-    customerId: '1',
-    customerName: 'Nguyễn Văn An',
-    status: 'Chờ xử lý',
-    adminNote: '',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-  {
-    warrantyId: 1000002,
-    orderId: 1002,
-    orderDetailId: 2002,
-    productName: 'Giày Victor A970ACE',
-    serialNumber: 'SN-00441890',
-    reasonCategory: 'shipping',
-    reasonLabel: 'Hư hỏng vận chuyển',
-    description: 'Hộp giày bị móp, đế giày bong keo bên phải.',
-    images: [],
-    videoName: null,
-    customerId: '2',
-    customerName: 'Trần Thị Bình',
-    status: 'Đang xử lý',
-    adminNote: 'Đã liên hệ khách, đang chờ gửi lại hàng.',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-  },
-  {
-    warrantyId: 1000003,
-    orderId: 1003,
-    orderDetailId: 2003,
-    productName: 'Túi vợt Li-Ning ABJS001',
-    serialNumber: 'SN-00195312',
-    reasonCategory: 'mismatch',
-    reasonLabel: 'Không đúng mô tả',
-    description: 'Nhận được màu đen thay vì màu xanh như đã đặt.',
-    images: [],
-    videoName: 'unboxing_bag.mp4',
-    customerId: '3',
-    customerName: 'Lê Minh Cường',
-    status: 'Đã xử lý',
-    adminNote: 'Đã gửi sản phẩm đúng màu đến khách. Hoàn tất.',
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-  },
-];
-
-const seedIfEmpty = () => {
-  const existing = warrantyService.getAll();
-  if (existing.length === 0) {
-    localStorage.setItem('warranty_claims', JSON.stringify(MOCK_SEED));
-  }
-};
 
 // ─── STATUS BADGE ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
@@ -102,13 +38,18 @@ const DetailPanel = ({ claim, onClose, onUpdateStatus }) => {
   const [saving, setSaving]         = useState(false);
   const [saved, setSaved]           = useState(false);
 
+  const { updateStatus } = useWarranty();
+
   const handleSave = async () => {
     setSaving(true);
-    warrantyService.updateStatus(claim.warrantyId, newStatus, adminNote);
-    setSaving(false);
-    setSaved(true);
-    onUpdateStatus(claim.warrantyId, newStatus, adminNote);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await updateStatus(claim.warrantyId, newStatus, adminNote);
+      onUpdateStatus(claim.warrantyId, newStatus, adminNote);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -250,23 +191,15 @@ const ClaimRow = ({ claim, onClick }) => (
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const WarrantyManagement = () => {
-  const [claims, setClaims]         = useState([]);
+  const { claims, fetchAll } = useWarranty();
   const [activeFilter, setFilter]   = useState('all');
   const [search, setSearch]         = useState('');
   const [selected, setSelected]     = useState(null);
 
-  const load = useCallback(() => {
-    seedIfEmpty();
-    setClaims(warrantyService.getAll());
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const handleUpdateStatus = (warrantyId, status, adminNote) => {
-    setClaims((prev) =>
-      prev.map((c) => c.warrantyId === warrantyId ? { ...c, status, adminNote } : c)
-    );
-    setSelected((prev) => prev && prev.warrantyId === warrantyId ? { ...prev, status, adminNote } : prev);
+    setSelected((prev) => prev?.warrantyId === warrantyId ? { ...prev, status, adminNote } : prev);
   };
 
   const filtered = claims

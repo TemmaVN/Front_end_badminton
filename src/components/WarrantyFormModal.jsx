@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { warrantyService } from '../services/warrantyService';
+import { useWarranty } from '../contexts/WarrantyContext';
 
 const WARRANTY_REASONS = [
   { value: 'manufacturing', label: 'Lỗi sản xuất',        icon: '🏭', desc: 'Khuyết tật từ nhà sản xuất, chất lượng không đạt tiêu chuẩn' },
@@ -135,7 +135,8 @@ const Row = ({ label, value }) => (
 );
 
 // ─── MAIN MODAL ───────────────────────────────────────────────────────────────
-const WarrantyFormModal = ({ order, orderDetail, serialNumber, userId, onClose, onSuccess }) => {
+const WarrantyFormModal = ({ order, orderDetail, serialNumbers = [], userId, onClose, onSuccess }) => {
+  const { createClaim } = useWarranty();
   const [step, setStep]               = useState(1);
   const [reason, setReason]           = useState('');
   const [description, setDescription] = useState('');
@@ -157,11 +158,11 @@ const WarrantyFormModal = ({ order, orderDetail, serialNumber, userId, onClose, 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await warrantyService.create({
+      await createClaim({
         orderId:        order.orderId,
         orderDetailId:  orderDetail.orderDetailId,
         productName:    orderDetail.productName,
-        serialNumber,
+        serialNumber: serialNumbers.join(', '),
         reasonCategory: reason,
         reasonLabel:    selectedReason?.label || reason,
         description,
@@ -228,9 +229,13 @@ const WarrantyFormModal = ({ order, orderDetail, serialNumber, userId, onClose, 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{orderDetail.productName}</p>
                       <p className="text-xs text-gray-500 mt-0.5">Đơn hàng #{order.orderId}</p>
-                      <div className="mt-2 inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1">
-                        <span className="text-xs text-gray-400">Số seri:</span>
-                        <span className="text-xs font-mono font-bold text-gray-800 tracking-wider">{serialNumber}</span>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {serialNumbers.map((sn) => (
+                          <div key={sn} className="inline-flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2.5 py-1">
+                            <span className="text-xs text-gray-400">Seri:</span>
+                            <span className="text-xs font-mono font-bold text-gray-800 tracking-wider">{sn}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -291,7 +296,7 @@ const WarrantyFormModal = ({ order, orderDetail, serialNumber, userId, onClose, 
                   <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Thông tin bảo hành</p>
                     <Row label="Sản phẩm"    value={orderDetail.productName} />
-                    <Row label="Số seri"     value={<span className="font-mono">{serialNumber}</span>} />
+                    <Row label="Số seri"     value={<span className="font-mono">{serialNumbers.join(', ')}</span>} />
                     <Row label="Đơn hàng"    value={`#${order.orderId}`} />
                     <Row label="Lý do"       value={selectedReason ? `${selectedReason.icon} ${selectedReason.label}` : '—'} />
                     {description && <Row label="Mô tả" value={description} />}

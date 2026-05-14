@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { orderApi } from "../api";
 import WarrantyFormModal from "../components/WarrantyFormModal";
-import { warrantyService, getSerialNumber } from "../services/warrantyService";
+import { useWarranty } from "../contexts/WarrantyContext";
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -107,13 +107,13 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
   const canWarranty = order.status === "Hoàn tất";
+  const { isClaimedOrderDetail } = useWarranty();
+  const [expandedIds, setExpandedIds] = useState([]);
 
-  // track which orderDetails already have a warranty claim
-  const [claimedIds, setClaimedIds] = useState(() =>
-    (order.orderDetails || [])
-      .filter((od) => warrantyService.getByOrderDetail(od.orderDetailId))
-      .map((od) => od.orderDetailId)
-  );
+  const toggleExpand = (id) =>
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -168,15 +168,21 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
           {/* Products */}
           <div>
             <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wider">
-              Sản phẩm
+              Sản phẩm 
             </h3>
             <div className="space-y-2">
               {order.orderDetails.map((od) => {
-                const serial = getSerialNumber(od.orderDetailId);
-                const isClaimed = claimedIds.includes(od.orderDetailId);
+                const isClaimed = isClaimedOrderDetail(od.orderDetailId);
+                const hasSerials = !od.isStringingService && od.serialNumbers?.length > 0;
+                const isExpanded = expandedIds.includes(od.orderDetailId);
+
                 return (
-                  <div key={od.orderDetailId} className="bg-gray-50 rounded-xl p-3 space-y-2">
-                    <div className="flex items-start gap-3">
+                  <div key={od.orderDetailId} className="bg-gray-50 rounded-xl overflow-hidden">
+                    {/* ── Dòng sản phẩm ── */}
+                    <div
+                      className={`flex items-start gap-3 p-3 ${hasSerials ? "cursor-pointer hover:bg-gray-100 transition-colors" : ""}`}
+                      onClick={() => hasSerials && toggleExpand(od.orderDetailId)}
+                    >
                       <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
                         {od.isStringingService ? "🏸" : "📦"}
                       </div>
@@ -192,12 +198,10 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
                         <p className="text-xs text-gray-400 mt-0.5">
                           SL: {od.quantity} × {formatCurrency(od.unitPrice)}
                         </p>
-                        {/* Serial number badge */}
-                        {!od.isStringingService && canWarranty && (
-                          <div className="mt-1 inline-flex items-center gap-1 bg-white border border-gray-200 rounded-md px-2 py-0.5">
-                            <span className="text-xs text-gray-400">Seri:</span>
-                            <span className="text-xs font-mono font-semibold text-gray-700 tracking-wider">{serial}</span>
-                          </div>
+                        {hasSerials && (
+                          <p className="text-xs text-blue-500 mt-1 font-medium">
+                            {isExpanded ? "▲ Ẩn số seri" : `▼ Xem ${od.serialNumbers.length} số seri`}
+                          </p>
                         )}
                       </div>
                       <p className="text-sm font-semibold text-gray-800 shrink-0">
@@ -205,20 +209,55 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
                       </p>
                     </div>
 
-                    {/* Warranty button for completed orders */}
-                    {canWarranty && !od.isStringingService && (
-                      isClaimed ? (
-                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-1">
-                          <span>✅</span> Đã gửi yêu cầu bảo hành
+                    {/* ── Panel seri (expand) ── */}
+                    {hasSerials && isExpanded && (
+                      <div className="border-t border-gray-200 px-3 pb-3 pt-2 space-y-3 bg-white">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Số seri sản phẩm
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {od.serialNumbers.map((sn, idx) => (
+                            <div key={sn} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                              <span className="text-xs text-gray-400 shrink-0">#{idx + 1}</span>
+                              <span className="text-xs font-mono font-semibold text-gray-800 tracking-wider truncate">{sn}</span>
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => onWarranty(order, od, serial)}
-                          className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
-                        >
-                          🔧 Yêu cầu bảo hành
-                        </button>
-                      )
+
+                        {/* Nút bảo hành - chỉ hiện khi đơn Hoàn tất */}
+                        {canWarranty && (
+                          isClaimed ? (
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                              <span>✅</span> Đã gửi yêu cầu bảo hành
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onWarranty(order, od, od.serialNumbers ?? []); }}
+                              className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                            >
+                              🔧 Yêu cầu bảo hành
+                            </button>
+                          )
+                        )}
+                      </div>
+                    )}
+
+                    {/* Warranty cho đơn hoàn tất không có seri */}
+                    {canWarranty && !od.isStringingService && !hasSerials && (
+                      <div className="px-3 pb-3">
+                        {isClaimed ? (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-1">
+                            <span>✅</span> Đã gửi yêu cầu bảo hành
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => onWarranty(order, od, [])}
+                            className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            🔧 Yêu cầu bảo hành
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -364,9 +403,9 @@ const MyOrders = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  // warranty: { order, orderDetail, serial }
   const [warrantyTarget, setWarrantyTarget] = useState(null);
 
+  const { fetchMyWarranties } = useWarranty();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user?.id || user?.userId || user?.Id;
 
@@ -375,12 +414,10 @@ const MyOrders = () => {
     setError(null);
     try {
       const response = await orderApi.getMyOrders();
-      // API GET /api/Order/my-orders returns array directly
       const data = response.data;
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Không thể tải đơn hàng. Vui lòng thử lại.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -388,7 +425,8 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    fetchMyWarranties();
+  }, [fetchOrders, fetchMyWarranties]);
 
   const handleCancel = async (orderId) => {
     setCancelling(true);
@@ -538,12 +576,11 @@ const MyOrders = () => {
         <WarrantyFormModal
           order={warrantyTarget.order}
           orderDetail={warrantyTarget.orderDetail}
-          serialNumber={warrantyTarget.serial}
+          serialNumbers={warrantyTarget.serial}
           userId={userId}
           onClose={() => setWarrantyTarget(null)}
           onSuccess={() => {
-            // refresh selected order so the button updates to "Đã gửi"
-            setSelectedOrder((prev) => prev ? { ...prev } : prev);
+            fetchMyWarranties();
           }}
         />
       )}

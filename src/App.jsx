@@ -27,6 +27,7 @@ import HomePage from "./layouts/HomePage";
 import ProductDetail from "./layouts/ProductDetail";
 import Footer from "./layouts/Footer";
 import { CartProvider } from "./contexts/CartContext";
+import { WarrantyProvider } from "./contexts/WarrantyContext";
 import CartPage from "./layouts/CartPage";
 import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
@@ -103,7 +104,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/:categorySlug"
+        path="/:categorySlug/*"
         element={
           <PublicRoute>
             <Product />
@@ -182,14 +183,16 @@ function App() {
       <UserProvider>
         <CategoryProvider>
           <CartProvider>
-            <div className="bg-white h-auto w-full">
-              {isHidePageHeader && <PageHeader />}
-              {isHideMainHeader && <MainHeader />}
-              <ProductProvider>
-                <AppRoutes />
-              </ProductProvider>
-              <Footer />
-            </div>
+            <WarrantyProvider>
+              <div className="bg-white h-auto w-full">
+                {isHidePageHeader && <PageHeader />}
+                {isHideMainHeader && <MainHeader />}
+                <ProductProvider>
+                  <AppRoutes />
+                </ProductProvider>
+                <Footer />
+              </div>
+            </WarrantyProvider>
           </CartProvider>
         </CategoryProvider>
       </UserProvider>
