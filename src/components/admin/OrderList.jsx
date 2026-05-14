@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, Eye, Loader2, RotateCcw } from "lucide-react";
-import { orderApi } from "../../api"; // Giả định API đã được tạo
+import { useOrder } from "../../contexts/OrderContext";
 import OrderDetail from "./OrderDetail";
 
 const STATUSES = {
@@ -15,65 +15,48 @@ const STATUSES = {
 };
 
 const OrderList = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, loading, pagination: ctxPagination, fetchAllOrders, fetchByStatus, searchOrders } = useOrder();
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    totalPages: 1,
-  });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [filters, setFilters] = useState({ status: "", keyword: "" });
-
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      let response;
-      if (filters.status) {
-        // Nếu có chọn trạng thái, gọi API lấy theo trạng thái
-        const params = { page: pagination.page, pageSize: pagination.pageSize };
-        response = await orderApi.getByStatus(filters.status, params);
-      } else {
-        // Nếu không chọn trạng thái, gọi API lấy tất cả
-        const params = {
-          page: pagination.page,
-          pageSize: pagination.pageSize,
-          keyword: filters.keyword || null,
-        };
-        response = await orderApi.getAll(params);
-      }
-      setOrders(response.data.orders || []);
-      setPagination((prev) => ({
-        ...prev,
-        totalPages: response.data.totalPages || 1,
-      }));
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
-      alert("Không thể tải danh sách đơn hàng.");
-    } finally {
-      setLoading(false);
+  const fetchOrders = useCallback(() => {
+    if (filters.status) {
+      fetchByStatus(filters.status, page, PAGE_SIZE);
+    } else if (filters.keyword) {
+      searchOrders({ keyword: filters.keyword, page, pageSize: PAGE_SIZE });
+    } else {
+      fetchAllOrders(page, PAGE_SIZE);
     }
-  }, [pagination.page, pagination.pageSize, filters]);
+  }, [page, filters, fetchAllOrders, fetchByStatus, searchOrders]);
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+  }, [page, filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
-      setPagination((prev) => ({ ...prev, page: newPage }));
+    if (newPage >= 1 && newPage <= ctxPagination.totalPages) {
+      setPage(newPage);
     }
   };
 
+  const pageList = []
+  for (let i = page-2; i <= page+2; i++) {
+    if (i > 0 && i <= ctxPagination.totalPages) {
+      pageList.push(i)
+    }
+  }
+
+
   const resetFilters = () => {
     setFilters({ status: "", keyword: "" });
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPage(1);
   };
 
   const handleCloseDetail = () => {
@@ -224,20 +207,33 @@ const OrderList = () => {
         </div>
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
           <span className="text-sm text-slate-500">
-            Trang <span className="font-semibold">{pagination.page}</span> /{" "}
-            {pagination.totalPages}
+            Trang <span className="font-semibold">{page}</span> /{" "}
+            {ctxPagination.totalPages || 1}
           </span>
           <div className="flex gap-2">
             <button
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
               className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
             >
               Trước
             </button>
+            {pageList.map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePageChange(p)}
+                className={`w-9 h-9 rounded-lg text-xs font-semibold transition-colors
+                ${p === page
+                  ? 'bg-orange-default text-white shadow shadow-orange-default/25'
+                  : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
             <button
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= (ctxPagination.totalPages || 1)}
               className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
             >
               Sau

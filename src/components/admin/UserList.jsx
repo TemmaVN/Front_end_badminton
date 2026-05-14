@@ -185,7 +185,9 @@ const UserList = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await userApi.getAll(keyword);
+        const res = keyword
+          ? await userApi.search(keyword)
+          : await userApi.getAll(1, 1000);
         if (!cancelled) {
           const list = Array.isArray(res.data)
             ? res.data

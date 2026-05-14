@@ -129,8 +129,11 @@ const MainHeader = () => {
               <Link
                 to={`/${slug}`}
                 key={slug}
-                onClick={() => setPageCatagory(label)}
-                className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
+                onClick={() => {
+                  setPageCatagory(label);
+                  setPage(label);
+                }}
+                className={`pb-3 border-orange-500 hover:text-orange-500 hover:border-b-2 ${page === label ? 'text-orange-500 border-b-2' : ''}`}
                 onMouseEnter={() => {
                   setCurrentProduct(productCategories);
                   setIsProductHovered(true);

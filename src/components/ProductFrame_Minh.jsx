@@ -1,7 +1,6 @@
 import React from "react";
 import { Crown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useProduct } from "../contexts/ProductContext";
 
 function ProductPrice({ basePrice, sellingPrice }) {
   const parsePrice = (priceVal) => {
@@ -45,7 +44,6 @@ export default function ProductFrame_Minh({
   productDetailSlug,
   categorySlug,
 }) {
-  const { currentProduct, setCurrentProduct } = useProduct();
   return (
     // Bỏ w-full ở Link, thay bằng h-full để thẻ con trải dài hết chiều cao của ô Grid
     <Link 

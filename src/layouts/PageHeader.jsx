@@ -113,9 +113,9 @@ const PageHeader = () => {
         {!isHideMainHeader && <Button size='icon' onClick={() => setShowMenuBar(!showMenuBar)}>{showMenuBar? "Close":<MenuIcon/>}</Button>}
         {!isShowFullWidthSearch &&
         <div>
-          <a href="">
+          <Link to="/">
             <img src="https://static.fbshop.vn/wp-content/uploads/2026/01/cropped-logo-4.webp" alt="" className='w-12 h-12'/>
-          </a>
+          </Link>
         </div>}
         {isShowFullWidthSearch &&
           <Button size='icon' onClick={() => {setShowFullWidthSearch(false)}}>

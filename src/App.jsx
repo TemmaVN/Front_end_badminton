@@ -35,6 +35,7 @@ import MyOrders from "./layouts/MyOrders";
 import AdminProductDetail from "./components/admin/AdminProductDetail";
 import WarrantyManagement from "./components/admin/WarrantyManagement";
 import Statistics from "./components/admin/Statistics";
+import { OrderProvider } from "./contexts/OrderContext";
 
 
 const PublicRoute = ({ children }) => {
@@ -183,6 +184,7 @@ function App() {
       <UserProvider>
         <CategoryProvider>
           <CartProvider>
+            <OrderProvider>
             <WarrantyProvider>
               <div className="bg-white h-auto w-full">
                 {isHidePageHeader && <PageHeader />}
@@ -193,6 +195,7 @@ function App() {
                 <Footer />
               </div>
             </WarrantyProvider>
+            </OrderProvider>
           </CartProvider>
         </CategoryProvider>
       </UserProvider>

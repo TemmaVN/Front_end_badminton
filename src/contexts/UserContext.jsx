@@ -76,6 +76,7 @@ export const UserProvider = ({ children }) => {
         UpdateProfile,
         changePassword,
         getUserInfo,
+        getAllUsers,
         loading,
     };
 
