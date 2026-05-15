@@ -36,6 +36,7 @@ import AdminProductDetail from "./components/admin/AdminProductDetail";
 import WarrantyManagement from "./components/admin/WarrantyManagement";
 import Statistics from "./components/admin/Statistics";
 import { OrderProvider } from "./contexts/OrderContext";
+import { StatisticProvider } from "./contexts/StatisticContext";
 
 
 const PublicRoute = ({ children }) => {
@@ -185,16 +186,18 @@ function App() {
         <CategoryProvider>
           <CartProvider>
             <OrderProvider>
-            <WarrantyProvider>
-              <div className="bg-white h-auto w-full">
-                {isHidePageHeader && <PageHeader />}
-                {isHideMainHeader && <MainHeader />}
-                <ProductProvider>
-                  <AppRoutes />
-                </ProductProvider>
-                <Footer />
-              </div>
-            </WarrantyProvider>
+              <WarrantyProvider>
+                <StatisticProvider>
+                  <div className="bg-white h-auto w-full">
+                    {isHidePageHeader && <PageHeader />}
+                    {isHideMainHeader && <MainHeader />}
+                    <ProductProvider>
+                      <AppRoutes />
+                    </ProductProvider>
+                    <Footer />
+                  </div>
+                </StatisticProvider>
+              </WarrantyProvider>
             </OrderProvider>
           </CartProvider>
         </CategoryProvider>

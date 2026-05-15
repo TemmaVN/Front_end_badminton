@@ -182,7 +182,7 @@ const OrderList = () => {
                       )}
                     </td>
                     <td className="p-4 text-right font-bold text-slate-700">
-                      {order.totalAmount?.toLocaleString()}₫
+                      {order.finalAmount?.toLocaleString()}₫
                     </td>
                     <td className="p-4 text-center">
                       <span

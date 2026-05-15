@@ -270,18 +270,32 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
             <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
               Thanh toán
             </h3>
-            <SummaryRow
-              label="Phương thức"
-              value={order.paymentMethod}
-            />
-            <SummaryRow
-              label="Phí vận chuyển"
-              value={formatCurrency(order.shippingFee)}
-            />
+            <SummaryRow label="Phương thức" value={order.paymentMethod} />
+            <SummaryRow label="Tạm tính" value={formatCurrency(order.subTotal)} />
+            <SummaryRow label="Phí vận chuyển" value={formatCurrency(order.shippingFee)} />
+            {order.totalDiscount > 0 && (
+              <SummaryRow
+                label="Giảm giá voucher"
+                value={`− ${formatCurrency(order.totalDiscount)}`}
+                discount
+              />
+            )}
+            {order.appliedVouchers?.length > 0 && (
+              <div className="pt-1 space-y-1">
+                {order.appliedVouchers.map((v, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-emerald-600">
+                      <span className="px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded font-mono font-bold">{v.voucherCode}</span>
+                    </span>
+                    <span className="text-emerald-600 font-medium">− {formatCurrency(v.appliedDiscount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="border-t border-gray-200 pt-2 mt-2">
               <SummaryRow
                 label="Tổng cộng"
-                value={formatCurrency(order.totalAmount)}
+                value={formatCurrency(order.finalAmount)}
                 bold
               />
             </div>
@@ -314,14 +328,10 @@ const InfoBlock = ({ label, value, icon, className = "" }) => (
   </div>
 );
 
-const SummaryRow = ({ label, value, bold = false }) => (
+const SummaryRow = ({ label, value, bold = false, discount = false }) => (
   <div className="flex justify-between items-center">
-    <span className={`text-sm ${bold ? "font-bold text-gray-800" : "text-gray-500"}`}>
-      {label}
-    </span>
-    <span className={`text-sm ${bold ? "font-bold text-gray-900" : "text-gray-700"}`}>
-      {value}
-    </span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-800" : "text-gray-500"}`}>{label}</span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-900" : discount ? "text-emerald-600 font-medium" : "text-gray-700"}`}>{value}</span>
   </div>
 );
 
@@ -356,7 +366,7 @@ const OrderCard = ({ order, onClick }) => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-gray-900">
-            {formatCurrency(order.totalAmount)}
+            {formatCurrency(order.finalAmount)}
           </span>
           <span className="text-gray-300 group-hover:text-gray-500 transition-colors text-lg">›</span>
         </div>

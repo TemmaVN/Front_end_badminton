@@ -6,48 +6,31 @@ const STATUS_TIMELINE = [
   { id: 1, text: "Chờ xác nhận" },
   { id: 2, text: "Đã xác nhận" },
   { id: 3, text: "Đang xử lý" },
+  { id: 4, text: "Đang đan lưới" },
   { id: 5, text: "Đang giao hàng" },
   { id: 6, text: "Đã giao hàng" },
 ];
 
 const STATUS_INFO = {
-  1: { text: "Chờ xác nhận", badge: "bg-yellow-100 text-yellow-600" },
-  2: { text: "Đã xác nhận", badge: "bg-blue-100 text-blue-600" },
-  3: { text: "Đang xử lý", badge: "bg-orange-100 text-orange-600" },
-  5: { text: "Đang giao hàng", badge: "bg-purple-100 text-purple-600" },
-  6: { text: "Đã giao hàng", badge: "bg-green-100 text-green-600" },
-  7: { text: "Hoàn tất", badge: "bg-emerald-100 text-emerald-600" },
-  8: { text: "Đã huỷ", badge: "bg-red-100 text-red-600" },
+  1: { text: "Chờ xác nhận",  badge: "bg-yellow-100 text-yellow-600" },
+  2: { text: "Đã xác nhận",   badge: "bg-blue-100 text-blue-600" },
+  3: { text: "Đang xử lý",    badge: "bg-orange-100 text-orange-600" },
+  4: { text: "Đang đan lưới", badge: "bg-fuchsia-100 text-fuchsia-600" },
+  5: { text: "Đang giao hàng",badge: "bg-purple-100 text-purple-600" },
+  6: { text: "Đã giao hàng",  badge: "bg-green-100 text-green-600" },
+  7: { text: "Hoàn tất",      badge: "bg-emerald-100 text-emerald-600" },
+  8: { text: "Đã huỷ",        badge: "bg-red-100 text-red-600" },
 };
 
 const CANCEL_STATUS_ID = 8;
 
 const NEXT_ACTIONS = {
-  1: {
-    nextStatusId: 2,
-    label: "Xác nhận đơn hàng",
-    btnClass: "bg-blue-500 hover:bg-blue-600 text-white",
-  },
-  2: {
-    nextStatusId: 3,
-    label: "Bắt đầu xử lý",
-    btnClass: "bg-orange-500 hover:bg-orange-600 text-white",
-  },
-  3: {
-    nextStatusId: 5,
-    label: "Bàn giao vận chuyển",
-    btnClass: "bg-purple-500 hover:bg-purple-600 text-white",
-  },
-  5: {
-    nextStatusId: 6,
-    label: "Xác nhận đã giao",
-    btnClass: "bg-green-500 hover:bg-green-600 text-white",
-  },
-  6: {
-    nextStatusId: 7,
-    label: "Hoàn thành đơn",
-    btnClass: "bg-emerald-500 hover:bg-emerald-600 text-white",
-  },
+  1: { nextStatusId: 2, label: "Xác nhận đơn hàng",      btnClass: "bg-blue-500 hover:bg-blue-600 text-white" },
+  2: { nextStatusId: 3, label: "Bắt đầu xử lý",           btnClass: "bg-orange-500 hover:bg-orange-600 text-white" },
+  3: { nextStatusId: 5, label: "Bàn giao vận chuyển",     btnClass: "bg-purple-500 hover:bg-purple-600 text-white" },
+  4: { nextStatusId: 5, label: "Đan xong, bàn giao giao hàng", btnClass: "bg-purple-500 hover:bg-purple-600 text-white" },
+  5: { nextStatusId: 6, label: "Xác nhận đã giao",        btnClass: "bg-green-500 hover:bg-green-600 text-white" },
+  6: { nextStatusId: 7, label: "Hoàn thành đơn",          btnClass: "bg-emerald-500 hover:bg-emerald-600 text-white" },
 };
 
 const OrderDetail = ({ order, onClose, onUpdate }) => {
@@ -77,7 +60,8 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
 
   const isCancelled = currentStatusId === CANCEL_STATUS_ID;
   const isCompleted = currentStatusId === 7;
-  const canCancel = !isCancelled && currentStatusId <= 3;
+  // Per state machine: cancel allowed from 1,2,3,5 (not 4=đan lưới, not 6,7,8)
+  const canCancel = !isCancelled && !isCompleted && [1, 2, 3, 5].includes(currentStatusId);
 
   const handleUpdateStatus = async (newStatusId) => {
     const confirmationText =
@@ -181,16 +165,12 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
                   }
                 } else if (isPassed) {
                   textClass = "text-gray-800 font-medium";
-                  if (status.id === 1)
-                    circleClass = "bg-yellow-500 border-yellow-500 text-white";
-                  if (status.id === 2)
-                    circleClass = "bg-blue-500 border-blue-500 text-white";
-                  if (status.id === 3)
-                    circleClass = "bg-orange-500 border-orange-500 text-white";
-                  if (status.id === 5)
-                    circleClass = "bg-purple-500 border-purple-500 text-white";
-                  if (status.id === 6)
-                    circleClass = "bg-green-500 border-green-500 text-white";
+                  if (status.id === 1) circleClass = "bg-yellow-500 border-yellow-500 text-white";
+                  if (status.id === 2) circleClass = "bg-blue-500 border-blue-500 text-white";
+                  if (status.id === 3) circleClass = "bg-orange-500 border-orange-500 text-white";
+                  if (status.id === 4) circleClass = "bg-fuchsia-500 border-fuchsia-500 text-white";
+                  if (status.id === 5) circleClass = "bg-purple-500 border-purple-500 text-white";
+                  if (status.id === 6) circleClass = "bg-green-500 border-green-500 text-white";
                 }
 
                 return (
@@ -258,23 +238,43 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
               <h3 className="text-sm font-semibold text-gray-700 mb-4">
                 Thông tin thanh toán
               </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between">
                   <span className="text-gray-500">Phương thức</span>
-                  <span className="font-semibold text-gray-900">
-                    {localOrder.paymentMethod}
-                  </span>
+                  <span className="font-semibold text-gray-900">{localOrder.paymentMethod}</span>
                 </div>
-                <div className="flex justify-between text-sm items-center">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tạm tính</span>
+                  <span className="text-gray-700">{(localOrder.subTotal ?? 0).toLocaleString()} đ</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Phí vận chuyển</span>
+                  <span className="text-gray-700">{(localOrder.shippingFee ?? 0).toLocaleString()} đ</span>
+                </div>
+                {(localOrder.totalDiscount ?? 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Giảm giá</span>
+                    <span className="text-emerald-600 font-medium">− {localOrder.totalDiscount.toLocaleString()} đ</span>
+                  </div>
+                )}
+                {localOrder.appliedVouchers?.length > 0 && (
+                  <div className="pl-2 space-y-1 border-l-2 border-emerald-200">
+                    {localOrder.appliedVouchers.map((v, i) => (
+                      <div key={i} className="flex justify-between text-xs">
+                        <span className="font-mono bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 font-bold">{v.voucherCode}</span>
+                        <span className="text-emerald-600">− {v.appliedDiscount.toLocaleString()} đ</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
                   <span className="text-gray-500">Trạng thái TT</span>
-                  <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-semibold">
-                    Chưa thanh toán
-                  </span>
+                  <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-semibold">Chưa thanh toán</span>
                 </div>
-                <div className="pt-3 mt-3 border-t border-gray-100 flex justify-between items-center">
+                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between items-center">
                   <span className="font-bold text-gray-800">Tổng tiền</span>
                   <span className="text-xl font-bold text-emerald-600">
-                    {localOrder.totalAmount.toLocaleString()} đ
+                    {(localOrder.finalAmount ?? 0).toLocaleString()} đ
                   </span>
                 </div>
               </div>

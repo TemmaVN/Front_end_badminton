@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -7,8 +7,8 @@ import {
   TrendingUp, TrendingDown, Package, ShoppingCart, Users,
   Wallet, Award, Layers, Download, Tag,
 } from 'lucide-react';
+import {useStatistic} from "../../contexts/StatisticContext";
 
-// ─── Mock Data ────────────────────────────────────────────────────────
 const monthly2025 = [
   { thang: "T1",  doanhThu: 42, chiPhi: 28, loiNhuan: 14, donHang: 187 },
   { thang: "T2",  doanhThu: 38, chiPhi: 26, loiNhuan: 12, donHang: 163 },
@@ -123,11 +123,28 @@ function Card({ children, className = "" }) {
 
 // ─── Revenue Tab ──────────────────────────────────────────────────────
 function RevenueTab({ period }) {
-  const data = period === '2025' ? monthly2025 : monthly2024;
-  const totalDT  = data.reduce((s, d) => s + d.doanhThu,  0);
-  const totalCP  = data.reduce((s, d) => s + d.chiPhi,    0);
-  const totalLN  = data.reduce((s, d) => s + d.loiNhuan,  0);
-  const totalDH  = data.reduce((s, d) => s + d.donHang,   0);
+  const { revenueByMonth } = useStatistic();
+
+  const data = useMemo(() => {
+    const sample = period === '2025' ? monthly2025 : monthly2024;
+    if (revenueByMonth && period === '2025') {
+      return sample.map((d, i) => {
+        const real = revenueByMonth.find((r) => r.month === i + 1);
+        if (!real) return d;
+        return {
+          ...d,
+          doanhThu: real.totalRevenue / 1_000_000,
+          donHang:  real.totalOrders,
+        };
+      });
+    }
+    return sample;
+  }, [period, revenueByMonth]);
+
+  const totalDT = data.reduce((s, d) => s + d.doanhThu, 0);
+  const totalCP = data.reduce((s, d) => s + d.chiPhi,   0);
+  const totalLN = data.reduce((s, d) => s + d.loiNhuan, 0);
+  const totalDH = data.reduce((s, d) => s + d.donHang,  0);
 
   return (
     <div className="space-y-6">

@@ -83,6 +83,9 @@ export const productApi = {
     getForAdmin: (params = {}) =>
         api.get('/Product/product-management', { params }),
 
+    getTopProducts: (params = {}) => 
+        api.get('/Statistics/products/top', {params}),
+
     create: (data) =>
         api.post('/Product', data),
 
@@ -180,5 +183,20 @@ export const warrantyApi = {
     delete: (warrantyId) => api.delete(`/Warranty/${warrantyId}`),
 };
 
+export const statisticApi = {
+    getOverview: (params = {}) => api.get('/admin/statistic/overview', { params }),
+    getRevenueByCategoy: (params = {}) => api.get('/admin/statistic/revenue/category', {params}),
+    getRevenueByBrand: (params = {}) => api.get('/admin/statistic/revenue/brand', {params}),
+    getRevenueByMonth: (params = {}) => api.get('/admin/statistic/revenue/monthly', {params}),
+    getRevenueCategoryByMonth: (params = {}) => api.get('/admin/statistic/revenue/category-monthly', {params}),
+    getFullReport: (params = {}) => api.get('/admin/statistic/full-report', {params}),
+}
+
+export const voucherApi = {
+    getAvailableVouchers: () => api.get('/Voucher/my-vouchers'),
+}
+
 export default api;
+
+
 

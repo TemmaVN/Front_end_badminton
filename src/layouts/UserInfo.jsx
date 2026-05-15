@@ -1,10 +1,11 @@
-import { LockKeyhole, PackageMinus, User2, UserCircleIcon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { LockKeyhole, PackageMinus, Tag, User2 } from 'lucide-react'
+import { useState } from 'react'
 import Button from '../components/Button'
 import { useMediaQuery } from '../mystate/useMediaQuery'
 import Information from '../components/Information'
 import ChangePass from '../components/ChangePass'
 import MyOrders from './MyOrders'
+import MyVoucher from './MyVoucher'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -37,17 +38,22 @@ const UserInfo = () => {
                     onClick={() => setPage('changePass')} 
                     className={`flex gap-2 justify-center hover:bg-orange-light ${page === 'changePass' ? 'bg-orange-light font-bold' : ''} rounded-full`}
                     ><LockKeyhole/> Thay đổi mật khẩu</Button>
-                    {!isAdmin() && 
-                    <Button 
-                    onClick={() => setPage('orders')} 
+                    {!isAdmin() && <>
+                    <Button
+                    onClick={() => setPage('orders')}
                     className={`flex gap-2 justify-center hover:bg-orange-light ${page === 'orders' ? 'bg-orange-light font-bold' : ''} rounded-full`}
                     ><PackageMinus/> Lịch sử đơn hàng</Button>
-                    }
+                    <Button
+                    onClick={() => setPage('voucher')}
+                    className={`flex gap-2 justify-center hover:bg-orange-light ${page === 'voucher' ? 'bg-orange-light font-bold' : ''} rounded-full`}
+                    ><Tag/> Voucher của tôi</Button>
+                    </>}
                 </div>
             </div>
             {page === 'info' && <Information/>}
             {page === 'changePass' && <ChangePass/>}
             {page === 'orders' && <MyOrders/>}
+            {page === 'voucher' && <MyVoucher/>}
         </div>
     </div>
   )

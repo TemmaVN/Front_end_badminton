@@ -150,7 +150,7 @@ sequenceDiagram
 ```mermaid
 mindmap
   root((Badminton Shop))
-    Người 1 - Minh
+    Người 1 - Nguyen
       UI/UX & Customer Pages
         HomePage
         Product Listing
@@ -158,7 +158,7 @@ mindmap
         Navigation Header
         Footer
         Responsive Design
-    Người 2 - Nguyên
+    Người 2 - Tram
       Auth & User Account
         Login Page
         Register Page
@@ -167,7 +167,7 @@ mindmap
         Cart Drawer
         CartPage Checkout
         MyOrders
-    Người 3 - Temmavn
+    Người 3 - Minh
       Admin Panel & Backend
         Admin Dashboard
         Product CRUD
