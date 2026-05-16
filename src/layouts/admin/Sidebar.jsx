@@ -41,6 +41,7 @@ const menuItems = [
       { id: "don-hang",  label: "Đơn hàng",  path: "orders"   },
       { id: "bao-hanh",  label: "Bảo hành",  path: "warranty", icon: ShieldCheck },
       { id: "thanh-toan", label: "Thanh toán", path: "payment" },
+      { id: "voucher", label: "Voucher", path: "vouchers" },
     ],
   },
   {
@@ -69,7 +70,7 @@ const menuItems = [
 
 const Sidebar = ({ sideBarCollapsed, onToggleSidebar, isMobile = false, onClose }) => {
   const user = JSON.parse(localStorage.getItem('user'));
-  const [fullName, setFullName] = useState(user.fullName);
+  const [fullName, setFullName] = useState('');
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();

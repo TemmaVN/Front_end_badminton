@@ -15,7 +15,7 @@ const STATUSES = {
 };
 
 const OrderList = () => {
-  const { orders, loading, pagination: ctxPagination, fetchAllOrders, fetchByStatus, searchOrders } = useOrder();
+  const { orders, loading, pagination: ctxPagination, fetchAllOrders, fetchByStatus } = useOrder();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
@@ -23,12 +23,19 @@ const OrderList = () => {
   const fetchOrders = useCallback(() => {
     if (filters.status) {
       fetchByStatus(filters.status, page, PAGE_SIZE);
-    } else if (filters.keyword) {
-      searchOrders({ keyword: filters.keyword, page, pageSize: PAGE_SIZE });
     } else {
       fetchAllOrders(page, PAGE_SIZE);
     }
-  }, [page, filters, fetchAllOrders, fetchByStatus, searchOrders]);
+  }, [page, filters.status, fetchAllOrders, fetchByStatus]);
+
+  const displayedOrders = filters.keyword.trim()
+    ? orders.filter(
+        (o) =>
+          o.receiverName?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+          o.phoneNumber?.includes(filters.keyword) ||
+          String(o.orderId).includes(filters.keyword)
+      )
+    : orders;
 
   useEffect(() => {
     fetchOrders();
@@ -125,7 +132,7 @@ const OrderList = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {orders.map((order) => {
+              {displayedOrders.map((order) => {
                 const firstProduct =
                   order.orderDetails?.[0]?.productName || "N/A";
                 const totalProducts = order.orderDetails?.length || 0;

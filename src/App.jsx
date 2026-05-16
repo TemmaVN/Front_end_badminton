@@ -35,6 +35,7 @@ import MyOrders from "./layouts/MyOrders";
 import AdminProductDetail from "./components/admin/AdminProductDetail";
 import WarrantyManagement from "./components/admin/WarrantyManagement";
 import Statistics from "./components/admin/Statistics";
+import VoucherManagement from "./components/admin/VoucherManagement";
 import { OrderProvider } from "./contexts/OrderContext";
 import { StatisticProvider } from "./contexts/StatisticContext";
 
@@ -159,6 +160,7 @@ function AppRoutes() {
         <Route path="admin-info" element={<UserInfo />} />
         <Route path="warranty" element={<WarrantyManagement />} />
         <Route path="statistics" element={<Statistics />} />
+        <Route path="vouchers" element={<VoucherManagement />} />
       </Route>
 
       <Route
