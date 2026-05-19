@@ -34,8 +34,7 @@ const CartPage = () => {
       .then(res => setVouchers(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
   }, []);
-
-  // Client-side discount preview (authoritative calc is server-side)
+  console.log(vouchers)
   const calcDiscount = (voucher, base) => {
     if (base < voucher.minOrderValue) return 0;
     if (voucher.isPercent) {
@@ -307,7 +306,7 @@ const CartPage = () => {
              </div>
 
              {/* ── Voucher selector ── */}
-             {vouchers.length > 0 && (
+             {(vouchers.length > 0 && step === 2)  && (
                <div className="mt-5 border border-dashed border-orange-200 rounded-2xl overflow-hidden">
                  <button
                    onClick={() => setVoucherOpen(o => !o)}

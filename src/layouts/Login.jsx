@@ -77,7 +77,7 @@ const Login = () => {
               <a href="" className='text-orange-default hover:text-orange-900 pt-3'>Quên mật khẩu</a>
             </div>
             <div className='w-full flex justify-center'>
-              <FlashButton
+            <FlashButton
               disabled={loading}
               type='submit'
               onClick={handleSubmit}
