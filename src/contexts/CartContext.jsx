@@ -41,7 +41,6 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log(detailId, quantity);
       const res = await cartApi.addToCart(detailId, quantity);
       setCart(extractItems(res.data));
       return res.data;

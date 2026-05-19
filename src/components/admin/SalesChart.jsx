@@ -1,12 +1,13 @@
-import { div, i } from "framer-motion/client";
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const data = [
-  { name: "Điện tử", value: 45, color: "#3b82f6" },
-  { name: "Thời trang", value: 30, color: "#8b5cf6" },
-  { name: "Sách", value: 15, color: "#10b981" },
-  { name: "Khác", value: 10, color: "#f59e0b" },
+  { name: "Vợt cầu lông",  value: 42, color: "#fb923c" },
+  { name: "Cầu lông",      value: 22, color: "#3b82f6" },
+  { name: "Giày cầu lông", value: 18, color: "#10b981" },
+  { name: "Túi & Balo",    value:  8, color: "#8b5cf6" },
+  { name: "Phụ kiện",      value:  7, color: "#f59e0b" },
+  { name: "Quần áo",       value:  3, color: "#ef4444" },
 ];
 
 function SalesChart() {
@@ -17,7 +18,7 @@ function SalesChart() {
           Doanh thu theo danh mục
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Phân bổ sản phẩm
+          Phân bổ doanh thu năm 2025
         </p>
       </div>
       <div className="h-48">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { orderApi } from "../api";
+import WarrantyFormModal from "../components/WarrantyFormModal";
+import { useWarranty } from "../contexts/WarrantyContext";
 import { label } from "framer-motion/client";
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
@@ -102,9 +104,17 @@ const StatusBadge = ({ status }) => {
 };
 
 // ─── ORDER DETAIL PANEL ───────────────────────────────────────────────────────
-const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
+const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) => {
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
+  const canWarranty = order.status === "Hoàn tất";
+  const { isClaimedOrderDetail } = useWarranty();
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleExpand = (id) =>
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -159,35 +169,100 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
           {/* Products */}
           <div>
             <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wider">
-              Sản phẩm
+              Sản phẩm 
             </h3>
             <div className="space-y-2">
-              {order.orderDetails.map((od) => (
-                <div
-                  key={od.orderDetailId}
-                  className="flex items-start gap-3 bg-gray-50 rounded-xl p-3"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
-                    {od.isStringingService ? "🏸" : "📦"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {od.productName || "Sản phẩm"}
-                    </p>
-                    {od.isStringingService && (
-                      <p className="text-xs text-fuchsia-600 mt-0.5">
-                        Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+              {order.orderDetails.map((od) => {
+                const isClaimed = isClaimedOrderDetail(od.orderDetailId);
+                const hasSerials = !od.isStringingService && od.serialNumbers?.length > 0;
+                const isExpanded = expandedIds.includes(od.orderDetailId);
+
+                return (
+                  <div key={od.orderDetailId} className="bg-gray-50 rounded-xl overflow-hidden">
+                    {/* ── Dòng sản phẩm ── */}
+                    <div
+                      className={`flex items-start gap-3 p-3 ${hasSerials ? "cursor-pointer hover:bg-gray-100 transition-colors" : ""}`}
+                      onClick={() => hasSerials && toggleExpand(od.orderDetailId)}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
+                        {od.isStringingService ? "🏸" : "📦"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {od.productName || "Sản phẩm"}
+                        </p>
+                        {od.isStringingService && (
+                          <p className="text-xs text-fuchsia-600 mt-0.5">
+                            Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          SL: {od.quantity} × {formatCurrency(od.unitPrice)}
+                        </p>
+                        {hasSerials && (
+                          <p className="text-xs text-blue-500 mt-1 font-medium">
+                            {isExpanded ? "▲ Ẩn số seri" : `▼ Xem ${od.serialNumbers.length} số seri`}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 shrink-0">
+                        {formatCurrency(od.quantity * od.unitPrice)}
                       </p>
+                    </div>
+
+                    {/* ── Panel seri (expand) ── */}
+                    {hasSerials && isExpanded && (
+                      <div className="border-t border-gray-200 px-3 pb-3 pt-2 space-y-3 bg-white">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Số seri sản phẩm
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {od.serialNumbers.map((sn, idx) => (
+                            <div key={sn} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                              <span className="text-xs text-gray-400 shrink-0">#{idx + 1}</span>
+                              <span className="text-xs font-mono font-semibold text-gray-800 tracking-wider truncate">{sn}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Nút bảo hành - chỉ hiện khi đơn Hoàn tất */}
+                        {canWarranty && (
+                          isClaimed ? (
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                              <span>✅</span> Đã gửi yêu cầu bảo hành
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onWarranty(order, od, od.serialNumbers ?? []); }}
+                              className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                            >
+                              🔧 Yêu cầu bảo hành
+                            </button>
+                          )
+                        )}
+                      </div>
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      SL: {od.quantity} × {formatCurrency(od.unitPrice)}
-                    </p>
+
+                    {/* Warranty cho đơn hoàn tất không có seri */}
+                    {canWarranty && !od.isStringingService && !hasSerials && (
+                      <div className="px-3 pb-3">
+                        {isClaimed ? (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-1">
+                            <span>✅</span> Đã gửi yêu cầu bảo hành
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => onWarranty(order, od, [])}
+                            className="w-full py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            🔧 Yêu cầu bảo hành
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 shrink-0">
-                    {formatCurrency(od.quantity * od.unitPrice)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -196,18 +271,32 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
             <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
               Thanh toán
             </h3>
-            <SummaryRow
-              label="Phương thức"
-              value={order.paymentMethod}
-            />
-            <SummaryRow
-              label="Phí vận chuyển"
-              value={formatCurrency(order.shippingFee)}
-            />
+            <SummaryRow label="Phương thức" value={order.paymentMethod} />
+            <SummaryRow label="Tạm tính" value={formatCurrency(order.subTotal)} />
+            <SummaryRow label="Phí vận chuyển" value={formatCurrency(order.shippingFee)} />
+            {order.totalDiscount > 0 && (
+              <SummaryRow
+                label="Giảm giá voucher"
+                value={`− ${formatCurrency(order.totalDiscount)}`}
+                discount
+              />
+            )}
+            {order.appliedVouchers?.length > 0 && (
+              <div className="pt-1 space-y-1">
+                {order.appliedVouchers.map((v, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-emerald-600">
+                      <span className="px-1.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded font-mono font-bold">{v.voucherCode}</span>
+                    </span>
+                    <span className="text-emerald-600 font-medium">− {formatCurrency(v.appliedDiscount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="border-t border-gray-200 pt-2 mt-2">
               <SummaryRow
                 label="Tổng cộng"
-                value={formatCurrency(order.totalAmount)}
+                value={formatCurrency(order.finalAmount)}
                 bold
               />
             </div>
@@ -240,14 +329,10 @@ const InfoBlock = ({ label, value, icon, className = "" }) => (
   </div>
 );
 
-const SummaryRow = ({ label, value, bold = false }) => (
+const SummaryRow = ({ label, value, bold = false, discount = false }) => (
   <div className="flex justify-between items-center">
-    <span className={`text-sm ${bold ? "font-bold text-gray-800" : "text-gray-500"}`}>
-      {label}
-    </span>
-    <span className={`text-sm ${bold ? "font-bold text-gray-900" : "text-gray-700"}`}>
-      {value}
-    </span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-800" : "text-gray-500"}`}>{label}</span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-900" : discount ? "text-emerald-600 font-medium" : "text-gray-700"}`}>{value}</span>
   </div>
 );
 
@@ -282,7 +367,7 @@ const OrderCard = ({ order, onClick }) => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-gray-900">
-            {formatCurrency(order.totalAmount)}
+            {formatCurrency(order.finalAmount)}
           </span>
           <span className="text-gray-300 group-hover:text-gray-500 transition-colors text-lg">›</span>
         </div>
@@ -295,6 +380,8 @@ const OrderCard = ({ order, onClick }) => {
 const FILTER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "⏳ Chờ xác nhận", value: "Chờ xác nhận" },
+  { label: "✅ Đã xác nhận", value: "Đã xác nhận" },
+  { label: "🏸 Đang đan lưới", value: "Đang đan lưới" },
   { label: "📦 Đang xử lý", value: "Đang xử lý"},
   { label: "🚚 Đang giao", value: "Đang giao hàng" },
   { label: "🎉 Hoàn tất", value: "Hoàn tất" },
@@ -328,18 +415,21 @@ const MyOrders = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [warrantyTarget, setWarrantyTarget] = useState(null);
+
+  const { fetchMyWarranties } = useWarranty();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user?.id || user?.userId || user?.Id;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await orderApi.getMyOrders();
-      // API GET /api/Order/my-orders returns array directly
       const data = response.data;
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Không thể tải đơn hàng. Vui lòng thử lại.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -347,7 +437,8 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    fetchMyWarranties();
+  }, [fetchOrders, fetchMyWarranties]);
 
   const handleCancel = async (orderId) => {
     setCancelling(true);
@@ -382,7 +473,7 @@ const MyOrders = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/70">
+    <div className="w-full h-full bg-gray-50/70">
       {/* ── Inline styles for animations ── */}
       <style>{`
         @keyframes slide-up {
@@ -397,7 +488,7 @@ const MyOrders = () => {
         .animate-fade-in { animation: fade-in 0.3s ease both; }
       `}</style>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-full mx-auto px-4 py-8">
         {/* ── Page header ── */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Đơn hàng của tôi</h1>
@@ -488,6 +579,21 @@ const MyOrders = () => {
           onClose={() => setSelectedOrder(null)}
           onCancel={handleCancel}
           cancelling={cancelling}
+          onWarranty={(order, od, serial) => setWarrantyTarget({ order, orderDetail: od, serial })}
+        />
+      )}
+
+      {/* ── Warranty form modal ── */}
+      {warrantyTarget && (
+        <WarrantyFormModal
+          order={warrantyTarget.order}
+          orderDetail={warrantyTarget.orderDetail}
+          serialNumbers={warrantyTarget.serial}
+          userId={userId}
+          onClose={() => setWarrantyTarget(null)}
+          onSuccess={() => {
+            fetchMyWarranties();
+          }}
         />
       )}
     </div>

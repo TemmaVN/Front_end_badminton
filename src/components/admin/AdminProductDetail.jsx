@@ -1,609 +1,831 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronDown, Edit2, Trash2, Plus, Hash, Loader2, X, Save, AlertCircle } from 'lucide-react';
-import { useProduct } from '../../contexts/ProductContext';
-import { useParams } from 'react-router-dom';
+import { Plus, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { productApi, metaDataApi } from '../../api';
 
-const DEFAULT_VARIANT_FORM = {
-  weightClass: '', gripSize: '', balancePoint: '', stiffness: '',
-  maxTension: '', price: '',
-  serials: [{ serialNumber: '', stockQuantity: 1 }],
+const STATUS = {
+    0: { label: 'Còn hàng',  cls: 'bg-emerald-50 text-emerald-700 border-emerald-100', dot: 'bg-emerald-500' },
+    1: { label: 'Đã bán',    cls: 'bg-gray-100   text-gray-500   border-gray-200',     dot: 'bg-gray-400'    },
+    2: { label: 'Lỗi/Hỏng', cls: 'bg-rose-50    text-rose-700   border-rose-100',     dot: 'bg-rose-500'    },
+    3: { label: 'Đã đặt',   cls: 'bg-orange-50  text-orange-700 border-orange-100',   dot: 'bg-orange-500'  },
 };
-const DEFAULT_SERIAL_FORM = { serialNumber: '', price: '', stockQuantity: 1 };
+
+const SERIAL_TABS = [
+    { key: 'all', label: 'Tất cả'   },
+    { key: '0',   label: 'Còn hàng' },
+    { key: '1',   label: 'Đã bán'   },
+    { key: '2',   label: 'Lỗi/Hỏng'},
+    { key: '3',   label: 'Đã đặt'  },
+];
+
+// Backend nhận Status dạng string
+const STATUS_STRING = { 0: 'InStock', 1: 'Sold', 2: 'Defective', 3: 'Reserved' };
+const STATUS_COUNT_KEY = { 0: 'inStockCount', 1: 'soldCount', 2: 'defectiveCount', 3: 'reservedCount' };
+
+const FORM_FIELDS = [
+    { label: 'Hạng trọng lượng', metaKey: 'weightClassess', formKey: 'weightClass'  },
+    { label: 'Cỡ cán / Size',    metaKey: 'gripSizes',      formKey: 'gripSize'     },
+    { label: 'Điểm cân bằng',    metaKey: 'balancePoints',  formKey: 'balancePoint' },
+    { label: 'Độ cứng',          metaKey: 'stiffness',      formKey: 'stiffness'    },
+];
+
+const EMPTY_FORM = {
+    weightClass: '', gripSize: '', balancePoint: '', stiffness: '',
+    maxTension: '', price: '', stockQuantity: 10,
+};
 
 const AdminProductDetail = () => {
-  const { productSlug } = useParams();
-  const { getProductDetaildBySlug, addProductDetails } = useProduct();
+    const { productId } = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const product = location.state?.product ?? null;
 
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [expandedItems, setExpandedItems] = useState(new Set());
+    const [variants, setVariants] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
 
-  // Modal state
-  const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
-  const [isSerialModalOpen, setIsSerialModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [targetVariant, setTargetVariant] = useState(null);
-  const [editingGroup, setEditingGroup] = useState(null);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [modalError, setModalError] = useState(null);
+    const [metaData, setMetaData] = useState(null);
+    const [metaLoading, setMetaLoading] = useState(true);
 
-  const [variantForm, setVariantForm] = useState(DEFAULT_VARIANT_FORM);
-  const [serialForm, setSerialForm] = useState(DEFAULT_SERIAL_FORM);
-  const [editForm, setEditForm] = useState({
-    weightClass: '', gripSize: '', balancePoint: '', stiffness: '', maxTension: '', price: '',
-  });
+    // Add variant modal
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newVariantForm, setNewVariantForm] = useState(EMPTY_FORM);
+    const [addLoading, setAddLoading] = useState(false);
+    const [addError, setAddError] = useState(null);
 
-  const loadProduct = async () => {
-    setLoading(true);
-    try {
-      const result = await getProductDetaildBySlug(productSlug);
-      if (result) setProduct(result);
-    } catch (err) {
-      console.error('Failed to load product:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Inline serial expansion
+    const [expandedId, setExpandedId] = useState(null);
+    const [serialsMap, setSerialsMap] = useState({});
+    const [serialsLoadingId, setSerialsLoadingId] = useState(null);
 
-  useEffect(() => {
-    loadProduct();
-  }, [productSlug]);
+    // Add serial inline: { detailId, value, loading, error } | null
+    const [addSerialState, setAddSerialState] = useState(null);
 
-  // Group flat variants list by specs combination
-  const groupedVariants = useMemo(() => {
-    if (!product?.variants?.length) return [];
-    const map = new Map();
-    product.variants.forEach((v) => {
-      const key = `${v.weightClass ?? ''}|${v.gripSize ?? ''}|${v.balancePoint ?? ''}|${v.stiffness ?? ''}|${v.maxTension ?? ''}`;
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
-          weightClass: v.weightClass,
-          gripSize: v.gripSize,
-          balancePoint: v.balancePoint,
-          stiffness: v.stiffness,
-          maxTension: v.maxTension,
-          price: v.price,
-          serials: [],
-        });
-      }
-      map.get(key).serials.push(v);
-    });
-    return Array.from(map.values());
-  }, [product?.variants]);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const toggleExpanded = (key) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
+    // Serial management modal (# SNs badge click)
+    const [serialModal, setSerialModal] = useState({ open: false, variant: null });
+    const [serialTab, setSerialTab] = useState('all');
+    const [serialSearch, setSerialSearch] = useState('');
+    const [addSerialModal, setAddSerialModal] = useState(null);
 
-  const handleAddVariant = async (e) => {
-    e.preventDefault();
-    setModalError(null);
-    const dupes = variantForm.serials.map((s) => s.serialNumber.trim()).filter(Boolean);
-    if (new Set(dupes).size !== dupes.length) {
-      setModalError('Số seri trong danh sách bị trùng nhau.');
-      return;
-    }
-    setModalLoading(true);
-    const result = await addProductDetails(product.productId, {
-      productDetailRequests: variantForm.serials.map((s) => ({
-        serialNumber:  s.serialNumber.trim(),
-        weightClass:   variantForm.weightClass.trim()  || null,
-        gripSize:      variantForm.gripSize.trim()      || null,
-        balancePoint:  variantForm.balancePoint.trim()  || null,
-        stiffness:     variantForm.stiffness.trim()     || null,
-        maxTension:    variantForm.maxTension ? parseInt(variantForm.maxTension) : null,
-        price:         parseFloat(variantForm.price),
-        stockQuantity: parseInt(s.stockQuantity) || 1,
-      })),
-    });
-    setModalLoading(false);
-    if (result) {
-      setIsVariantModalOpen(false);
-      setVariantForm(DEFAULT_VARIANT_FORM);
-      await loadProduct();
-    } else {
-      setModalError('Thêm thất bại. Kiểm tra lại số seri (có thể đã tồn tại).');
-    }
-  };
+    const loadVariants = async () => {
+        setLoading(true);
+        setLoadError(null);
+        try {
+            const res = await productApi.getVariants(productId, { page: 1, pagesize: 100 });
+            const items = res.data?.items ?? [];
+            setVariants(items);
+        } catch (error) {
+            const status = error?.response?.status;
+            if (status === 404) {
+                setLoadError('Chưa có biến thể cho sản phẩm này');
+            } else {
+                setLoadError('Không thể tải danh sách biến thể');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const openEditModal = (group) => {
-    setEditingGroup(group);
-    setEditForm({
-      weightClass:  group.weightClass  ?? '',
-      gripSize:     group.gripSize     ?? '',
-      balancePoint: group.balancePoint ?? '',
-      stiffness:    group.stiffness    ?? '',
-      maxTension:   group.maxTension   ?? '',
-      price:        group.price        ?? '',
-    });
-    setModalError(null);
-    setIsEditModalOpen(true);
-  };
+    useEffect(() => {
+        if (productId) loadVariants();
+    }, [productId]);
 
-  const handleAddSerial = async (e) => {
-    e.preventDefault();
-    setModalError(null);
-    setModalLoading(true);
-    const result = await addProductDetails(product.productId, {
-      productDetailRequests: [{
-        serialNumber:  serialForm.serialNumber.trim(),
-        weightClass:   targetVariant.weightClass,
-        gripSize:      targetVariant.gripSize,
-        balancePoint:  targetVariant.balancePoint,
-        stiffness:     targetVariant.stiffness,
-        maxTension:    targetVariant.maxTension,
-        price:         serialForm.price ? parseFloat(serialForm.price) : targetVariant.price,
-        stockQuantity: parseInt(serialForm.stockQuantity) || 1,
-      }],
-    });
-    setModalLoading(false);
-    if (result) {
-      setIsSerialModalOpen(false);
-      setSerialForm(DEFAULT_SERIAL_FORM);
-      setTargetVariant(null);
-      await loadProduct();
-    } else {
-      setModalError('Thêm thất bại. Số seri có thể đã tồn tại.');
-    }
-  };
+    useEffect(() => {
+        const load = async () => {
+            setMetaLoading(true);
+            try {
+                const res = await metaDataApi.get();
+                setMetaData(res.data?.data ?? res.data ?? null);
+            } catch { } finally {
+                setMetaLoading(false);
+            }
+        };
+        load();
+    }, []);
 
-  const openSerialModal = (variant) => {
-    setTargetVariant(variant);
-    setSerialForm({ serialNumber: '', price: variant.price?.toString() ?? '', stockQuantity: 1 });
-    setModalError(null);
-    setIsSerialModalOpen(true);
-  };
+    const ensureSerials = async (detailId) => {
+        if (serialsMap[detailId] !== undefined) return;
+        setSerialsLoadingId(detailId);
+        try {
+            const res = await productApi.getSerials(detailId, { page: 1, pageSize: 200 });
+            setSerialsMap((prev) => ({ ...prev, [detailId]: res.data?.data ?? null }));
+        } catch {
+            setSerialsMap((prev) => ({ ...prev, [detailId]: null }));
+        } finally {
+            setSerialsLoadingId(null);
+        }
+    };
 
-  const formatPrice = (price) =>
-    price != null ? Number(price).toLocaleString('vi-VN') + ' ₫' : '—';
+    const toggleExpand = async (detailId) => {
+        if (expandedId === detailId) {
+            setExpandedId(null);
+            setAddSerialState(null);
+            return;
+        }
+        setExpandedId(detailId);
+        setAddSerialState(null);
+        await ensureSerials(detailId);
+    };
 
-  if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
-  if (!product) return <div className="text-center py-20 text-red-500">Không tìm thấy sản phẩm.</div>;
+    const openSerialModal = async (variant, e) => {
+        e.stopPropagation();
+        setSerialTab('all');
+        setSerialSearch('');
+        setAddSerialModal(null);
+        setSerialModal({ open: true, variant });
+        await ensureSerials(variant.detailId);
+    };
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen font-sans">
-      {/* Breadcrumb */}
-      <div className="flex items-center text-sm text-gray-500 mb-6">
-        <span>Danh sách sản phẩm</span>
-        <span className="mx-2">&gt;</span>
-        <span className="font-medium text-gray-800">{product.productName}</span>
-      </div>
+    const closeSerialModal = () => {
+        setSerialModal({ open: false, variant: null });
+        setAddSerialModal(null);
+    };
 
-      {/* Product Header Card */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm mb-6 flex gap-6">
-        <div className="w-32 h-32 bg-gray-200 rounded-xl overflow-hidden flex-shrink-0">
-          {product.mainImageUrl
-            ? <img src={product.mainImageUrl} alt="product" className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-4xl">🏸</div>
-          }
-        </div>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">{product.productName}</h1>
-          <p className="text-gray-400 text-xs mb-3">{productSlug}</p>
-          <p className="text-gray-500 text-sm mb-4 max-w-2xl">
-            {product.description || 'Chưa có mô tả sản phẩm nào'}
-          </p>
-          <div className="grid grid-cols-5 gap-8 border-t pt-4">
-            <div><p className="text-gray-400 text-xs">Giá gốc</p><p className="font-bold text-gray-800">{formatPrice(product.basePrice)}</p></div>
-            <div><p className="text-gray-400 text-xs">Giá KM</p><p className="font-bold text-green-500">{formatPrice(product.sellingPrice)}</p></div>
-            <div><p className="text-gray-400 text-xs">Giảm</p><p className="font-bold text-orange-500">{product.discountPercent ?? 0}%</p></div>
-            <div><p className="text-gray-400 text-xs">Biến thể</p><p className="font-bold text-gray-800">{groupedVariants.length}</p></div>
-            <div><p className="text-gray-400 text-xs">Tổng serial</p><p className="font-bold text-blue-600">{product.variants?.length ?? 0}</p></div>
-          </div>
-        </div>
-      </div>
+    const handleAddVariant = async () => {
+        if (!newVariantForm.price || Number(newVariantForm.price) <= 0) {
+            setAddError('Vui lòng nhập giá hợp lệ!');
+            return;
+        }
+        setAddLoading(true);
+        setAddError(null);
+        try {
+            const payload = {
+                weightClass:   newVariantForm.weightClass   || null,
+                gripSize:      newVariantForm.gripSize      || null,
+                balancePoint:  newVariantForm.balancePoint  || null,
+                stiffness:     newVariantForm.stiffness     || null,
+                maxTension:    newVariantForm.maxTension !== '' ? parseInt(newVariantForm.maxTension) : null,
+                price:         parseFloat(newVariantForm.price),
+                stockQuantity: parseInt(newVariantForm.stockQuantity) || 1,
+            };
+            await productApi.addVariant(productId, payload);
+            setShowAddModal(false);
+            await loadVariants();
+        } catch (err) {
+            setAddError(err.response?.data?.message ?? 'Không thể thêm biến thể');
+        } finally {
+            setAddLoading(false);
+        }
+    };
 
-      {/* Variants Section */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-5 flex justify-between items-center border-b">
-          <div className="flex items-center gap-2 font-bold text-gray-800">
-            <div className="p-1 bg-green-100 rounded text-green-600"><Plus size={16} /></div>
-            Biến thể / Detail
-            <span className="ml-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-500">
-              {groupedVariants.length}
-            </span>
-          </div>
-          <button
-            onClick={() => { setVariantForm(DEFAULT_VARIANT_FORM); setModalError(null); setIsVariantModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF8C00] to-[#E65100] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            <Plus size={18} /> Thêm biến thể
-          </button>
-        </div>
+    const handleAddSerialModal = async () => {
+        const sn = addSerialModal?.value?.trim();
+        const detailId = serialModal.variant?.detailId;
+        if (!sn || !detailId) {
+            setAddSerialModal((prev) => ({ ...prev, error: 'Nhập số serial!' }));
+            return;
+        }
+        setAddSerialModal((prev) => ({ ...prev, loading: true, error: null }));
+        const statusInt = addSerialModal.status ?? 0;
+        const importDate = addSerialModal.importDate || new Date().toISOString().split('T')[0];
+        try {
+            await productApi.addSerial(detailId, { serialNumber: sn, status: STATUS_STRING[statusInt] ?? 'InStock', importDate });
+            const newEntry = { serialNumber: sn, status: statusInt, importDate: new Date(importDate).toISOString() };
+            const countKey = STATUS_COUNT_KEY[statusInt] ?? 'inStockCount';
+            setSerialsMap((prev) => {
+                const cur = prev[detailId];
+                if (!cur) {
+                    return { ...prev, [detailId]: { totalCount: 1, inStockCount: 0, soldCount: 0, defectiveCount: 0, reservedCount: 0, [countKey]: 1, serials: [newEntry] } };
+                }
+                return { ...prev, [detailId]: { ...cur, totalCount: (cur.totalCount ?? 0) + 1, [countKey]: (cur[countKey] ?? 0) + 1, serials: [...(cur.serials ?? []), newEntry] } };
+            });
+            setVariants((prev) => prev.map((v) => v.detailId === detailId ? { ...v, totalSerialNumbers: (v.totalSerialNumbers ?? 0) + 1 } : v));
+            setAddSerialModal(null);
+        } catch (err) {
+            setAddSerialModal((prev) => ({ ...prev, loading: false, error: err.response?.data?.message ?? 'Không thể thêm serial' }));
+        }
+    };
 
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          <div className="col-span-1">STT</div>
-          <div className="col-span-3">Thông số vật lý</div>
-          <div className="col-span-3">Kỹ thuật</div>
-          <div className="col-span-2">Giá</div>
-          <div className="col-span-1">SL</div>
-          <div className="col-span-2 text-right">Thao tác</div>
-        </div>
+    const handleDeleteVariant = async (detailId, e) => {
+        e.stopPropagation();
+        if (!window.confirm('Xóa biến thể này? Toàn bộ serial số liên quan sẽ bị xóa.')) return;
+        setDeleteLoading(true);
+        try {
+            await productApi.deleteVariant(detailId);
+            setVariants((prev) => prev.filter((v) => v.detailId !== detailId));
+            if (expandedId === detailId) setExpandedId(null);
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Không thể xóa biến thể');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
 
-        {/* Variant Rows */}
-        {groupedVariants.length === 0 ? (
-          <div className="py-16 text-center text-gray-400">Chưa có biến thể nào</div>
-        ) : (
-          groupedVariants.map((group, idx) => (
-            <div key={group.key} className="border-b last:border-0">
-              <div className="grid grid-cols-12 gap-4 px-6 py-5 items-center hover:bg-gray-50/50">
-                {/* STT + toggle */}
-                <div
-                  className="col-span-1 flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none"
-                  onClick={() => toggleExpanded(group.key)}
-                >
-                  <ChevronDown
-                    size={16}
-                    className={`text-gray-400 transition-transform duration-200 ${expandedItems.has(group.key) ? 'rotate-180' : ''}`}
-                  />
-                  {String(idx + 1).padStart(2, '0')}
-                </div>
+    const handleAddSerial = async (detailId) => {
+        const sn = addSerialState?.value?.trim();
+        if (!sn) {
+            setAddSerialState((prev) => ({ ...prev, error: 'Nhập số serial!' }));
+            return;
+        }
+        setAddSerialState((prev) => ({ ...prev, loading: true, error: null }));
+        try {
+            await productApi.addSerial(detailId, { serialNumber: sn });
+            const newEntry = { serialNumber: sn, status: 0, importDate: new Date().toISOString() };
+            setSerialsMap((prev) => {
+                const cur = prev[detailId];
+                if (!cur) return { ...prev, [detailId]: { totalCount: 1, inStockCount: 1, soldCount: 0, defectiveCount: 0, reservedCount: 0, serials: [newEntry] } };
+                return { ...prev, [detailId]: { ...cur, totalCount: (cur.totalCount ?? 0) + 1, inStockCount: (cur.inStockCount ?? 0) + 1, serials: [...(cur.serials ?? []), newEntry] } };
+            });
+            setVariants((prev) => prev.map((v) => v.detailId === detailId ? { ...v, totalSerialNumbers: (v.totalSerialNumbers ?? 0) + 1 } : v));
+            setAddSerialState((prev) => ({ ...prev, value: '', loading: false }));
+        } catch (err) {
+            setAddSerialState((prev) => ({ ...prev, loading: false, error: err.response?.data?.message ?? 'Không thể thêm serial' }));
+        }
+    };
 
-                {/* Thông số vật lý */}
-                <div className="col-span-3 flex flex-wrap gap-1.5">
-                  {group.weightClass  && <span className="px-2 py-1 bg-blue-50   text-blue-600   rounded text-[10px] font-bold">{group.weightClass}</span>}
-                  {group.gripSize     && <span className="px-2 py-1 bg-purple-50 text-purple-600 rounded text-[10px] font-bold">{group.gripSize}</span>}
-                  {group.balancePoint && <span className="px-2 py-1 bg-orange-50 text-orange-600 rounded text-[10px] font-bold">{group.balancePoint}</span>}
-                </div>
+    const formatPrice = (price) =>
+        price != null ? price.toLocaleString('vi-VN') + ' ₫' : '—';
 
-                {/* Kỹ thuật */}
-                <div className="col-span-3 flex flex-wrap gap-1.5">
-                  {group.stiffness   && <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">{group.stiffness}</span>}
-                  {group.maxTension  && <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">{group.maxTension} lbs</span>}
-                </div>
+    const stockColor = (qty) => {
+        const q = qty ?? 0;
+        if (q <= 0) return 'text-rose-500 font-bold';
+        if (q <= 5) return 'text-amber-500 font-bold';
+        return 'text-emerald-500 font-bold';
+    };
 
-                {/* Giá */}
-                <div className="col-span-2 font-bold text-gray-800 text-sm">{formatPrice(group.price)}</div>
+    const totalSerials = variants.reduce((sum, v) => sum + (v.totalSerialNumbers ?? 0), 0);
+    const computedTotalStock = variants.reduce((sum, v) => sum + (v.stockQuantity ?? 0), 0);
 
-                {/* Số lượng serial */}
-                <div className="col-span-1">
-                  <span className="inline-block px-3 py-1 bg-orange-50 text-orange-600 rounded-full font-bold text-xs">
-                    {group.serials.length}
-                  </span>
-                </div>
+    const modalSerials = serialModal.variant ? (serialsMap[serialModal.variant.detailId]?.serials ?? []) : [];
+    const modalSerialsData = serialModal.variant ? serialsMap[serialModal.variant.detailId] : null;
+    const isModalLoadingSerials = serialModal.variant ? serialsLoadingId === serialModal.variant.detailId : false;
 
-                {/* Actions */}
-                <div className="col-span-2 flex justify-end gap-2 items-center">
-                  <button
-                    onClick={() => openSerialModal(group)}
-                    className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-600 rounded-lg text-xs font-bold border border-green-100 hover:bg-green-100 transition-colors"
-                  >
-                    <Plus size={11} /> Seri
-                  </button>
-                  <button
-                    onClick={() => toggleExpanded(group.key)}
-                    className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold border border-blue-100"
-                  >
-                    <Hash size={11} /> {group.serials.length}
-                  </button>
-                  <Edit2
-                    size={15}
-                    className="text-gray-400 cursor-pointer hover:text-blue-500"
-                    onClick={() => openEditModal(group)}
-                  />
-                  <Trash2
-                    size={15}
-                    className="text-gray-300 cursor-not-allowed"
-                    title="Can backend endpoint DELETE /ProductDetail/{id}"
-                  />
-                </div>
-              </div>
+    const filteredModalSerials = useMemo(() => {
+        let list = modalSerials;
+        if (serialTab !== 'all') {
+            const statusNum = parseInt(serialTab);
+            list = list.filter((s) => s.status === statusNum);
+        }
+        if (serialSearch.trim()) {
+            const q = serialSearch.trim().toLowerCase();
+            list = list.filter((s) => s.serialNumber?.toLowerCase().includes(q));
+        }
+        return list;
+    }, [modalSerials, serialTab, serialSearch]);
 
-              {/* Serial Numbers Sub-grid */}
-              {expandedItems.has(group.key) && (
-                <div className="px-6 pb-6 pt-2">
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-xl p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xs font-bold text-gray-700 uppercase">
-                        Serial Numbers ({group.serials.length} tổng)
-                      </h4>
-                      <div className="flex gap-4 text-[10px] font-bold uppercase">
-                        <span className="text-green-500">
-                          Còn hàng: <span className="text-green-600">{group.serials.filter((s) => s.inStock).length}</span>
-                        </span>
-                        <span className="text-gray-400">
-                          Hết hàng: {group.serials.filter((s) => !s.inStock).length}
-                        </span>
-                      </div>
+    const tabCount = (key) => {
+        if (key === 'all') return modalSerials.length;
+        const statusNum = parseInt(key);
+        return modalSerials.filter((s) => s.status === statusNum).length;
+    };
+
+    const formatDate = (iso) => {
+        if (!iso) return '—';
+        return new Date(iso).toLocaleDateString('vi-VN');
+    };
+
+    return (
+        <div className="p-6 bg-gray-50 min-h-screen font-sans">
+
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 hover:text-orange-500 transition-colors">
+                    <ArrowLeft size={14} /> Danh sách sản phẩm
+                </button>
+                <span>›</span>
+                <span className="font-medium text-gray-800">{product?.productName ?? `Sản phẩm #${productId}`}</span>
+            </div>
+
+            {/* Product Header */}
+            {product && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm mb-6 flex gap-5">
+                    <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                        {product.mainImageUrl ? (
+                            <img src={product.mainImageUrl} alt={product.productName} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-4xl">🏸</div>
+                        )}
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                      {group.serials.map((sn) => (
-                        <div
-                          key={sn.detailId}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${
-                            sn.inStock
-                              ? 'bg-green-50 text-green-700 border-green-100'
-                              : 'bg-gray-100 text-gray-500 border-gray-200 opacity-60'
-                          }`}
-                        >
-                          <div className={`w-1.5 h-1.5 rounded-full ${sn.inStock ? 'bg-green-500' : 'bg-gray-400'}`} />
-                          Detail #{sn.detailId}
-                          {sn.stockQuantity > 0 && (
-                            <span className="text-[9px] opacity-60">×{sn.stockQuantity}</span>
-                          )}
+                    <div className="flex-1 min-w-0">
+                        <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.productName}</h1>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {product.brandName && (
+                                <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-semibold border border-emerald-100">{product.brandName}</span>
+                            )}
+                            {product.categoryName && (
+                                <span className="px-2.5 py-0.5 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold border border-blue-100">{product.categoryName}</span>
+                            )}
+                            {product.slug && <span className="text-xs text-gray-400 font-mono">/{product.slug}</span>}
                         </div>
-                      ))}
+                        {product.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{product.description}</p>}
+                        <div className="flex flex-wrap gap-6 pt-3 border-t border-gray-100">
+                            {[
+                                { label: 'Giá gốc',     value: formatPrice(product.basePrice),    cls: 'text-gray-800'    },
+                                { label: 'Giá KM',      value: product.discountPrice ? formatPrice(product.discountPrice) : '—', cls: 'text-emerald-500' },
+                                { label: 'Đã bán',      value: product.soldQuantity ?? 0,                    cls: 'text-gray-800'    },
+                                { label: 'Tồn kho',     value: loading ? '…' : computedTotalStock,           cls: 'text-emerald-500' },
+                                { label: 'Tổng serial', value: loading ? '…' : totalSerials,                 cls: 'text-blue-500'    },
+                            ].map(({ label, value, cls }) => (
+                                <div key={label}>
+                                    <span className="text-gray-400 text-xs block mb-0.5">{label}</span>
+                                    <span className={`font-bold text-sm ${cls}`}>{value}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                  </div>
                 </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* ── Modal: Thêm biến thể ── */}
-      {isVariantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">Thêm biến thể mới</h3>
-              <button onClick={() => setIsVariantModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500">
-                <X size={18} />
-              </button>
-            </div>
-
-            {modalError && (
-              <div className="mb-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" /><span>{modalError}</span>
-              </div>
             )}
 
-            <form onSubmit={handleAddVariant} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Weight Class</label>
-                  <input
-                    placeholder="VD: 3U, 4U"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.weightClass}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, weightClass: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Grip Size</label>
-                  <input
-                    placeholder="VD: G4, G5"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.gripSize}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, gripSize: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Balance Point</label>
-                  <input
-                    placeholder="VD: Head Heavy"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.balancePoint}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, balancePoint: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Stiffness</label>
-                  <input
-                    placeholder="VD: Stiff, Extra Stiff"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.stiffness}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, stiffness: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Max Tension (lbs)</label>
-                  <input
-                    type="number"
-                    placeholder="VD: 30"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.maxTension}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, maxTension: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Giá (VND) *</label>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    placeholder="VD: 5200000"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={variantForm.price}
-                    onChange={(e) => setVariantForm((p) => ({ ...p, price: e.target.value }))}
-                  />
-                </div>
-              </div>
-              {/* Serial rows */}
-              <div className="border border-gray-100 rounded-xl p-3 space-y-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-xs font-semibold text-gray-700">Danh sach so seri *</span>
-                  <button
-                    type="button"
-                    onClick={() => setVariantForm((p) => ({ ...p, serials: [...p.serials, { serialNumber: '', stockQuantity: 1 }] }))}
-                    className="text-xs text-green-600 font-bold hover:text-green-700"
-                  >
-                    + Them seri
-                  </button>
-                </div>
-                <div className="grid grid-cols-10 gap-2 text-[10px] text-gray-400 font-semibold uppercase px-1">
-                  <span className="col-span-7">So seri</span>
-                  <span className="col-span-2">So luong</span>
-                </div>
-                {variantForm.serials.map((row, i) => (
-                  <div key={i} className="grid grid-cols-10 gap-2 items-center">
-                    <input
-                      required
-                      placeholder="VD: SN-D3-001"
-                      className="col-span-7 p-2 bg-gray-100 rounded-lg text-xs outline-none"
-                      value={row.serialNumber}
-                      onChange={(e) => setVariantForm((p) => {
-                        const s = [...p.serials];
-                        s[i] = { ...s[i], serialNumber: e.target.value };
-                        return { ...p, serials: s };
-                      })}
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      className="col-span-2 p-2 bg-gray-100 rounded-lg text-xs outline-none"
-                      value={row.stockQuantity}
-                      onChange={(e) => setVariantForm((p) => {
-                        const s = [...p.serials];
-                        s[i] = { ...s[i], stockQuantity: e.target.value };
-                        return { ...p, serials: s };
-                      })}
-                    />
+            {/* Variants Section */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+                {/* Section header */}
+                <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-800">Biến thể / Detail</span>
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
+                            {loading ? '…' : variants.length}
+                        </span>
+                    </div>
                     <button
-                      type="button"
-                      disabled={variantForm.serials.length === 1}
-                      onClick={() => setVariantForm((p) => ({ ...p, serials: p.serials.filter((_, idx) => idx !== i) }))}
-                      className="col-span-1 text-red-400 hover:text-red-600 disabled:opacity-30 font-bold text-base text-center"
+                        onClick={() => { setNewVariantForm(EMPTY_FORM); setAddError(null); setShowAddModal(true); }}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-orange-default hover:bg-orange-dark text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
                     >
-                      ×
+                        <Plus size={15} /> Thêm biến thể
                     </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="submit"
-                disabled={modalLoading}
-                className="w-full bg-gradient-to-r from-[#FF8C00] to-[#E65100] text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2"
-              >
-                {modalLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Lưu biến thể
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+                </div>
 
-      {/* ── Modal: Sua bien the ── */}
-      {isEditModalOpen && editingGroup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-bold text-gray-800">Sua bien the</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500">
-                <X size={18} />
-              </button>
+                {/* Table header */}
+                <div className="grid grid-cols-12 gap-3 px-6 py-3 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                    <div className="col-span-1" />
+                    <div className="col-span-2">Detail ID</div>
+                    <div className="col-span-3">Thông số vật lý</div>
+                    <div className="col-span-2">Kỹ thuật</div>
+                    <div className="col-span-2">Giá</div>
+                    <div className="col-span-1 text-center">Tồn kho</div>
+                    <div className="col-span-1 text-right">Thao tác</div>
+                </div>
+
+                {/* Body */}
+                {loading ? (
+                    <div className="flex justify-center py-16"><Loader2 className="animate-spin text-gray-300" size={28} /></div>
+                ) : loadError ? (
+                    <div className="flex items-center justify-center gap-2 py-16 text-rose-500 text-sm">
+                        <AlertCircle size={16} /> {loadError}
+                    </div>
+                ) : variants.length === 0 ? (
+                    <div className="py-16 text-center text-gray-400 text-sm">
+                        <div className="text-3xl mb-2">🏸</div>Chưa có biến thể nào
+                    </div>
+                ) : (
+                    variants.map((v, index) => {
+                        const isExpanded = expandedId === v.detailId;
+                        const serials = serialsMap[v.detailId];
+                        const isLoadingSerials = serialsLoadingId === v.detailId;
+
+                        return (
+                            <div key={v.detailId} className="border-b border-gray-50 last:border-0">
+                                {/* Variant row */}
+                                <div
+                                    className="grid grid-cols-12 gap-3 px-6 py-4 items-center hover:bg-gray-50/50 cursor-pointer transition-colors"
+                                    onClick={() => toggleExpand(v.detailId)}
+                                >
+                                    <div className="col-span-1">
+                                        {isExpanded
+                                            ? <ChevronDown size={16} className="text-gray-400" />
+                                            : <ChevronRight size={16} className="text-gray-400" />
+                                        }
+                                    </div>
+
+                                    <div className="col-span-2 text-xs text-gray-400 font-mono">
+                                        d{productId} - {index + 1}
+                                    </div>
+
+                                    <div className="col-span-3 flex flex-wrap gap-1">
+                                        {v.weightClass  && <span className="px-2 py-0.5 bg-blue-50   text-blue-600   rounded text-[10px] font-bold">{v.weightClass}</span>}
+                                        {v.gripSize     && <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold">{v.gripSize}</span>}
+                                        {v.balancePoint && <span className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded text-[10px] font-bold">{v.balancePoint}</span>}
+                                        {!v.weightClass && !v.gripSize && !v.balancePoint && <span className="text-gray-300 text-xs">—</span>}
+                                    </div>
+
+                                    <div className="col-span-2 flex flex-wrap gap-1">
+                                        {v.stiffness  && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold uppercase">{v.stiffness}</span>}
+                                        {v.maxTension && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold">{v.maxTension} lbs</span>}
+                                        {!v.stiffness && !v.maxTension && <span className="text-gray-300 text-xs">—</span>}
+                                    </div>
+
+                                    <div className="col-span-2 font-bold text-gray-800 text-sm">
+                                        {formatPrice(v.price)}
+                                    </div>
+
+                                    <div className="col-span-1 text-center">
+                                        <span className={`text-sm font-bold ${stockColor(v.stockQuantity)}`}>
+                                            {v.stockQuantity ?? 0}
+                                        </span>
+                                    </div>
+
+                                    <div className="col-span-1 flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                            onClick={(e) => openSerialModal(v, e)}
+                                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-colors whitespace-nowrap bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                                        >
+                                            <Hash size={10} /> {v.totalSerialNumbers ?? 0} SNs
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDeleteVariant(v.detailId, e)}
+                                            disabled={deleteLoading}
+                                            className="p-1 text-gray-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-40"
+                                            title="Xóa biến thể"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* ── Inline serial expansion ── */}
+                                {isExpanded && (
+                                    <div className="px-6 pb-5 pt-2 border-t border-gray-50 bg-gray-50/40">
+                                        {isLoadingSerials ? (
+                                            <div className="flex justify-center py-5">
+                                                <Loader2 className="animate-spin text-gray-300" size={20} />
+                                            </div>
+                                        ) : serials ? (
+                                            <div className="bg-white border border-gray-100 rounded-xl p-4">
+                                                {/* Stats row */}
+                                                <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
+                                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                                                        Serial Numbers ({serials.totalCount} tổng)
+                                                    </span>
+                                                    <div className="flex gap-4 text-[10px] font-bold uppercase">
+                                                        <span className="text-emerald-500">Còn hàng: {serials.inStockCount}</span>
+                                                        <span className="text-gray-400">Đã bán: {serials.soldCount}</span>
+                                                        <span className="text-orange-400">Đã đặt: {serials.reservedCount}</span>
+                                                        <span className="text-rose-400">Lỗi: {serials.defectiveCount}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Serial badges + add button */}
+                                                <div className="flex flex-wrap gap-2">
+                                                    {serials.serials?.map((sn, idx) => {
+                                                        const s = STATUS[sn.status] ?? STATUS[0];
+                                                        return (
+                                                            <div
+                                                                key={idx}
+                                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${s.cls}`}
+                                                                title={s.label}
+                                                            >
+                                                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+                                                                {sn.serialNumber}
+                                                            </div>
+                                                        );
+                                                    })}
+
+                                                    {/* Add serial inline input */}
+                                                    {addSerialState?.detailId === v.detailId ? (
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <input
+                                                                autoFocus
+                                                                placeholder="SN-XXX-0001"
+                                                                value={addSerialState.value}
+                                                                onChange={(e) => setAddSerialState((prev) => ({ ...prev, value: e.target.value }))}
+                                                                onKeyDown={(e) => e.key === 'Enter' && handleAddSerial(v.detailId)}
+                                                                className="px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-emerald-400 w-36 transition-colors"
+                                                            />
+                                                            <button
+                                                                onClick={() => handleAddSerial(v.detailId)}
+                                                                disabled={addSerialState.loading}
+                                                                className="flex items-center gap-1 px-2.5 py-1.5 bg-orange-default hover:bg-orange-dark text-white rounded-lg text-xs font-semibold disabled:opacity-50 transition-colors"
+                                                            >
+                                                                {addSerialState.loading ? <Loader2 size={10} className="animate-spin" /> : 'Thêm'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setAddSerialState(null)}
+                                                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                            >
+                                                                <X size={13} />
+                                                            </button>
+                                                            {addSerialState.error && (
+                                                                <span className="text-xs text-rose-500">{addSerialState.error}</span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setAddSerialState({ detailId: v.detailId, value: '', loading: false, error: null })}
+                                                            className="flex items-center gap-1 px-3 py-1.5 border border-dashed border-gray-300 text-gray-400 hover:border-emerald-400 hover:text-emerald-500 rounded-lg text-xs font-medium transition-colors"
+                                                        >
+                                                            <Plus size={11} /> Thêm serial
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 text-center py-4">Không thể tải serial numbers</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
-            {/* Note về giới hạn backend */}
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
-              Chi chỉnh sửa thông số hiển thị. Để cập nhật giá hoặc specs lên database, backend cần trả về SerialNumber trong response GET.
-            </div>
+            {/* ── Add Variant Modal ── */}
+            {showAddModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="font-bold text-gray-800">Thêm biến thể mới</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">Cấu hình thông số kỹ thuật</p>
+                            </div>
+                            <button onClick={() => setShowAddModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
 
-            <form
-              onSubmit={(e) => { e.preventDefault(); setIsEditModalOpen(false); }}
-              className="space-y-3"
-            >
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { key: 'weightClass',  label: 'Weight Class',     placeholder: 'VD: 3U, 4U' },
-                  { key: 'gripSize',     label: 'Grip Size',         placeholder: 'VD: G4, G5' },
-                  { key: 'balancePoint', label: 'Balance Point',     placeholder: 'VD: Head Heavy' },
-                  { key: 'stiffness',    label: 'Stiffness',         placeholder: 'VD: Stiff' },
-                  { key: 'maxTension',   label: 'Max Tension (lbs)', placeholder: 'VD: 30', type: 'number' },
-                  { key: 'price',        label: 'Gia (VND)',         placeholder: '5200000', type: 'number' },
-                ].map(({ key, label, placeholder, type }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                    <input
-                      type={type ?? 'text'}
-                      placeholder={placeholder}
-                      className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                      value={editForm[key]}
-                      onChange={(e) => setEditForm((p) => ({ ...p, [key]: e.target.value }))}
-                    />
-                  </div>
-                ))}
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-              >
-                <Save size={16} /> Dong
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+                        <div className="p-6">
+                            {addError && (
+                                <div className="flex items-center gap-2 p-3 mb-4 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-600">
+                                    <AlertCircle size={13} /> {addError}
+                                </div>
+                            )}
 
-      {/* ── Modal: Thêm seri ── */}
-      {isSerialModalOpen && targetVariant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-bold text-gray-800">Thêm số seri</h3>
-              <button
-                onClick={() => { setIsSerialModalOpen(false); setTargetVariant(null); }}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mb-4">
-              Biến thể: {[targetVariant.weightClass, targetVariant.gripSize, targetVariant.stiffness].filter(Boolean).join(' · ')}
-            </p>
+                            {metaLoading ? (
+                                <div className="flex justify-center py-8">
+                                    <Loader2 className="animate-spin text-gray-300" size={22} />
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {FORM_FIELDS.map(({ label, metaKey, formKey }) => (
+                                        <div key={formKey} className="flex flex-col gap-1">
+                                            <label className="text-xs font-medium text-gray-600">{label}</label>
+                                            <select
+                                                className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+                                                value={newVariantForm[formKey]}
+                                                onChange={(e) => setNewVariantForm((prev) => ({ ...prev, [formKey]: e.target.value }))}
+                                            >
+                                                <option value="">— Chọn —</option>
+                                                {(metaData?.[metaKey] ?? []).map((opt) => (
+                                                    <option key={String(opt.value)} value={opt.value ?? ''}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
 
-            {modalError && (
-              <div className="mb-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" /><span>{modalError}</span>
-              </div>
+                                    <div className="col-span-2 flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">Lực căng tối đa / Speed</label>
+                                        <select
+                                            className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+                                            value={newVariantForm.maxTension}
+                                            onChange={(e) => setNewVariantForm((prev) => ({ ...prev, maxTension: e.target.value }))}
+                                        >
+                                            <option value="">— Chọn —</option>
+                                            {(metaData?.maxTensions ?? []).map((opt) => (
+                                                <option key={String(opt.value)} value={opt.value ?? ''}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">
+                                            Giá bán (VNĐ) <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="number" min="0"
+                                            placeholder="4200000"
+                                            className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+                                            value={newVariantForm.price}
+                                            onChange={(e) => setNewVariantForm((prev) => ({ ...prev, price: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600">
+                                            Tồn kho <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="number" min="0"
+                                            placeholder="10"
+                                            className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+                                            value={newVariantForm.stockQuantity}
+                                            onChange={(e) => setNewVariantForm((prev) => ({ ...prev, stockQuantity: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* Auto serial info */}
+                                    {newVariantForm.stockQuantity > 0 && (
+                                        <div className="col-span-2 flex items-start gap-2 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-600">
+                                            <Info size={13} className="mt-0.5 shrink-0" />
+                                            <span>
+                                                Hệ thống sẽ tự động tạo{' '}
+                                                <span className="font-bold">{parseInt(newVariantForm.stockQuantity) || 0} serial number</span>{' '}
+                                                tương ứng với số lượng tồn kho.
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-medium transition-colors"
+                            >
+                                Huỷ bỏ
+                            </button>
+                            <button
+                                onClick={handleAddVariant}
+                                disabled={addLoading}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-orange-default hover:bg-orange-dark text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
+                            >
+                                {addLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                Thêm biến thể
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            <form onSubmit={handleAddSerial} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Số seri *</label>
-                <input
-                  required
-                  placeholder="VD: SN-D2-1-0010"
-                  className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                  value={serialForm.serialNumber}
-                  onChange={(e) => setSerialForm((p) => ({ ...p, serialNumber: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Giá (để trống = giá biến thể)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder={targetVariant.price}
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={serialForm.price}
-                    onChange={(e) => setSerialForm((p) => ({ ...p, price: e.target.value }))}
-                  />
+            {/* ── Serial Management Modal ── */}
+            {serialModal.open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh]">
+
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+                            <div>
+                                <h3 className="font-bold text-gray-800">Quản lý Serial Number</h3>
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                    {[
+                                        serialModal.variant?.weightClass,
+                                        serialModal.variant?.gripSize,
+                                        serialModal.variant?.balancePoint,
+                                    ].filter(Boolean).join(' · ')}
+                                    {serialModal.variant?.price ? ` · ${formatPrice(serialModal.variant.price)}` : ''}
+                                </p>
+                            </div>
+                            <button onClick={closeSerialModal} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Filter tabs */}
+                        <div className="flex gap-1 px-6 pt-4 shrink-0 border-b border-gray-100">
+                            {SERIAL_TABS.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setSerialTab(tab.key)}
+                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg border-b-2 transition-colors ${
+                                        serialTab === tab.key
+                                            ? 'border-blue-500 text-blue-600 bg-blue-50/50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {tab.label}
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                        serialTab === tab.key ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+                                    }`}>
+                                        {tabCount(tab.key)}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Search + Add button */}
+                        <div className="flex items-center gap-3 px-6 py-3 shrink-0">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus-within:border-blue-400 focus-within:bg-white transition-colors">
+                                <Search size={14} className="text-gray-400 shrink-0" />
+                                <input
+                                    placeholder="Tìm kiếm serial number..."
+                                    value={serialSearch}
+                                    onChange={(e) => setSerialSearch(e.target.value)}
+                                    className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
+                                />
+                                {serialSearch && (
+                                    <button onClick={() => setSerialSearch('')} className="text-gray-400 hover:text-gray-600">
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setAddSerialModal({ value: '', status: 0, importDate: new Date().toISOString().split('T')[0], loading: false, error: null })}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shrink-0"
+                            >
+                                <Plus size={14} /> Thêm
+                            </button>
+                        </div>
+
+                        {/* Inline add form */}
+                        {addSerialModal !== null && (
+                            <div className="mx-6 mb-3 shrink-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <input
+                                        autoFocus
+                                        placeholder="Nhập serial number..."
+                                        value={addSerialModal.value}
+                                        onChange={(e) => setAddSerialModal((prev) => ({ ...prev, value: e.target.value }))}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddSerialModal()}
+                                        className="flex-1 min-w-36 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-400 transition-colors"
+                                    />
+                                    <select
+                                        value={addSerialModal.status}
+                                        onChange={(e) => setAddSerialModal((prev) => ({ ...prev, status: parseInt(e.target.value) }))}
+                                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-400 transition-colors"
+                                    >
+                                        <option value={0}>Còn hàng</option>
+                                        <option value={1}>Đã bán</option>
+                                        <option value={2}>Lỗi/Hỏng</option>
+                                        <option value={3}>Đã đặt</option>
+                                    </select>
+                                    <input
+                                        type="date"
+                                        value={addSerialModal.importDate}
+                                        onChange={(e) => setAddSerialModal((prev) => ({ ...prev, importDate: e.target.value }))}
+                                        className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-emerald-400 transition-colors"
+                                    />
+                                    <button
+                                        onClick={handleAddSerialModal}
+                                        disabled={addSerialModal.loading}
+                                        className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg disabled:opacity-50 transition-colors"
+                                        title="Xác nhận"
+                                    >
+                                        {addSerialModal.loading ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                                    </button>
+                                    <button
+                                        onClick={() => setAddSerialModal(null)}
+                                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                        title="Huỷ"
+                                    >
+                                        <X size={15} />
+                                    </button>
+                                </div>
+                                {addSerialModal.error && (
+                                    <p className="text-xs text-rose-500 mt-1.5">{addSerialModal.error}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Serial table */}
+                        <div className="flex-1 overflow-y-auto px-6 pb-2 min-h-0">
+                            {isModalLoadingSerials ? (
+                                <div className="flex justify-center py-12">
+                                    <Loader2 className="animate-spin text-gray-300" size={24} />
+                                </div>
+                            ) : !modalSerialsData ? (
+                                <div className="flex items-center justify-center gap-2 py-12 text-rose-400 text-sm">
+                                    <AlertCircle size={15} /> Không thể tải danh sách serial
+                                </div>
+                            ) : filteredModalSerials.length === 0 ? (
+                                <div className="py-12 text-center text-gray-400 text-sm">
+                                    {serialSearch ? 'Không tìm thấy kết quả' : 'Không có serial nào trong danh mục này'}
+                                </div>
+                            ) : (
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-xs font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                            <th className="py-2.5 text-left pr-4">Serial Number</th>
+                                            <th className="py-2.5 text-left pr-4">Trạng thái</th>
+                                            <th className="py-2.5 text-left">Ngày nhập</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredModalSerials.map((sn, idx) => {
+                                            const s = STATUS[sn.status] ?? STATUS[0];
+                                            return (
+                                                <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                    <td className="py-3 pr-4 font-mono text-xs text-gray-700 font-medium">{sn.serialNumber}</td>
+                                                    <td className="py-3 pr-4">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${s.cls}`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                                                            {s.label}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 text-xs text-gray-400">{formatDate(sn.importDate)}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 shrink-0">
+                            <span className="text-xs text-gray-400">
+                                Tổng: <span className="font-semibold text-gray-600">{modalSerialsData?.totalCount ?? 0} serial</span>
+                                {' · '}Còn hàng: <span className="font-semibold text-emerald-600">{modalSerialsData?.inStockCount ?? 0}</span>
+                                {' · '}Đã bán: <span className="font-semibold text-gray-500">{modalSerialsData?.soldCount ?? 0}</span>
+                                {(modalSerialsData?.reservedCount ?? 0) > 0 && (
+                                    <> · Đã đặt: <span className="font-semibold text-orange-500">{modalSerialsData.reservedCount}</span></>
+                                )}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button onClick={closeSerialModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-medium transition-colors">
+                                    Đóng
+                                </button>
+                                <button onClick={closeSerialModal} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
+                                    Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Số lượng</label>
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full p-2 bg-gray-100 rounded-xl text-sm outline-none"
-                    value={serialForm.stockQuantity}
-                    onChange={(e) => setSerialForm((p) => ({ ...p, stockQuantity: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={modalLoading}
-                className="w-full bg-gradient-to-r from-[#FF8C00] to-[#E65100] text-white p-3 rounded-xl font-bold flex items-center justify-center gap-2"
-              >
-                {modalLoading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Lưu số seri
-              </button>
-            </form>
-          </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default AdminProductDetail;

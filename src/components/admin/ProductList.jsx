@@ -12,7 +12,7 @@ const ProductList = () => {
         loading,
         error,
         pagination,
-        searchProducts,
+        searchProductsAdmin,
         addProduct,
         updateProduct,
         deleteProduct,
@@ -26,11 +26,9 @@ const ProductList = () => {
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const [filters, setFilters] = useState({
-        key: '',
-        categorySlug: '',
-        brandSlug: '',
-        minPrice: '',
-        maxPrice: '',
+        keyword: '',
+        categoryId: '',
+        brandId: '',
         page: 1,
         pageSize: 10,
     });
@@ -43,9 +41,6 @@ const ProductList = () => {
         discountPrice: '',
         mainImageUrl: '',
         description: '',
-        productDetailRequests: [
-            { weightClass: '', gripSize: '', balancePoint: '', stiffness: '', maxTension: '', price: '', stockQuantity: 10, serialNumber: '' },
-        ],
     };
     const [formData, setFormData] = useState(defaultForm);
 
@@ -60,10 +55,8 @@ const ProductList = () => {
     }, []);
 
     useEffect(() => {
-        searchProducts(filters);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        searchProductsAdmin(filters);
     }, [filters]);
-    
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -71,7 +64,7 @@ const ProductList = () => {
     };
 
     const resetFilters = () =>
-        setFilters({ key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
+        setFilters({ keyword: '', categoryId: '', brandId: '', page: 1, pagesize: 10 });
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -79,6 +72,7 @@ const ProductList = () => {
         }
     };
 
+    // ── Modal open/close ─────────────────────────────────────────────────────────
     const openCreate = () => {
         setEditingProduct(null);
         setFormData(defaultForm);
@@ -88,15 +82,17 @@ const ProductList = () => {
 
     const openEdit = (product) => {
         setEditingProduct(product);
+        // Look up brandId/categoryId by name since admin response only has names
+        const brand = brands.find((b) => b.brandName === product.brandName);
+        const category = categories.find((c) => c.categoryName === product.categoryName);
         setFormData({
             productName: product.productName ?? '',
-            brandId: product.brandId ?? '',
-            categoryId: product.categoryId ?? '',
+            brandId: brand?.brandId ?? product.brandId ?? '',
+            categoryId: category?.categoryId ?? product.categoryId ?? '',
             basePrice: product.basePrice ?? '',
             discountPrice: product.discountPrice ?? '',
             mainImageUrl: product.mainImageUrl ?? '',
             description: product.description ?? '',
-            productDetailRequests: [],
         });
         clearError();
         setIsModalOpen(true);
@@ -108,31 +104,9 @@ const ProductList = () => {
         clearError();
     };
 
-    const addDetailRow = () =>
-        setFormData((prev) => ({
-            ...prev,
-            productDetailRequests: [
-                ...prev.productDetailRequests,
-                { weightClass: '', gripSize: '', price: '', stockQuantity: 10, serialNumber: '' },
-            ],
-        }));
-
-    const updateDetailRow = (index, field, value) =>
-        setFormData((prev) => {
-            const rows = [...prev.productDetailRequests];
-            rows[index] = { ...rows[index], [field]: value };
-            return { ...prev, productDetailRequests: rows };
-        });
-
-    const removeDetailRow = (index) =>
-        setFormData((prev) => ({
-            ...prev,
-            productDetailRequests: prev.productDetailRequests.filter((_, i) => i !== index),
-        }));
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate trước khi gửi
         if (!formData.productName.trim()) return;
         if (!formData.categoryId || !formData.brandId) {
             alert('Vui lòng chọn danh mục và thương hiệu!');
@@ -147,49 +121,14 @@ const ProductList = () => {
             return;
         }
 
-        if (!editingProduct) {
-            if (formData.productDetailRequests.length === 0) {
-                alert('Vui lòng thêm ít nhất 1 biến thể sản phẩm!');
-                return;
-            }
-
-            // Tìm row nào thiếu serial hoặc giá → báo rõ vị trí
-            const invalidRows = formData.productDetailRequests
-                .map((d, i) => ({ ...d, index: i + 1 }))
-                .filter((d) => !d.serialNumber?.trim() || !d.price);
-            if (invalidRows.length > 0) {
-                alert(`Biến thể #${invalidRows.map((r) => r.index).join(', #')} còn thiếu Số seri hoặc Giá!`);
-                return;
-            }
-
-            // Kiểm tra serial trùng
-            const serials = formData.productDetailRequests.map((d) => d.serialNumber.trim());
-            if (new Set(serials).size !== serials.length) {
-                alert('Số seri không được trùng nhau!');
-                return;
-            }
-        }
-
         const payload = {
-            productName:  formData.productName.trim(),
-            brandId:      parseInt(formData.brandId),     // đã validate không rỗng ở trên
-            categoryId:   parseInt(formData.categoryId),
-            basePrice:    parseFloat(formData.basePrice),
+            productName: formData.productName.trim(),
+            brandId: parseInt(formData.brandId),
+            categoryId: parseInt(formData.categoryId),
+            basePrice: parseFloat(formData.basePrice),
             discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
-            mainImageUrl:  formData.mainImageUrl?.trim() || null,
-            description:   formData.description?.trim()  || null,
-            productDetailRequests: editingProduct
-                ? formData.productDetailRequests
-                : formData.productDetailRequests.map((d) => ({
-                    serialNumber:  d.serialNumber.trim(),
-                    weightClass:   d.weightClass?.trim()  || null,
-                    gripSize:      d.gripSize?.trim()      || null,
-                    balancePoint:  d.balancePoint?.trim()  || null,  // ← thêm
-                    stiffness:     d.stiffness?.trim()     || null,  // ← thêm
-                    maxTension:    d.maxTension ? parseInt(d.maxTension) : null,  // ← thêm
-                    price:         parseFloat(d.price),
-                    stockQuantity: parseInt(d.stockQuantity) || 0,
-                })),
+            mainImageUrl: formData.mainImageUrl?.trim() || null,
+            description: formData.description?.trim() || null,
         };
 
         setSubmitLoading(true);
@@ -200,12 +139,13 @@ const ProductList = () => {
 
             if (result !== null) {
                 closeModal();
-                searchProducts(filters);
+                searchProductsAdmin(filters);
             }
         } finally {
             setSubmitLoading(false);
         }
     };
+
     const handleDelete = async (e, id, name) => {
         e.stopPropagation();
         if (!window.confirm(`Xóa "${name}"?\n\nThao tác sẽ xóa tất cả biến thể và ảnh liên quan (CASCADE).`)) return;
@@ -215,7 +155,6 @@ const ProductList = () => {
         }
     };
 
-    // Helper: stock color
     const stockColor = (qty) => {
         if (qty === null || qty === undefined) return 'text-slate-400';
         if (qty <= 2) return 'text-rose-500 font-bold';
@@ -225,7 +164,7 @@ const ProductList = () => {
 
     const formatPrice = (price) =>
         price ? price.toLocaleString('vi-VN') + ' ₫' : '—';
-
+    
     return (
         <div className="p-6 bg-slate-50 min-h-screen">
             <div className="mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -247,8 +186,8 @@ const ProductList = () => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
-                        <div className="relative lg:col-span-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                             <input
                                 name="key"
@@ -282,25 +221,6 @@ const ProductList = () => {
                                 <option key={cat.categoryId} value={cat.slug}>{cat.categoryName}</option>
                             ))}
                         </select>
-
-                        <div className="flex gap-2">
-                            <input
-                                name="minPrice"
-                                type="number"
-                                value={filters.minPrice}
-                                onChange={handleFilterChange}
-                                placeholder="Giá từ..."
-                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
-                            />
-                            <input
-                                name="maxPrice"
-                                type="number"
-                                value={filters.maxPrice}
-                                onChange={handleFilterChange}
-                                placeholder="đến..."
-                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
-                            />
-                        </div>
 
                         <button
                             onClick={resetFilters}
@@ -347,7 +267,7 @@ const ProductList = () => {
                                 products.map((item) => (
                                     <tr
                                         key={item.productId}
-                                        onClick={() => navigate(`/admin/product/${item.slug}`)}
+                                        onClick={() => navigate(`/admin/product/${item.productId}`, { state: { product: item } })}
                                         className="hover:bg-slate-50 cursor-pointer transition-colors group"
                                     >
                                         {/* Sản phẩm */}
@@ -409,7 +329,7 @@ const ProductList = () => {
                                         <td className="px-4 py-3 text-right">
                                             {item.discountPrice || item.discountPercent > 0 ? (
                                                 <span className="font-semibold text-emerald-600 text-sm">
-                                                    {formatPrice(item.sellingPrice)}
+                                                    {formatPrice(item.discountPrice)}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 text-xs">—</span>
@@ -419,7 +339,7 @@ const ProductList = () => {
                                         {/* Biến thể */}
                                         <td className="px-4 py-3 text-center">
                                             <span className="text-slate-700 font-medium">
-                                                {item.variantCount ?? item.totalVariants ?? '—'}
+                                                {item.variantsCount ?? item.variantCount ?? '—'}
                                             </span>
                                         </td>
 
@@ -433,7 +353,7 @@ const ProductList = () => {
                                         {/* Đã bán */}
                                         <td className="px-4 py-3 text-center">
                                             <span className="text-slate-600 font-medium">
-                                                {item.totalSold ?? item.soldCount ?? 0}
+                                                {item.soldQuantity ?? item.totalSold ?? 0}
                                             </span>
                                         </td>
 
@@ -441,7 +361,7 @@ const ProductList = () => {
                                         <td className="px-4 py-3">
                                             <div className="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); navigate(`/admin/product/${item.productId}`); }}
+                                                    onClick={(e) => { e.stopPropagation(); navigate(`/admin/product/${item.productId}`, { state: { product: item } }); }}
                                                     className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-colors"
                                                     title="Xem"
                                                 >
@@ -527,7 +447,6 @@ const ProductList = () => {
                             <h3 className="text-lg font-bold text-slate-800">
                                 {editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
                             </h3>
-
                             <button onClick={closeModal} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">
                                 <X size={18} />
                             </button>
@@ -544,18 +463,20 @@ const ProductList = () => {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <label className="block mb-2 text-sm font-medium text-slate-700">Tên sản phẩm </label>
-                            <input
-                                required
-                                placeholder="Tên sản phẩm *"
-                                className="w-full p-2.5 bg-slate-100 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-default"
-                                value={formData.productName}
-                                onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
-                            />
+                            <div>
+                                <label className="block mb-1.5 text-sm font-medium text-slate-700">Tên sản phẩm</label>
+                                <input
+                                    required
+                                    placeholder="Tên sản phẩm *"
+                                    className="w-full p-2.5 bg-slate-100 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-default"
+                                    value={formData.productName}
+                                    onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                                />
+                            </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-medium text-slate-700">Danh mục</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Danh mục</label>
                                     <select
                                         required
                                         className="p-2.5 bg-slate-100 rounded-xl outline-none text-sm focus:ring-orange-default"
@@ -568,8 +489,8 @@ const ProductList = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-medium text-slate-700">Thương hiệu</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Thương hiệu</label>
                                     <select
                                         required
                                         className="p-2.5 bg-slate-100 rounded-xl outline-none text-sm focus:ring-orange-default"
@@ -585,8 +506,8 @@ const ProductList = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-medium text-slate-700">Giá gốc</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Giá gốc</label>
                                     <input
                                         required
                                         type="number"
@@ -597,8 +518,8 @@ const ProductList = () => {
                                         onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
                                     />
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="block text-sm font-medium text-slate-700">Giá khuyến mãi</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Giá khuyến mãi</label>
                                     <input
                                         type="number"
                                         min="0"
@@ -609,8 +530,9 @@ const ProductList = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm font-medium text-slate-700">Link ảnh chính</label>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-medium text-slate-700">Link ảnh chính</label>
                                 <input
                                     placeholder="Link ảnh chính"
                                     className="w-full p-2.5 bg-slate-100 rounded-xl outline-none text-sm focus:ring-orange-default"
@@ -618,8 +540,9 @@ const ProductList = () => {
                                     onChange={(e) => setFormData({ ...formData, mainImageUrl: e.target.value })}
                                 />
                             </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm font-medium text-slate-700">Mô tả sản phẩm</label>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-medium text-slate-700">Mô tả sản phẩm</label>
                                 <textarea
                                     placeholder="Mô tả sản phẩm"
                                     rows={2}
@@ -628,39 +551,6 @@ const ProductList = () => {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 />
                             </div>
-
-                            {!editingProduct && (
-                                <div className="border border-slate-200 rounded-xl p-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <span className="text-sm font-semibold text-slate-700">Biến thể sản phẩm *</span>
-                                        <button
-                                            type="button"
-                                            onClick={addDetailRow}
-                                            className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold focus:ring-orange-default"
-                                        >
-                                            + Thêm biến thể
-                                        </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-9 gap-2 mb-2">
-                                        {['WeightClass', 'GripSize', 'Số seri', 'Giá', 'Tồn kho'].map((h) => (
-                                            <span key={h} className="text-xs text-slate-400 col-span-2 last:col-span-1">{h}</span>
-                                        ))}
-                                    </div>
-
-                                    {formData.productDetailRequests.map((row, i) => (
-                                        <div key={i} className="grid grid-cols-10 gap-2 mb-2">
-                                            <input placeholder="3U/4U" className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none" value={row.weightClass} onChange={(e) => updateDetailRow(i, 'weightClass', e.target.value)} />
-                                            <input placeholder="G4/G5" className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none" value={row.gripSize} onChange={(e) => updateDetailRow(i, 'gripSize', e.target.value)} />
-                                            <input required placeholder="Serial *" className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none" value={row.serialNumber} onChange={(e) => updateDetailRow(i, 'serialNumber', e.target.value)} />
-                                            <input required type="number" min="0" placeholder="Giá" className="col-span-2 p-1.5 bg-slate-100 rounded-lg text-xs outline-none" value={row.price} onChange={(e) => updateDetailRow(i, 'price', e.target.value)} />
-                                            <input type="number" min="0" placeholder="SL" className="col-span-1 p-1.5 bg-slate-100 rounded-lg text-xs outline-none" value={row.stockQuantity} onChange={(e) => updateDetailRow(i, 'stockQuantity', e.target.value)} />
-                                            <button type="button" onClick={() => removeDetailRow(i)} disabled={formData.productDetailRequests.length === 1} className="col-span-1 text-rose-400 hover:text-rose-600 disabled:opacity-30 text-base font-bold">×</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
                             <button
                                 type="submit"
                                 disabled={submitLoading}

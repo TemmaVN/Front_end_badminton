@@ -55,10 +55,12 @@ const Product = () => {
     setInputKeyword(keyword);
   }, [keyword]);
 
+  const isSearchRoute = categorySlug === 'search';
+
   // ── Fetch khi searchParams hoặc slug thay đổi ─────────────
   useEffect(() => {
     searchProducts({
-      ...(categorySlug   && { categorySlug }),
+      ...(!isSearchRoute && categorySlug && { categorySlug }),
       ...(brandSlug      && { brandSlug }),
       ...(keyword        && { keyword }),
       ...(minPrice       && { minPrice }),
@@ -186,7 +188,7 @@ const Product = () => {
               {/* ── Toolbar ───────────────────────────────────── */}
               <div className="flex flex-col justify-between mb-8 pb-4 border-b border-gray-100 gap-4">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold">{pageCatagorySession}</h1>
+                  <h1 className="text-3xl font-bold">{isSearchRoute ? 'Kết quả tìm kiếm' : pageCatagorySession}</h1>
                   <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
                     {pagination.totalCount ?? 0} sản phẩm
                   </span>

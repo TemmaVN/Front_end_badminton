@@ -34,7 +34,6 @@ useEffect(() => {
       const result = await getProductDetaildBySlug(productSlug);
       if (result) {
         setProduct(result);
-        console.log('Product loaded:', result);
       }
     } catch (error) {
       console.error('Failed to load product:', error);
@@ -75,7 +74,6 @@ const selectedVariant = product?.variants?.find(
   v => v.weightClass === selectedWeight && v.gripSize === selectedGrip
 ) || product?.variants?.[0]; // Fallback về variant đầu tiên nếu không tìm thấy
 
-console.log('Selected variant:', selectedVariant);
 
 const handleSelectWeight = (w) => {
   if (!isWeightAvailable(w)) return;
@@ -129,12 +127,13 @@ const handleOrder = () => {
         productName: product.productName,
         variantInfo: `${selectedVariant.weightClass} / ${selectedVariant.gripSize}`,
         quantity: quantity,
-        unitPrice: product.sellingPrice,
-        subTotal: product.sellingPrice * quantity,
+        unitPrice:selectedVariant.price,
+        subTotal:selectedVariant.price * quantity,
       }
     }
   });
 };
+console.log(product)
   if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
   if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
   return (
@@ -169,9 +168,7 @@ const handleOrder = () => {
             </div>
 
             <div className="flex items-baseline gap-4 mb-6">
-              <span className="text-4xl font-bold text-orange-500">{product.sellingPrice}</span>
-              {product.sellingPrice !== product.basePrice && <span className="bg-orange-500 text-white px-2 py-0.5 rounded text-sm font-bold">-{product.discountPercent}%</span>}
-              {product.sellingPrice !== product.basePrice && <span className="text-xl text-gray-400 line-through">{product.basePrice}</span>}
+              <span className="text-4xl font-bold text-orange-500">{selectedVariant.price}</span>
             </div>
 
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-orange-800 mb-8">
