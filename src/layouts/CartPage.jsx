@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState} from 'react';
 import {
   ChevronLeftIcon, MapPinIcon, CreditCardIcon, BanknotesIcon,
   WalletIcon, ShieldCheckIcon, ChevronRightIcon,
@@ -6,10 +6,11 @@ import {
   TagIcon, ChevronDownIcon, ChevronUpIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, CheckIcon } from '@heroicons/react/24/solid';
-import { useUser } from '../contexts/UserContext';
 import {useCart} from '../contexts/CartContext'
 import { orderApi, voucherApi } from '../api';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { ALargeSmall } from 'lucide-react';
+
 const CartPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,8 +21,6 @@ const CartPage = () => {
   // 1. STATE QUẢN LÝ BƯỚC & THANH TOÁN
   const [step, setStep] = useState(1); 
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [fullName, setFullName] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false);
   const [orderError, setOrderError] = useState('');
 
@@ -29,12 +28,23 @@ const CartPage = () => {
   const [selectedVoucherIds, setSelectedVoucherIds] = useState([]);
   const [voucherOpen, setVoucherOpen]     = useState(false);
 
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState(null);
+  const [incompatibleVouchers, setIncompatibleVouchers] = useState([]);
+  const [showPaymentWarning, setShowPaymentWarning]     = useState(false);
+
+  const PAYMENT_METHOD_NAMES = {
+    'COD': 'Thanh toán khi nhận hàng',
+    'Bank Transfer': 'Chuyển khoản ngân hàng',
+    'E-Wallet': 'Ví điện tử',
+  };
+
   useEffect(() => {
-    voucherApi.getAvailableVouchers()
-      .then(res => setVouchers(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {});
-  }, []);
-  console.log(vouchers)
+    voucherApi.getAvailableVouchers(paymentMethod)
+      .then(res => {
+        setVouchers(Array.isArray(res.data) ? res.data : [])
+      })
+      .catch((err) => {alert(err.response?.data ?? err)})
+  }, [paymentMethod]);
   const calcDiscount = (voucher, base) => {
     if (base < voucher.minOrderValue) return 0;
     if (voucher.isPercent) {
@@ -48,6 +58,48 @@ const CartPage = () => {
     setSelectedVoucherIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
+
+  const handlePaymentMethodChange = async (newMethod) => {
+    if (newMethod === paymentMethod) return;
+
+    if (selectedVoucherIds.length === 0) {
+      setPaymentMethod(newMethod);
+      return;
+    }
+
+    try {
+      const res = await voucherApi.getAvailableVouchers(newMethod);
+      const newVouchers = Array.isArray(res.data) ? res.data : [];
+      const newVoucherIds = new Set(newVouchers.map(v => v.voucherId));
+      const incompatible = selectedVouchers.filter(v => !newVoucherIds.has(v.voucherId));
+
+      if (incompatible.length > 0) {
+        setIncompatibleVouchers(incompatible);
+        setPendingPaymentMethod(newMethod);
+        setShowPaymentWarning(true);
+      } else {
+        setPaymentMethod(newMethod);
+      }
+    } catch {
+      setPaymentMethod(newMethod);
+    }
+  };
+
+  const confirmSwitchPayment = () => {
+    const incompatibleIds = incompatibleVouchers.map(v => v.voucherId);
+    setSelectedVoucherIds(prev => prev.filter(id => !incompatibleIds.includes(id)));
+    setPaymentMethod(pendingPaymentMethod);
+    setShowPaymentWarning(false);
+    setPendingPaymentMethod(null);
+    setIncompatibleVouchers([]);
+  };
+
+  const cancelSwitchPayment = () => {
+    setShowPaymentWarning(false);
+    setPendingPaymentMethod(null);
+    setIncompatibleVouchers([]);
+  };
+
 
   const {cart, deleteCartItem, fetchCart} = useCart();
   const displayItems = isSingleItem
@@ -120,8 +172,9 @@ const CartPage = () => {
             try {
               await Promise.all(cart.map(item => deleteCartItem(item.cartItemId)));
               await fetchCart();
-            } catch (cartError) {
+            } catch (err) {
               fetchCart().catch(() => {});
+              alert(err)
             }
           }
           
@@ -131,6 +184,7 @@ const CartPage = () => {
       } catch (error) {
         const msg = error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại!';
         setOrderError(msg);
+        alert(msg)
       } finally {
         setIsLoading(false);
       }
@@ -250,9 +304,9 @@ const CartPage = () => {
                     <h2 className="text-lg font-black">Phương thức thanh toán</h2>
                   </div>
                   <div className="space-y-4">
-                    <PaymentOption id="COD" title="Thanh toán khi nhận hàng" desc="Trả tiền mặt khi nhận hàng (COD)" icon={<BanknotesIcon className="w-6 h-6" />} selected={paymentMethod === 'COD'} onSelect={() => setPaymentMethod('COD')} />
-                    <PaymentOption id="Bank Transfer" title="Chuyển khoản ngân hàng" desc="Vietcombank, BIDV, Techcombank..." icon={<CreditCardIcon className="w-6 h-6" />} selected={paymentMethod === 'Bank Transfer'} onSelect={() => setPaymentMethod('Bank Transfer')} />
-                    <PaymentOption id="E-Wallet" title="Ví điện tử" desc="Thanh toán nhanh qua ví điện tử" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'E-Wallet'} onSelect={() => setPaymentMethod('E-Wallet')} />
+                    <PaymentOption id="COD" title="Thanh toán khi nhận hàng" desc="Trả tiền mặt khi nhận hàng (COD)" icon={<BanknotesIcon className="w-6 h-6" />} selected={paymentMethod === 'COD'} onSelect={() => handlePaymentMethodChange('COD')} />
+                    <PaymentOption id="Bank Transfer" title="Chuyển khoản ngân hàng" desc="Vietcombank, BIDV, Techcombank..." icon={<CreditCardIcon className="w-6 h-6" />} selected={paymentMethod === 'Bank Transfer'} onSelect={() => handlePaymentMethodChange('Bank Transfer')} />
+                    <PaymentOption id="E-Wallet" title="Ví điện tử" desc="Thanh toán nhanh qua ví điện tử" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'E-Wallet'} onSelect={() => handlePaymentMethodChange('E-Wallet')} />
                   </div>
                 </div>
 
@@ -407,7 +461,8 @@ const CartPage = () => {
 
         {/* NÚT ACTION CUỐI CÙNG LỚN (Giải quyết sự kiện bấm) */}
         <div className="mt-10 flex justify-center pb-20">
-          {orderError && (
+          <div className='flex flex-col'>
+            {orderError && (
             <p className="text-center text-red-500 text-sm mb-3">{orderError}</p>
           )}
 
@@ -434,8 +489,49 @@ const CartPage = () => {
               </>
             )}
           </button>
+          </div>
         </div>
       </div>
+
+      {/* Modal cảnh báo voucher không tương thích */}
+      {showPaymentWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-100 text-orange-default rounded-full">
+                <TagIcon className="w-5 h-5" />
+              </div>
+              <h3 className="font-black text-base text-gray-900">Voucher không tương thích</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              {incompatibleVouchers.length === 1 ? 'Voucher' : 'Các voucher'}{' '}
+              <span className="font-bold text-orange-default font-mono">
+                {incompatibleVouchers.map(v => v.voucherCode).join(', ')}
+              </span>
+              {' '}không thể sử dụng với{' '}
+              <span className="font-bold">{PAYMENT_METHOD_NAMES[pendingPaymentMethod]}</span>.
+            </p>
+            <p className="text-sm text-gray-500 mb-5">
+              Để tiếp tục dùng voucher này, hãy giữ lại{' '}
+              <span className="font-semibold">{PAYMENT_METHOD_NAMES[paymentMethod]}</span>.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={cancelSwitchPayment}
+                className="w-full py-3 rounded-2xl border-2 border-orange-default text-orange-default font-bold text-sm hover:bg-orange-50 transition-colors"
+              >
+                Giữ nguyên "{PAYMENT_METHOD_NAMES[paymentMethod]}"
+              </button>
+              <button
+                onClick={confirmSwitchPayment}
+                className="w-full py-3 rounded-2xl bg-orange-default text-white font-bold text-sm hover:bg-orange-dark transition-colors"
+              >
+                Chuyển sang "{PAYMENT_METHOD_NAMES[pendingPaymentMethod]}"
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -463,7 +559,7 @@ const InputField = ({ label, name, value, onChange, icon: Icon, required, ...pro
 );
 
 // Component Lựa chọn thanh toán
-const PaymentOption = ({ id, title, desc, icon, selected, onSelect }) => (
+const PaymentOption = ({title, desc, icon, selected, onSelect }) => (
   <div 
     onClick={onSelect}
     className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${

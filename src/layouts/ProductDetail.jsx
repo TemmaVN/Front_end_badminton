@@ -10,11 +10,12 @@ const ProductDetail = (
 ) => {
   const { productSlug } = useParams();
 const [loading, setLoading] = useState(true);
-const { getCart, addToCart, fetchCart } = useCart();
+const {addToCart, fetchCart } = useCart();
 const { getProductDetaildBySlug } = useProduct();
 const [activeTab, setActiveTab] = useState('description');
 const [quantity, setQuantity] = useState(1);
 const [product, setProduct] = useState(null);
+const [selectedImageOrder, setSelectedImageOrder] = useState(1);
 const navigate = useNavigate();
 
 const tabs = [
@@ -133,6 +134,7 @@ const handleOrder = () => {
     }
   });
 };
+
 console.log(product)
   if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
   if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
@@ -144,12 +146,26 @@ console.log(product)
         {/* TOP SECTION: PRODUCT INFO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-16">
           {/* Left: Images */}
-          <div>
-            <div className="border border-gray-100 rounded-xl p-4 flex justify-center mb-4">
-              <img src={product.image} alt="Yonex BG80 Power" className="max-h-125 object-contain" />
-            </div>
-            <div className="flex gap-3 overflow-x-auto">
-               <img src={product.image} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
+          <div className='flex flex-col h-200'>
+            <div className='flex-1 min-h-0 flex items-center justify-center p-4'>
+              {product.imgaes
+                .filter(img => img.displayOrder === selectedImageOrder)
+                .map(img => {
+                return (
+                  <div key={img.imageID} className="border border-gray-100 rounded-xl w-full h-full object-contain p-4 flex justify-center mb-4">
+                    <img src={img.imageUrl} alt="Yonex BG80 Power" className="h-full w-full object-contain" />
+                  </div>
+                )
+              })} 
+            </div>         
+            <div className='flex justify-center gap-3'>
+              {product.imgaes.map(img => {
+              return (
+                  <div className="flex gap-3 overflow-x-auto" onMouseEnter={() => setSelectedImageOrder(img.displayOrder)}>
+                    <img src={img.imageUrl} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
+                  </div>
+              )
+            })}
             </div>
           </div>
 

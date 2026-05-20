@@ -193,7 +193,7 @@ export const statisticApi = {
 }
 
 export const voucherApi = {
-    getAvailableVouchers: () => api.get('/Voucher/my-voucher'),
+    getAvailableVouchers: (paymentMethod) => api.get('/Voucher/my-voucher', {params: {paymentMethod}}),
     getAllAvailable: () => api.get('/Voucher/all-available'),
     saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
     adminCreate: (data) => api.post('/Voucher/admin/add', data),
