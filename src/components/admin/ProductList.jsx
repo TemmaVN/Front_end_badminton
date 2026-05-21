@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus, Search, X, Save, Loader2, RotateCcw, AlertCircle, Eye, Images, ArrowUp, ArrowDown, Star, StarOff } from 'lucide-react';
+import { Edit2, Trash2, Plus, Search, X, Save, Loader2, RotateCcw, AlertCircle, Eye, Images, ArrowUp, ArrowDown, Star, StarOff, ZoomIn, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useProduct } from "../../contexts/ProductContext";
 import { useCategory } from "../../contexts/CategoryContext";
 import { brandApi, productApi } from "../../api";
@@ -34,6 +34,7 @@ const ProductList = () => {
     const [addingImage, setAddingImage] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
     const [orderChanged, setOrderChanged] = useState(false);
+    const [previewImage, setPreviewImage] = useState(null);
 
     const [filters, setFilters] = useState({
         keyword: '',
@@ -178,6 +179,7 @@ const ProductList = () => {
         setImageModalProduct(null);
         setImages([]);
         setOrderChanged(false);
+        setPreviewImage(null);
     };
 
     const handleAddImage = async () => {
@@ -728,7 +730,10 @@ const ProductList = () => {
                                 {images.map((img, idx) => (
                                     <div key={img.imageId} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${img.isMain ? 'border-orange-200 bg-orange-50/50' : 'border-slate-100 bg-white hover:bg-slate-50'}`}>
                                         {/* Thumbnail */}
-                                        <div className="relative shrink-0">
+                                        <div
+                                            className="relative shrink-0 cursor-zoom-in group/thumb"
+                                            onClick={() => setPreviewImage(img)}
+                                        >
                                             <img
                                                 src={img.imageUrl}
                                                 alt=""
@@ -740,6 +745,9 @@ const ProductList = () => {
                                                     MAIN
                                                 </span>
                                             )}
+                                            <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
+                                                <ZoomIn size={16} className="text-white" />
+                                            </div>
                                         </div>
 
                                         {/* Order + URL */}
@@ -811,6 +819,63 @@ const ProductList = () => {
                 </div>
             </div>
         )}
+
+            {/* ── Lightbox xem ảnh ── */}
+            {previewImage && (() => {
+                const idx = images.findIndex(i => i.imageId === previewImage.imageId);
+                return (
+                    <div
+                        className="fixed inset-0 z-60 flex items-center justify-center bg-black/90"
+                        onClick={() => setPreviewImage(null)}
+                    >
+                        {/* Nút đóng */}
+                        <button
+                            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                            onClick={() => setPreviewImage(null)}
+                        >
+                            <X size={20} />
+                        </button>
+
+                        {/* Badge thứ tự + MAIN */}
+                        <div className="absolute top-4 left-4 flex items-center gap-2">
+                            <span className="text-white/70 text-sm font-medium">{idx + 1} / {images.length}</span>
+                            {previewImage.isMain && (
+                                <span className="px-2 py-0.5 bg-orange-default text-white text-xs font-bold rounded-full">MAIN</span>
+                            )}
+                        </div>
+
+                        {/* Mũi tên trái */}
+                        {images.length > 1 && (
+                            <button
+                                onClick={e => { e.stopPropagation(); idx > 0 && setPreviewImage(images[idx - 1]); }}
+                                disabled={idx === 0}
+                                className="absolute left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 transition-colors"
+                            >
+                                <ArrowLeft size={22} />
+                            </button>
+                        )}
+
+                        {/* Ảnh */}
+                        <img
+                            src={previewImage.imageUrl}
+                            alt=""
+                            className="max-w-[180vw] max-h-[170vh] object-contain rounded-lg shadow-2xl"
+                            onClick={e => e.stopPropagation()}
+                        />
+
+                        {/* Mũi tên phải */}
+                        {images.length > 1 && (
+                            <button
+                                onClick={e => { e.stopPropagation(); idx < images.length - 1 && setPreviewImage(images[idx + 1]); }}
+                                disabled={idx === images.length - 1}
+                                className="absolute right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white disabled:opacity-20 transition-colors"
+                            >
+                                <ArrowRight size={22} />
+                            </button>
+                        )}
+                    </div>
+                );
+            })()}
     </div>
     );
 };
