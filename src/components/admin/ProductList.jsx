@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus, Search, X, Save, Loader2, RotateCcw, AlertCircle, Eye } from 'lucide-react';
+import { Edit2, Trash2, Plus, Search, X, Save, Loader2, RotateCcw, AlertCircle, Eye, Images, ArrowUp, ArrowDown, Star, StarOff } from 'lucide-react';
 import { useProduct } from "../../contexts/ProductContext";
 import { useCategory } from "../../contexts/CategoryContext";
-import { brandApi } from "../../api";
+import { brandApi, productApi } from "../../api";
 import { useNavigate } from 'react-router-dom';
 
 const ProductList = () => {
@@ -24,6 +24,16 @@ const ProductList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [submitLoading, setSubmitLoading] = useState(false);
+
+    // ── Image management ─────────────────────────────────────────────────────────
+    const [imageModalProduct, setImageModalProduct] = useState(null);
+    const [images, setImages] = useState([]);
+    const [imageLoading, setImageLoading] = useState(false);
+    const [newImageUrl, setNewImageUrl] = useState('');
+    const [newImageIsMain, setNewImageIsMain] = useState(false);
+    const [addingImage, setAddingImage] = useState(false);
+    const [savingOrder, setSavingOrder] = useState(false);
+    const [orderChanged, setOrderChanged] = useState(false);
 
     const [filters, setFilters] = useState({
         keyword: '',
@@ -143,6 +153,93 @@ const ProductList = () => {
             }
         } finally {
             setSubmitLoading(false);
+        }
+    };
+
+    // ── Image modal functions ────────────────────────────────────────────────────
+    const openImageModal = async (e, product) => {
+        e.stopPropagation();
+        setImageModalProduct(product);
+        setNewImageUrl('');
+        setNewImageIsMain(false);
+        setOrderChanged(false);
+        setImageLoading(true);
+        try {
+            const res = await productApi.getImages(product.productId);
+            setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+        } catch {
+            setImages([]);
+        } finally {
+            setImageLoading(false);
+        }
+    };
+
+    const closeImageModal = () => {
+        setImageModalProduct(null);
+        setImages([]);
+        setOrderChanged(false);
+    };
+
+    const handleAddImage = async () => {
+        if (!newImageUrl.trim()) return;
+        setAddingImage(true);
+        try {
+            await productApi.addImage(imageModalProduct.productId, { imageUrl: newImageUrl.trim(), isMain: newImageIsMain });
+            const res = await productApi.getImages(imageModalProduct.productId);
+            setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+            setNewImageUrl('');
+            setNewImageIsMain(false);
+            searchProductsAdmin(filters);
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Thêm ảnh thất bại');
+        } finally {
+            setAddingImage(false);
+        }
+    };
+
+    const handleSetMain = async (imageId) => {
+        try {
+            await productApi.setMainImage(imageModalProduct.productId, imageId);
+            const res = await productApi.getImages(imageModalProduct.productId);
+            setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
+            searchProductsAdmin(filters);
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Thao tác thất bại');
+        }
+    };
+
+    const handleDeleteImage = async (imageId, isMain) => {
+        if (isMain) { alert('Không thể xóa ảnh đại diện. Hãy đặt ảnh khác làm đại diện trước.'); return; }
+        if (!window.confirm('Xóa ảnh này?')) return;
+        try {
+            await productApi.deleteImage(imageId);
+            setImages(prev => prev.filter(i => i.imageId !== imageId));
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Xóa ảnh thất bại');
+        }
+    };
+
+    const handleMoveImage = (index, dir) => {
+        const next = index + dir;
+        if (next < 0 || next >= images.length) return;
+        const updated = [...images];
+        [updated[index], updated[next]] = [updated[next], updated[index]];
+        updated.forEach((img, i) => { img.displayOrder = i + 1; });
+        setImages(updated);
+        setOrderChanged(true);
+    };
+
+    const handleSaveOrder = async () => {
+        setSavingOrder(true);
+        try {
+            const payload = images.map(img => ({ imageId: img.imageId, displayOrder: img.displayOrder }));
+            await productApi.reorderImages(imageModalProduct.productId, payload);
+            setOrderChanged(false);
+            searchProductsAdmin(filters);
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Lưu thứ tự thất bại');
+        } finally {
+            setSavingOrder(false);
         }
     };
 
@@ -368,6 +465,13 @@ const ProductList = () => {
                                                     <Eye size={15} />
                                                 </button>
                                                 <button
+                                                    onClick={(e) => openImageModal(e, item)}
+                                                    className="p-1.5 hover:bg-purple-50 text-slate-400 hover:text-purple-500 rounded-lg transition-colors"
+                                                    title="Quản lý ảnh"
+                                                >
+                                                    <Images size={15} />
+                                                </button>
+                                                <button
                                                     onClick={(e) => { e.stopPropagation(); openEdit(item); }}
                                                     className="p-1.5 hover:bg-blue-50 text-slate-400 hover:text-blue-500 rounded-lg transition-colors"
                                                     title="Sửa"
@@ -563,7 +667,151 @@ const ProductList = () => {
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* ── Modal Quản lý ảnh ── */}
+        {imageModalProduct && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+
+                    {/* Header */}
+                    <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100">
+                        <div>
+                            <h3 className="text-base font-bold text-slate-800">Quản lý ảnh</h3>
+                            <p className="text-xs text-slate-400 truncate max-w-xs">{imageModalProduct.productName}</p>
+                        </div>
+                        <button onClick={closeImageModal} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    {/* Thêm ảnh mới */}
+                    <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Thêm ảnh mới</p>
+                        <div className="flex gap-2">
+                            <input
+                                value={newImageUrl}
+                                onChange={e => setNewImageUrl(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleAddImage()}
+                                placeholder="Dán URL ảnh vào đây..."
+                                className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-default"
+                            />
+                            <label className="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer select-none whitespace-nowrap">
+                                <input
+                                    type="checkbox"
+                                    checked={newImageIsMain}
+                                    onChange={e => setNewImageIsMain(e.target.checked)}
+                                    className="accent-orange-500 w-4 h-4"
+                                />
+                                Ảnh chính
+                            </label>
+                            <button
+                                onClick={handleAddImage}
+                                disabled={addingImage || !newImageUrl.trim()}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-orange-default text-white rounded-xl text-sm font-semibold hover:bg-orange-dark disabled:opacity-50 transition-colors"
+                            >
+                                {addingImage ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                                Thêm
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Danh sách ảnh */}
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
+                        {imageLoading ? (
+                            <div className="flex justify-center py-10">
+                                <Loader2 className="animate-spin text-slate-400" size={24} />
+                            </div>
+                        ) : images.length === 0 ? (
+                            <div className="text-center py-10 text-slate-400 text-sm">Chưa có ảnh nào.</div>
+                        ) : (
+                            <div className="space-y-2">
+                                {images.map((img, idx) => (
+                                    <div key={img.imageId} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-colors ${img.isMain ? 'border-orange-200 bg-orange-50/50' : 'border-slate-100 bg-white hover:bg-slate-50'}`}>
+                                        {/* Thumbnail */}
+                                        <div className="relative shrink-0">
+                                            <img
+                                                src={img.imageUrl}
+                                                alt=""
+                                                className="w-14 h-14 object-cover rounded-lg border border-slate-200"
+                                                onError={e => { e.target.src = ''; e.target.className = 'w-14 h-14 bg-slate-200 rounded-lg'; }}
+                                            />
+                                            {img.isMain && (
+                                                <span className="absolute -top-1.5 -right-1.5 bg-orange-default text-white text-[9px] font-bold px-1 py-0.5 rounded-full">
+                                                    MAIN
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Order + URL */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-slate-500 mb-0.5">#{img.displayOrder}</p>
+                                            <p className="text-xs text-slate-400 truncate">{img.imageUrl}</p>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                                onClick={() => handleMoveImage(idx, -1)}
+                                                disabled={idx === 0}
+                                                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 disabled:opacity-25 transition-colors"
+                                                title="Lên"
+                                            >
+                                                <ArrowUp size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleMoveImage(idx, 1)}
+                                                disabled={idx === images.length - 1}
+                                                className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 disabled:opacity-25 transition-colors"
+                                                title="Xuống"
+                                            >
+                                                <ArrowDown size={14} />
+                                            </button>
+                                            {!img.isMain && (
+                                                <button
+                                                    onClick={() => handleSetMain(img.imageId)}
+                                                    className="p-1.5 hover:bg-amber-50 text-slate-400 hover:text-amber-500 rounded-lg transition-colors"
+                                                    title="Đặt làm ảnh chính"
+                                                >
+                                                    <Star size={14} />
+                                                </button>
+                                            )}
+                                            {img.isMain && (
+                                                <div className="p-1.5 text-orange-400" title="Đang là ảnh chính">
+                                                    <StarOff size={14} />
+                                                </div>
+                                            )}
+                                            <button
+                                                onClick={() => handleDeleteImage(img.imageId, img.isMain)}
+                                                className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                                                title="Xóa"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer — lưu thứ tự */}
+                    <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                        <p className="text-xs text-slate-400">
+                            {images.length} ảnh{orderChanged && <span className="ml-2 text-amber-500 font-semibold">· Chưa lưu thứ tự</span>}
+                        </p>
+                        <button
+                            onClick={handleSaveOrder}
+                            disabled={!orderChanged || savingOrder}
+                            className="flex items-center gap-2 px-4 py-2 bg-orange-default text-white rounded-xl text-sm font-semibold hover:bg-orange-dark disabled:opacity-40 transition-colors"
+                        >
+                            {savingOrder ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            Lưu thứ tự
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
     );
 };
 
