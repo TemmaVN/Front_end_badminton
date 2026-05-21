@@ -10,9 +10,8 @@ import {
   X,
   BarChart2,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useUser } from "../../contexts/UserContext";
 
 const menuItems = [
   {
@@ -68,9 +67,9 @@ const menuItems = [
   },
 ];
 
-const Sidebar = ({ sideBarCollapsed, onToggleSidebar, isMobile = false, onClose }) => {
+const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
   const user = JSON.parse(localStorage.getItem('user'));
-  const [fullName, setFullName] = useState('');
+  const fullName = user?.fullName ?? '';
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();
@@ -90,10 +89,6 @@ const Sidebar = ({ sideBarCollapsed, onToggleSidebar, isMobile = false, onClose 
       return newExpanded;
     });
   };
-
-  useEffect(() => {
-    setFullName(user.fullName);
-  }, []);
 
   const handleNavigate = (path) => {
     navigate(path);

@@ -1,9 +1,8 @@
 import React from 'react';
 import { ShoppingCart, CreditCard,AlertCircle, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { path } from 'framer-motion/client';
 
-const SalesOverview = ({ setCurrentPage }) => {
+const SalesOverview = () => {
   const navigate = useNavigate();
   const salesStats = [
     { id: 'orders', label: 'Tổng đơn hàng', value: '856', icon: ShoppingCart, color: 'text-blue-500', bg: 'bg-blue-500/10', path: '/admin/orders' },
@@ -22,7 +21,7 @@ const SalesOverview = ({ setCurrentPage }) => {
               <ArrowRight size={18} className="text-slate-400 group-hover:text-orange-500 transition-all" />
             </div>
             <div className="mt-4">
-              <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white mt-1">{stat.value}</h3>
             </div>
           </div>

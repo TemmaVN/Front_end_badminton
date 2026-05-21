@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -8,6 +8,7 @@ import {
   Wallet, Award, Layers, Download, Tag,
 } from 'lucide-react';
 import {useStatistic} from "../../contexts/StatisticContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const monthly2025 = [
   { thang: "T1",  doanhThu: 42, chiPhi: 28, loiNhuan: 14, donHang: 187 },
@@ -105,12 +106,12 @@ const orderTrendData = monthly2025.map((d) => ({
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 const fmtM = (v) => `${v}M`;
-const tooltipStyle = {
-  backgroundColor: "rgba(255,255,255,0.97)",
+const makeTooltipStyle = (isDark) => ({
+  backgroundColor: isDark ? "rgba(30,41,59,0.97)" : "rgba(255,255,255,0.97)",
   border: "none",
   borderRadius: "12px",
   boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-};
+});
 const axisProps = { stroke: "#94a3b8", fontSize: 11, tickLine: false, axisLine: false };
 
 function Card({ children, className = "" }) {
@@ -124,6 +125,7 @@ function Card({ children, className = "" }) {
 // ─── Revenue Tab ──────────────────────────────────────────────────────
 function RevenueTab({ period }) {
   const { revenueByMonth } = useStatistic();
+  const { isDark } = useTheme();
 
   const data = useMemo(() => {
     const sample = period === '2025' ? monthly2025 : monthly2024;
@@ -174,7 +176,7 @@ function RevenueTab({ period }) {
                 <XAxis dataKey="thang" {...axisProps} />
                 <YAxis tickFormatter={fmtM} {...axisProps} />
                 <Tooltip
-                  contentStyle={tooltipStyle}
+                  contentStyle={makeTooltipStyle(isDark)}
                   formatter={(v, n) => [
                     `${v} triệu đ`,
                     n === 'doanhThu' ? 'Doanh thu' : n === 'chiPhi' ? 'Chi phí' : 'Lợi nhuận',
@@ -203,7 +205,7 @@ function RevenueTab({ period }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
                 <YAxis tickFormatter={fmtM} {...axisProps} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [`${v} triệu đ`, n]} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} triệu đ`, n]} />
                 <Legend />
                 <Bar dataKey="Năm 2024" fill="#94a3b8" radius={[3, 3, 0, 0]} maxBarSize={22} />
                 <Bar dataKey="Năm 2025" fill="#fb923c" radius={[3, 3, 0, 0]} maxBarSize={22} />
@@ -243,10 +245,10 @@ function RevenueTab({ period }) {
               <tr className="bg-orange-50/50 dark:bg-orange-900/10 font-bold border-t-2 border-orange-100 dark:border-orange-900/30">
                 <td className="p-4 text-slate-800 dark:text-white">Tổng cộng</td>
                 <td className="p-4 text-right text-orange-500">{(totalDT * 1_000_000).toLocaleString('vi-VN')} đ</td>
-                <td className="p-4 text-right text-slate-500">{(totalCP * 1_000_000).toLocaleString('vi-VN')} đ</td>
+                <td className="p-4 text-right text-slate-500 dark:text-slate-400">{(totalCP * 1_000_000).toLocaleString('vi-VN')} đ</td>
                 <td className="p-4 text-right text-emerald-600">{(totalLN * 1_000_000).toLocaleString('vi-VN')} đ</td>
                 <td className="p-4 text-right text-slate-800 dark:text-white">{totalDH.toLocaleString()}</td>
-                <td className="p-4 text-right text-slate-500">—</td>
+                <td className="p-4 text-right text-slate-500 dark:text-slate-400">—</td>
               </tr>
             </tbody>
           </table>
@@ -258,6 +260,7 @@ function RevenueTab({ period }) {
 
 // ─── Category Tab ─────────────────────────────────────────────────────
 function CategoryTab() {
+  const { isDark } = useTheme();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -271,7 +274,7 @@ function CategoryTab() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
                 <YAxis tickFormatter={fmtM} {...axisProps} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [`${v} triệu đ`, n]} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} triệu đ`, n]} />
                 <Legend />
                 {CAT_KEYS.map((k, i) => (
                   <Bar key={k} dataKey={k} stackId="a" fill={CAT_COLORS[i]} />
@@ -291,7 +294,7 @@ function CategoryTab() {
                 <Pie data={categoryData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
                   {categoryData.map((_, i) => <Cell key={i} fill={CAT_COLORS[i]} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v, n) => [`${v}%`, n]} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v}%`, n]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -361,6 +364,7 @@ function CategoryTab() {
 
 // ─── Brand Tab ────────────────────────────────────────────────────────
 function BrandTab() {
+  const { isDark } = useTheme();
   const maxDT = Math.max(...brandData.map((b) => b.doanhThu));
   return (
     <div className="space-y-6">
@@ -373,7 +377,7 @@ function BrandTab() {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} horizontal={false} />
               <XAxis type="number" tickFormatter={fmtM} {...axisProps} />
               <YAxis type="category" dataKey="ten" {...axisProps} width={72} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} triệu đ`, 'Doanh thu']} />
+              <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [`${v} triệu đ`, 'Doanh thu']} />
               <Bar dataKey="doanhThu" radius={[0, 4, 4, 0]} maxBarSize={32}>
                 {brandData.map((_, i) => <Cell key={i} fill={BRAND_COLORS[i]} />)}
               </Bar>
@@ -514,6 +518,7 @@ function ProductsTab() {
 
 // ─── Orders Tab ───────────────────────────────────────────────────────
 function OrdersTab() {
+  const { isDark } = useTheme();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -527,7 +532,7 @@ function OrdersTab() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
                 <YAxis {...axisProps} />
-                <Tooltip contentStyle={tooltipStyle} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} />
                 <Legend />
                 <Bar dataKey="Hoàn tất"    stackId="a" fill="#10b981" />
                 <Bar dataKey="Đang xử lý"  stackId="a" fill="#3b82f6" />
@@ -548,7 +553,7 @@ function OrdersTab() {
                 <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
                   {orderStatusData.map((_, i) => <Cell key={i} fill={orderStatusData[i].color} />)}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`]} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [`${v}%`]} />
               </PieChart>
             </ResponsiveContainer>
           </div>

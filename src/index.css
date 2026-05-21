@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @keyframes flash-black {
   0% {
     transform: translateX(-110%) skewX(-20deg);

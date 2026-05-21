@@ -57,6 +57,7 @@ const MainHeader = () => {
   useEffect(() => {
     fetchBrands();
     refreshCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -109,10 +110,10 @@ const MainHeader = () => {
 
   return (
     <nav
-      className="relative bg-white text-gray-700 font-sans flex justify-center"
+      className="relative bg-white dark:bg-slate-950 text-gray-700 dark:text-slate-300 font-sans flex justify-center"
       onMouseLeave={() => setIsProductHovered(false)}
     >
-      <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-325 items-center justify-center">
+      <div className="container shadow-md border border-gray-200 dark:border-slate-700 flex grow max-w-325 items-center justify-center">
         <div className="flex space-x-15 uppercase text-sm font-bold py-4">
           <Link
             onClick={() => setPage('home')}

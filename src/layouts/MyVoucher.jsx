@@ -36,14 +36,14 @@ const VoucherCard = ({ voucher, action }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
       <div className={`h-1.5 ${voucher.isGlobal ? "bg-blue-400" : "bg-orange-400"}`} />
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
             <span
               className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                voucher.isGlobal ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
+                voucher.isGlobal ? "bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400" : "bg-orange-50 dark:bg-orange-500/15 text-orange-600 dark:text-orange-400"
               }`}
             >
               {voucher.isGlobal ? "🌐 Toàn sàn" : "🎁 Cá nhân"}
@@ -56,32 +56,32 @@ const VoucherCard = ({ voucher, action }) => {
           </div>
         </div>
 
-        <p className="text-2xl font-black text-gray-900 mb-1">
+        <p className="text-2xl font-black text-gray-900 dark:text-white mb-1">
           {voucher.isPercent
             ? `Giảm ${voucher.discountValue}%`
             : `Giảm ${formatCurrency(voucher.discountValue)}`}
         </p>
         {voucher.isPercent && voucher.maxDiscountAmount && (
-          <p className="text-xs text-gray-400 mb-2">
+          <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">
             Tối đa {formatCurrency(voucher.maxDiscountAmount)}
           </p>
         )}
         {voucher.description && (
-          <p className="text-sm text-gray-500 mb-3 line-clamp-2">{voucher.description}</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mb-3 line-clamp-2">{voucher.description}</p>
         )}
 
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
+        <div className="flex items-center justify-between text-xs text-gray-400 dark:text-slate-500 mb-4">
           <span>Đơn tối thiểu {formatCurrency(voucher.minOrderValue)}</span>
-          <span className={isExpiringSoon ? "text-red-500 font-semibold" : ""}>
+          <span className={isExpiringSoon ? "text-red-500 dark:text-red-400 font-semibold" : ""}>
             HSD: {formatDate(voucher.endDate)}
             {isExpiringSoon && ` (còn ${daysLeft} ngày)`}
           </span>
         </div>
 
-        <div className="border-t border-dashed border-gray-200 mb-4" />
+        <div className="border-t border-dashed border-gray-200 dark:border-slate-700 mb-4" />
 
         <div className="flex items-center gap-2">
-          <code className="flex-1 text-sm font-mono font-bold tracking-widest bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-800 truncate">
+          <code className="flex-1 text-sm font-mono font-bold tracking-widest bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-gray-800 dark:text-white truncate">
             {voucher.voucherCode}
           </code>
           {action ?? (
@@ -220,12 +220,12 @@ const MyVoucher = () => {
   });
 
   return (
-    <div className="w-full h-full bg-gray-50/70">
+    <div className="w-full h-full bg-gray-50/70 dark:bg-slate-950/50">
       <div className="max-w-full mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Voucher</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Voucher</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             {activeTab === "mine"
               ? myLoading ? "Đang tải..." : `${filtered.length} voucher khả dụng`
               : "Khám phá và lưu mã giảm giá"}
@@ -233,7 +233,7 @@ const MyVoucher = () => {
         </div>
 
         {/* Top-level tabs */}
-        <div className="flex gap-4 mb-6 border-b border-gray-200">
+        <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-slate-700">
           {[
             { label: "Voucher của tôi", value: "mine" },
             { label: "Khám phá", value: "explore" },
@@ -243,8 +243,8 @@ const MyVoucher = () => {
               onClick={() => setActiveTab(t.value)}
               className={`pb-2.5 text-sm font-semibold border-b-2 transition-colors ${
                 activeTab === t.value
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-400 hover:text-gray-600"
+                  ? "border-gray-900 dark:border-slate-100 text-gray-900 dark:text-white"
+                  : "border-transparent text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
               }`}
             >
               {t.label}
@@ -266,8 +266,8 @@ const MyVoucher = () => {
                   onClick={() => setFilter(tab.value)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                     filter === tab.value
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                      ? "bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900 border-gray-900 dark:border-slate-100"
+                      : "bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
                   }`}
                 >
                   {tab.label}
@@ -282,7 +282,7 @@ const MyVoucher = () => {
             ) : myError ? (
               <div className="text-center py-16">
                 <p className="text-4xl mb-3">😕</p>
-                <p className="text-gray-500 text-sm mb-4">{myError}</p>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mb-4">{myError}</p>
                 <button
                   onClick={fetchMyVouchers}
                   className="px-5 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition"
@@ -293,8 +293,8 @@ const MyVoucher = () => {
             ) : filtered.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-5xl mb-4">🎟️</p>
-                <p className="text-gray-800 font-semibold">Không có voucher nào</p>
-                <p className="text-gray-400 text-sm mt-1">
+                <p className="text-gray-800 dark:text-white font-semibold">Không có voucher nào</p>
+                <p className="text-gray-400 dark:text-slate-500 text-sm mt-1">
                   {filter !== "all" ? "Thử chuyển sang tab khác" : "Bạn chưa có voucher khả dụng"}
                 </p>
                 <button
@@ -335,8 +335,8 @@ const MyVoucher = () => {
             ) : allVouchers.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-5xl mb-4">🎟️</p>
-                <p className="text-gray-800 font-semibold">Không có voucher nào</p>
-                <p className="text-gray-400 text-sm mt-1">Hiện chưa có mã giảm giá nào khả dụng</p>
+                <p className="text-gray-800 dark:text-white font-semibold">Không có voucher nào</p>
+                <p className="text-gray-400 dark:text-slate-500 text-sm mt-1">Hiện chưa có mã giảm giá nào khả dụng</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

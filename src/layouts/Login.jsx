@@ -6,15 +6,12 @@ import { useMediaQuery } from '../mystate/useMediaQuery'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { jwtDecode } from 'jwt-decode';
 import { useUser } from '../contexts/UserContext';
-import { useLocation } from 'react-router-dom';
 
 const Login = () => {
   const isShowPic = useMediaQuery("(min-width: 700px)");
       const [email, setEmail] = useState('');
       const [password, setPassword] = useState('');
-      const [error, setError] = useState('');
       const [loading, setLoading] = useState(false);
       const navigate = useNavigate();
       const { login, isAdmin, isAuthenticated } = useAuth();
@@ -28,29 +25,24 @@ const Login = () => {
             navigate('/');
           }
         }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [isAuthenticated]);
   
       const handleSubmit = async (e) => {
           e.preventDefault();
-          setError('');
           setLoading(true);
           const result = await login(email, password);
-          const userRoles = result.user?.role;
-          const isUserAdmin = Array.isArray(userRoles) 
-            ? userRoles.some(r => r.toLowerCase() === 'admin')
-            : userRoles?.toLowerCase() === 'admin';
           if (result.success) {
               alert("Đăng nhập thành công!");
               getUserInfo();
           } else {
-              setError(result.message);
               alert(result.message);
           }
-  
+
           setLoading(false);
       };
   return (
-    <div className='flex w-full h-auto text-black'>
+    <div className='flex w-full h-auto text-black dark:text-white'>
       {
         isShowPic && <img src="https://static.fbshop.vn/wp-content/uploads/2023/08/plogin-img.jpg" alt="" className='w-1/2 h-auto'/>
       }

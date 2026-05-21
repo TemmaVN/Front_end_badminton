@@ -12,7 +12,6 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -23,13 +22,12 @@ const Register = () => {
         e.preventDefault();
         if (!acceptTerms) {
             alert("Vui lòng đồng ý với Điều khoản sử dụng dịch vụ!");
-            return setError("Vui lòng đồng ý với Điều khoản sử dụng dịch vụ!");
+            return;
         }
         if (password !== confirmPassword){
           alert("Mật khẩu nhập lại không khớp!");
-            return setError("Mật khẩu nhập lại không khớp!");
+            return;
         }
-        setError('');
         setLoading(true);
 
         const result = await register({email, password});
@@ -39,14 +37,13 @@ const Register = () => {
             navigate('/login');
         } else {
             alert(result.message);
-            setError(result.message);
         }
 
         setLoading(false);
     };
   
   return (
-    <div className='flex w-full h-auto text-black'>
+    <div className='flex w-full h-auto text-black dark:text-white'>
       {
         isShowPic && <img src="https://cdn.shopvnb.com/uploads/images/bai_viet/anh-cau-long-ngau-1-1737322298.webp" alt="" className='w-1/2 h-auto'/>
       }

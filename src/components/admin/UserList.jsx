@@ -41,7 +41,8 @@ const fmtDate = (dateStr) => {
 const profileComplete = (c) => !!(c.phoneNumber && c.city && c.detailedAddress);
 
 // ─── Info Row (used in detail panel) ─────────────────────────────────
-function InfoRow({ icon: Icon, label, value, mono = false }) {
+function InfoRow({ icon: IconComp, label, value, mono = false }) {
+  const Icon = IconComp;
   return (
     <div className="flex items-start gap-3">
       <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5">
@@ -303,7 +304,7 @@ const UserList = () => {
             )}
           </form>
           {keyword && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Kết quả cho: <span className="font-semibold text-orange-500">"{keyword}"</span> — {total} khách hàng
             </p>
           )}

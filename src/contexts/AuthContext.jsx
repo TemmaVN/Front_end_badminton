@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, use } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState } from 'react';
 import { authApi } from '../api';
 import { jwtDecode } from 'jwt-decode';
 
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     const register = async (userData) => {
         setLoading(true);
         try {
-            const response = await authApi.register({ email: userData.email, password: userData.password});
+            await authApi.register({ email: userData.email, password: userData.password});
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Registration failed';
@@ -65,7 +66,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('userRole');
             setUserRole(null); // ✅ cập nhật state → trigger re-render
             return { success: true };
-        } catch (error) {
+        } catch {
             return { success: false, message: 'Logout failed' };
         }
         finally {

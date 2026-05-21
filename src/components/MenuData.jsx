@@ -6,7 +6,7 @@ import { useCategory } from '../contexts/CategoryContext'
 
 const ACCESSORY_SLUG = 'phu-kien'
 
-const MenuData = ({ isOpen, setIsOpen }) => {
+const MenuData = ({ setIsOpen }) => {
   const { categories, setPageCatagory } = useCategory()
 
   const close = (label) => {
@@ -15,9 +15,9 @@ const MenuData = ({ isOpen, setIsOpen }) => {
   }
 
   return (
-    <div className="flex flex-col grow text-black gap-2.5 p-5">
+    <div className="flex flex-col grow text-slate-900 dark:text-white gap-2.5 p-5">
       {/* Nav links */}
-      <div className="flex flex-col border-b border-b-gray-900 pb-3">
+      <div className="flex flex-col border-b border-b-gray-900 dark:border-b-slate-600 pb-3">
         <Link
           onClick={() => close()}
           to="/"
@@ -66,7 +66,7 @@ const MenuData = ({ isOpen, setIsOpen }) => {
       </div>
 
       {/* Tư vấn */}
-      <div className="flex justify-between border-b border-b-gray-900 pb-3">
+      <div className="flex justify-between border-b border-b-gray-900 dark:border-b-slate-600 pb-3">
         <div className="flex flex-col gap-3">
           <TuVan name="Tư vấn sản phẩm" phoneNumber="0979.170.274" />
           <TuVan name="Bảo hành và CSKH" phoneNumber="0979.170.274" />

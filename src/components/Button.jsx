@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { cva } from 'class-variance-authority';
 import React from 'react'
 import { twMerge } from 'tailwind-merge';

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
 import { useOrder } from '../../contexts/OrderContext';
-import OrderDetail from './OrderDetail';
 
 
 const topProducts = [
@@ -48,10 +47,6 @@ const STATUSES = {
 
 
 function TableSection() {
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const handleCloseDetail = () => {
-    setSelectedOrder(null);
-  };
   const getStatusColor = (status) => {
     // Tìm status trong object STATUSES dựa vào text
     const statusEntry = Object.values(STATUSES).find(
@@ -69,6 +64,7 @@ function TableSection() {
     const {orders, fetchAllOrders, getRecentOrders} = useOrder();
     useEffect(() => {
       fetchAllOrders({page: 1, pagesize: 200});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     } , []);
 
     const ordersList = getRecentOrders(orders, 4);
@@ -97,28 +93,27 @@ function TableSection() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50">
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Order ID
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Khách hàng
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Tổng tiền
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Trạng thái
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Ngày tạo
                 </th>
               </tr>
             </thead>
                 <tbody>
                 {ordersList.map((order, index) => (
-                    <tr 
-                    onClick={() => setSelectedOrder(order)}
-                    key={index} 
+                    <tr
+                    key={index}
                     className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                     {/* Order ID */}

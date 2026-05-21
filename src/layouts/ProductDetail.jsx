@@ -43,6 +43,7 @@ useEffect(() => {
     }
   };
   loadProduct();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [productSlug]);
 
 // ✅ Khởi tạo variant mặc định khi product load xong
@@ -54,6 +55,7 @@ useEffect(() => {
       setSelectedGrip(product.variants[0].gripSize);
     }
   }
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [product]);
 
 // Helper functions với kiểm tra null an toàn
@@ -136,10 +138,10 @@ const handleOrder = () => {
 };
 
 console.log(product)
-  if (loading) return <div className="text-center py-20">Đang tải sản phẩm...</div>;
-  if (!product) return <div className="text-center py-20">Không tìm thấy sản phẩm</div>;
+  if (loading) return <div className="text-center py-20 bg-white dark:bg-slate-950 dark:text-white min-h-screen">Đang tải sản phẩm...</div>;
+  if (!product) return <div className="text-center py-20 bg-white dark:bg-slate-950 dark:text-white min-h-screen">Không tìm thấy sản phẩm</div>;
   return (
-    <div className="bg-white min-h-screen font-sans text-gray-800">
+    <div className="bg-white dark:bg-slate-950 min-h-screen font-sans text-gray-800 dark:text-white">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* BREADCRUMB */}
 
@@ -152,7 +154,7 @@ console.log(product)
                 .filter(img => img.displayOrder === selectedImageOrder)
                 .map(img => {
                 return (
-                  <div key={img.imageID} className="border border-gray-100 rounded-xl w-full h-full object-contain p-4 flex justify-center mb-4">
+                  <div key={img.imageID} className="border border-gray-100 dark:border-slate-700 dark:bg-slate-900 rounded-xl w-full h-full object-contain p-4 flex justify-center mb-4">
                     <img src={img.imageUrl} alt="Yonex BG80 Power" className="h-full w-full object-contain" />
                   </div>
                 )
@@ -162,7 +164,7 @@ console.log(product)
               {product.imgaes.map(img => {
               return (
                   <div className="flex gap-3 overflow-x-auto" onMouseEnter={() => setSelectedImageOrder(img.displayOrder)}>
-                    <img src={img.imageUrl} className="w-20 h-20 border rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500" />
+                    <img src={img.imageUrl} className="w-20 h-20 border dark:border-slate-600 rounded-lg p-1 shrink-0 cursor-pointer hover:border-orange-500 dark:bg-slate-800" />
                   </div>
               )
             })}
@@ -171,15 +173,15 @@ console.log(product)
 
           {/* Right: Summary & Order */}
           <div className="flex flex-col">
-            <h1 className="text-3xl font-bold text-slate-800 mb-4 leading-snug">
+            <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-4 leading-snug">
               {product.productName}
             </h1>
             <div className="mb-4"><span className="bg-teal-400 text-white px-3 py-1 rounded text-xs font-bold uppercase">✨ Mới</span></div>
             
-            <div className="flex gap-6 text-sm mb-6 pb-6 border-b border-gray-100">
-              <p>Xuất xứ: <span className="font-bold text-gray-900">Nhật Bản</span></p>
+            <div className="flex gap-6 text-sm mb-6 pb-6 border-b border-gray-100 dark:border-slate-700">
+              <p>Xuất xứ: <span className="font-bold text-gray-900 dark:text-white">Nhật Bản</span></p>
               <p>Tình trạng: {
-                !selectedVariant.inStock ? <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100">Hết hàng</span> : <span className="bg-green-50 text-green-500 px-3 py-1 rounded-full text-xs border border-green-100">Còn hàng</span>
+                !selectedVariant.inStock ? <span className="bg-red-50 dark:bg-red-500/10 text-red-500 px-3 py-1 rounded-full text-xs border border-red-100 dark:border-red-500/30">Hết hàng</span> : <span className="bg-green-50 dark:bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs border border-green-100 dark:border-green-500/30">Còn hàng</span>
                   }</p>
             </div>
 
@@ -187,15 +189,15 @@ console.log(product)
               <span className="text-4xl font-bold text-orange-500">{selectedVariant.price}</span>
             </div>
 
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-orange-800 mb-8">
+            <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/30 rounded-xl p-4 text-orange-800 dark:text-orange-300 mb-8">
               Liên hệ hotline <span className="font-bold">0979.170.274</span> để được tư vấn và đặt hàng nhanh nhất!
             </div>
             {/* Variant Selector */}
         <div className="mb-6 space-y-5">
           {/* Weight Class */}
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-              Trọng lượng: <span className="text-gray-900">{selectedWeight}</span>
+            <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Trọng lượng: <span className="text-gray-900 dark:text-white">{selectedWeight}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {weightOptions.map(w => {
@@ -207,10 +209,10 @@ console.log(product)
                     disabled={!avail}
                     className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all
                       ${selectedWeight === w
-                        ? 'border-orange-500 bg-orange-50 text-orange-500'
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-500'
                         : avail
-                          ? 'border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-400'
-                          : 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
+                          ? 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400 hover:text-orange-400'
+                          : 'border-gray-100 dark:border-slate-700 text-gray-300 dark:text-slate-600 line-through cursor-not-allowed'
                       }`}
                   >
                     {w}
@@ -222,8 +224,8 @@ console.log(product)
 
       {/* Grip Size */}
       <div>
-        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
-          Cỡ cán: <span className="text-gray-900">{selectedGrip}</span>
+        <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+          Cỡ cán: <span className="text-gray-900 dark:text-white">{selectedGrip}</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {gripOptions.map(g => {
@@ -235,10 +237,10 @@ console.log(product)
                 disabled={!avail}
                 className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all
                   ${selectedGrip === g
-                    ? 'border-orange-500 bg-orange-50 text-orange-500'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-500'
                     : avail
-                      ? 'border-gray-200 text-gray-600 hover:border-orange-400 hover:text-orange-400'
-                      : 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
+                      ? 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-orange-400 hover:text-orange-400'
+                      : 'border-gray-100 dark:border-slate-700 text-gray-300 dark:text-slate-600 line-through cursor-not-allowed'
                   }`}
               >
                 {g}
@@ -250,18 +252,18 @@ console.log(product)
 
       {/* Thông tin variant được chọn */}
       {selectedVariant && (
-        <div className="flex flex-wrap gap-4 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500">
-          <span>Cân bằng: <strong className="text-gray-800">{selectedVariant.balancePoint}</strong></span>
-          <span>Độ cứng: <strong className="text-gray-800">{selectedVariant.stiffness}</strong></span>
-          <span>Căng max: <strong className="text-gray-800">{selectedVariant.maxTension} lbs</strong></span>
-          <span>Tồn kho: <strong className="text-gray-800">{selectedVariant.stockQuantity} cái</strong></span>
+        <div className="flex flex-wrap gap-4 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+          <span>Cân bằng: <strong className="text-gray-800 dark:text-white">{selectedVariant.balancePoint}</strong></span>
+          <span>Độ cứng: <strong className="text-gray-800 dark:text-white">{selectedVariant.stiffness}</strong></span>
+          <span>Căng max: <strong className="text-gray-800 dark:text-white">{selectedVariant.maxTension} lbs</strong></span>
+          <span>Tồn kho: <strong className="text-gray-800 dark:text-white">{selectedVariant.stockQuantity} cái</strong></span>
         </div>
       )}
     </div>
 
             <div className="flex items-center gap-6 mb-8">
               <span className="font-medium">Số lượng:</span>
-              <div className="flex items-center border rounded-full px-4 py-2 w-32 justify-between">
+              <div className="flex items-center border dark:border-slate-600 rounded-full px-4 py-2 w-32 justify-between dark:text-white">
                 <button onClick={() => setQuantity(Math.max(1, quantity-1))}>-</button>
                 <span className="font-bold">{quantity < 10 ? `0${quantity}` : quantity}</span>
                 <button onClick={() => setQuantity(Math.min(quantity+1, selectedVariant.stockQuantity))}>+</button>
@@ -282,7 +284,7 @@ console.log(product)
                   Mua ngay
                 </Button>
               </div>
-              : <Button className={`w-50 rounded-2xl bg-gray-200 text-slate-400 hover:cursor-not-allowed`} disabled={true}>
+              : <Button className={`w-50 rounded-2xl bg-gray-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:cursor-not-allowed`} disabled={true}>
                   Đang hết hàng
               </Button>
             }
@@ -290,17 +292,17 @@ console.log(product)
         </div>
 
         {/* BOTTOM SECTION: TABS & CONTENT */}
-        <div className="mt-12 bg-[#FFF7F2] rounded-3xl p-6 md:p-10 border border-orange-50">
+        <div className="mt-12 bg-[#FFF7F2] dark:bg-slate-900 rounded-3xl p-6 md:p-10 border border-orange-50 dark:border-slate-700">
           {/* Tab Headers */}
-          <div className="flex flex-wrap gap-4 mb-8 border-b border-orange-100">
+          <div className="flex flex-wrap gap-4 mb-8 border-b border-orange-100 dark:border-slate-700">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`pb-4 px-4 font-bold text-lg transition-all relative ${
-                  activeTab === tab.id 
-                  ? 'text-orange-600 after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-orange-500' 
-                  : 'text-gray-500 hover:text-gray-700'
+                  activeTab === tab.id
+                  ? 'text-orange-600 after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-orange-500'
+                  : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'
                 }`}
               >
                 {tab.label}
@@ -309,7 +311,7 @@ console.log(product)
           </div>
 
           {/* Tab Content */}
-          <div className="text-gray-700 leading-relaxed text-lg">
+          <div className="text-gray-700 dark:text-slate-300 leading-relaxed text-lg">
             {activeTab === 'description' && (
               <div className="space-y-6 animate-fadeIn">
                 <p>
@@ -317,14 +319,14 @@ console.log(product)
                 </p>
                 <p>Với độ cứng đặc trưng và âm thanh nổ đanh thép, sợi cước này không chỉ mang lại cảm giác cầu chân thực...</p>
                 
-                <h2 className="text-2xl font-bold text-slate-800 mt-8">1. Giới thiệu cước đan vợt cầu lông Yonex BG80 Power JP</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mt-8">1. Giới thiệu cước đan vợt cầu lông Yonex BG80 Power JP</h2>
                 <p>Cước đan vợt cầu lông Yonex BG80 Power JP là phiên bản nâng cấp hoàn hảo của dòng BG80 huyền thoại...</p>
                 
                 <div className="my-8 rounded-2xl overflow-hidden shadow-sm">
                   <img src="https://fbshop.vn/wp-content/uploads/2023/04/bg-80-power-jp-1.jpg" alt="Mô tả" className="w-full" />
                 </div>
 
-                <h2 className="text-2xl font-bold text-slate-800">3. Công nghệ tích hợp</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">3. Công nghệ tích hợp</h2>
                 <ul className="list-disc pl-6 space-y-3">
                   <li><strong>Công nghệ Multi Filament:</strong> Giúp sợi dây có độ đàn hồi cực cao...</li>
                   <li><strong>Pha sợi Vectran:</strong> Tăng cường độ cứng cho dây, giữ sức căng ổn định...</li>
@@ -334,31 +336,31 @@ console.log(product)
 
             {activeTab === 'specs' && (
               <div className="animate-fadeIn space-y-4 max-w-2xl">
-                <div className="flex justify-between border-b py-3">
-                  <span className="font-medium text-gray-500">Mã sản phẩm</span>
-                  <span className="font-bold">BG 80 POWER (Mã JP)</span>
+                <div className="flex justify-between border-b dark:border-slate-700 py-3">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Mã sản phẩm</span>
+                  <span className="font-bold dark:text-white">BG 80 POWER (Mã JP)</span>
                 </div>
-                <div className="flex justify-between border-b py-3">
-                  <span className="font-medium text-gray-500">Đường kính dây</span>
-                  <span className="font-bold">0.68 mm</span>
+                <div className="flex justify-between border-b dark:border-slate-700 py-3">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Đường kính dây</span>
+                  <span className="font-bold dark:text-white">0.68 mm</span>
                 </div>
-                <div className="flex justify-between border-b py-3">
-                  <span className="font-medium text-gray-500">Chiều dài</span>
-                  <span className="font-bold">10 mét</span>
+                <div className="flex justify-between border-b dark:border-slate-700 py-3">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Chiều dài</span>
+                  <span className="font-bold dark:text-white">10 mét</span>
                 </div>
-                <div className="flex justify-between border-b py-3">
-                  <span className="font-medium text-gray-500">Cảm giác đánh</span>
+                <div className="flex justify-between border-b dark:border-slate-700 py-3">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Cảm giác đánh</span>
                   <span className="font-bold text-red-600">Cứng (Hard Feeling)</span>
                 </div>
-                <div className="flex justify-between border-b py-3">
-                  <span className="font-medium text-gray-500">Nguồn gốc</span>
-                  <span className="font-bold">Nhật Bản</span>
+                <div className="flex justify-between border-b dark:border-slate-700 py-3">
+                  <span className="font-medium text-gray-500 dark:text-slate-400">Nguồn gốc</span>
+                  <span className="font-bold dark:text-white">Nhật Bản</span>
                 </div>
               </div>
             )}
 
             {activeTab === 'reviews' && (
-              <div className="py-20 text-center text-gray-400 animate-fadeIn">
+              <div className="py-20 text-center text-gray-400 dark:text-slate-500 animate-fadeIn">
                 Chưa có đánh giá nào cho sản phẩm này.
               </div>
             )}

@@ -128,6 +128,12 @@ export const productApi = {
 
     deleteImage: (imageId) =>
         api.delete(`/Product/management-images/${imageId}`),
+
+    importFromFile: (formData) =>
+        api.post(`/Product/admin/import-excel`, formData),
+
+    exportFromFile: () =>
+        api.get(`/Product/admin/export-excel`, {responseType: "blob"}),
 };
 
 export const metaDataApi = {

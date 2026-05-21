@@ -1,5 +1,6 @@
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const data = [
   { name: "Vợt cầu lông",  value: 42, color: "#fb923c" },
@@ -11,6 +12,7 @@ const data = [
 ];
 
 function SalesChart() {
+  const { isDark } = useTheme();
   return (
     <div className="bg-white dark:bg-slate-900 backdrop-blur-xl rounded-b-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
       <div className="mb-6">
@@ -47,7 +49,7 @@ function SalesChart() {
                 </Pie>
                 <Tooltip
                 contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backgroundColor: isDark ? "rgba(30, 41, 59, 0.95)" : "rgba(255, 255, 255, 0.95)",
                     border: "none",
                     borderRadius: "12px",
                     boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",

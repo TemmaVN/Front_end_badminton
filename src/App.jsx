@@ -3,7 +3,7 @@ import MainHeader from "./layouts/MainHeader";
 import { useMediaQuery } from "./mystate/useMediaQuery";
 import Login from "./layouts/Login";
 import Register from "./layouts/Register";
-import { BrowserRouter, Route, Routes, Navigate,useNavigate, useLocation} from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation} from "react-router-dom";
 import Advertisement from "./components/Advertisement";
 import Contract from "./layouts/Contract";
 import Sales from "./layouts/Sales";
@@ -45,9 +45,8 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const adminRedirectPaths = ['/', '/login', '/register'];
   
   if (isAdmin() && adminRedirectPaths.includes(location.pathname)) {
@@ -190,7 +189,7 @@ function App() {
             <OrderProvider>
               <WarrantyProvider>
                 <StatisticProvider>
-                  <div className="bg-white h-auto w-full">
+                  <div className="bg-white dark:bg-slate-950 h-auto w-full">
                     {isHidePageHeader && <PageHeader />}
                     {isHideMainHeader && <MainHeader />}
                     <ProductProvider>

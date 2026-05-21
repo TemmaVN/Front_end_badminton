@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {
     createContext,
     useContext,
@@ -170,6 +171,62 @@ export const ProductProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
+
+    const importFromFile = useCallback(async (file) => {
+        if (!file) return null;
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await productApi.importFromFile(formData)
+            return {
+                success: true,
+                message: res.data?.message && "Thêm sản phẩm bằng file thành công"
+            };
+        } catch(err) {
+            const msg =
+                err.response?.data?.message  // message từ backend
+                ?? err.response?.data?.errors // ModelState errors
+                ?? err.message;
+            setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+            return {
+                success: false,
+                message: msg,
+            };
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    const exportFromFile = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await productApi.exportFromFile();
+
+            const disposition = res.headers["content-disposition"] || "";
+            const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i);
+            const fileName = match
+              ? decodeURIComponent(match[1])
+              : `Products_Export_${Date.now()}.xlsx`;
+            
+            const blob = new Blob([res.data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            })
+            return {
+                fileName: fileName,
+                blob: blob,
+            };
+        } catch (err) {
+            const msg = 
+                err.response?.data?.message
+                ?? err.response?.data?.errors 
+                ?? err.message;
+            setError(typeof msg === 'object'? JSON.stringify(msg): msg)
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }, [])
     // ─── Value ────────────────────────────────────────────────────────────────
     const value = {
         // state
@@ -186,6 +243,8 @@ export const ProductProvider = ({ children }) => {
         addProduct,
         updateProduct,
         deleteProduct,
+        importFromFile,
+        exportFromFile,
         clearError,
     };
 

@@ -1,15 +1,9 @@
 import React from 'react';
 import { useCategory } from '../../contexts/CategoryContext'; // Đảm bảo đúng đường dẫn
 import { Loader2, Box, ChevronRight, Plus , Edit2, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const Categories = () => {
   const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategory();
-  const navigate = useNavigate(); 
-  const handleCategoryClick = (categoryId) => {
-    // Chuyển hướng sang trang sản phẩm với query categoryId
-    navigate(`/products?categoryId=${categoryId}`);
-  };
   const handleAddCategory = async () => {
     const name = prompt("Nhập tên danh mục mới:");
     if (!name || name.trim() === "") return;
@@ -84,9 +78,9 @@ const Categories = () => {
             <p className="text-slate-500 text-sm mt-1">Quản lý các nhóm sản phẩm trong cửa hàng</p>
           </div>
           
-          <button 
+          <button
             onClick={handleAddCategory}
-            className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-orange-200"
+            className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-orange-200 dark:shadow-orange-500/10"
           >
             <Plus size={20} /> Thêm danh mục
           </button>
@@ -133,7 +127,7 @@ const Categories = () => {
                       >
                         <Trash2 size={14} />
                       </button>
-                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
+                      <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all text-slate-600 dark:text-slate-300">
                         <ChevronRight size={16} />
                       </div>
                     </div>
@@ -143,9 +137,9 @@ const Categories = () => {
           );
         })
       ) : (
-        <div className="col-span-full text-center p-10 bg-slate-50 rounded-2xl border border-dashed">
-          <Box className="mx-auto text-slate-300 mb-2" size={48} />
-          <p className="text-slate-500">Không có danh mục nào để hiển thị.</p>
+        <div className="col-span-full text-center p-10 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+          <Box className="mx-auto text-slate-300 dark:text-slate-600 mb-2" size={48} />
+          <p className="text-slate-500 dark:text-slate-400">Không có danh mục nào để hiển thị.</p>
         </div>
       )}
     </div>

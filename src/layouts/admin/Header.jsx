@@ -1,19 +1,19 @@
-import {User, LogOut, Filter, Menu, Plus, Search, Sun ,Bell, Settings, ChevronDown} from 'lucide-react'
+import {User, LogOut, Filter, Menu, Plus, Search, Sun, Moon, Bell, Settings, ChevronDown} from 'lucide-react'
 import React, {useEffect, useRef, useState} from 'react'
 import {useAuth} from  "../../contexts/AuthContext"
-import {useNavigate, Link, useLocation} from "react-router-dom"
-import {useUser} from "../../contexts/UserContext"
+import {useNavigate, Link} from "react-router-dom"
 import {useMediaQuery} from '../../mystate/useMediaQuery';
+import {useTheme} from '../../contexts/ThemeContext';
 
 
-const Header = ({sideBarCollapsed, onToggleSidebar}) => {
+const Header = ({onToggleSidebar}) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const { isDark, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
-    const {isAuthenticated, logout, loading} = useAuth();
-    const [error, setError] = useState('')
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
-    const [fullName, setFullName] = useState(user.fullName);
+    const fullName = user?.fullName ?? '';
     const isMedium = useMediaQuery('(min-width: 1280px)');
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -27,15 +27,12 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
 
     const handleLogout = async (e) => {
         e.preventDefault();
-        setError('')        
         const result = await logout();
-        
         if (result.success) {
             alert("Đăng xuất thành công");
             navigate('/');
         } else {
-            setError(result.message);
-            alert(message);
+            alert(result.message);
         }
       };
   return (
@@ -86,9 +83,13 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                     <span className='text-sm font-medium'>New</span>
                 </button>
                 {/*Toggle*/}
-                <button className='p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
-                 dark:hover:bg-slate-800 transition-colors'>
-                    <Sun className='w-5 h-5'/>
+                <button
+                    onClick={toggleTheme}
+                    className='p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
+                 dark:hover:bg-slate-800 transition-colors'
+                    title={isDark ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+                >
+                    {isDark ? <Sun className='w-5 h-5'/> : <Moon className='w-5 h-5'/>}
                 </button>
                 {/*Notification*/}
                 <button className='relative p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
