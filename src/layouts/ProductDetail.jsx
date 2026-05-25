@@ -136,8 +136,6 @@ const handleOrder = () => {
     }
   });
 };
-
-console.log(product)
   if (loading) return <div className="text-center py-20 bg-white dark:bg-slate-950 dark:text-white min-h-screen">Đang tải sản phẩm...</div>;
   if (!product) return <div className="text-center py-20 bg-white dark:bg-slate-950 dark:text-white min-h-screen">Không tìm thấy sản phẩm</div>;
   return (

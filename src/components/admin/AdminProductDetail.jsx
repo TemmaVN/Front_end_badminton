@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check } from 'lucide-react';
+import { Plus, Pencil, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { productApi, metaDataApi } from '../../api';
 
@@ -62,6 +62,13 @@ const AdminProductDetail = () => {
     const [addSerialState, setAddSerialState] = useState(null);
 
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    // Edit variant modal
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingVariant, setEditingVariant] = useState(null);
+    const [editVariantForm, setEditVariantForm] = useState(EMPTY_FORM);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState(null);
 
     // Serial management modal (# SNs badge click)
     const [serialModal, setSerialModal] = useState({ open: false, variant: null });
@@ -211,6 +218,33 @@ const AdminProductDetail = () => {
             alert(err.response?.data?.message ?? 'Không thể xóa biến thể');
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    const handleEditVariant = async () => {
+        if (!editVariantForm.price || Number(editVariantForm.price) <= 0) {
+            setEditError('Vui lòng nhập giá hợp lệ!');
+            return;
+        }
+        setEditLoading(true);
+        setEditError(null);
+        try {
+            const payload = {
+                weightClass:   editVariantForm.weightClass   || null,
+                gripSize:      editVariantForm.gripSize      || null,
+                balancePoint:  editVariantForm.balancePoint  || null,
+                stiffness:     editVariantForm.stiffness     || null,
+                maxTension:    editVariantForm.maxTension !== '' ? parseInt(editVariantForm.maxTension) : null,
+                price:         parseFloat(editVariantForm.price),
+                stockQuantity: parseInt(editVariantForm.stockQuantity) || 1,
+            };
+            await productApi.updateVariant(editingVariant.detailId, payload);
+            setShowEditModal(false);
+            await loadVariants();
+        } catch (err) {
+            setEditError(err.response?.data?.message ?? 'Không thể cập nhật biến thể');
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -429,6 +463,13 @@ const AdminProductDetail = () => {
                                             <Hash size={10} /> {v.totalSerialNumbers ?? 0} SNs
                                         </button>
                                         <button
+                                            onClick={(e) => { e.stopPropagation(); setEditingVariant(v); setEditVariantForm({ weightClass: v.weightClass || '', gripSize: v.gripSize || '', balancePoint: v.balancePoint || '', stiffness: v.stiffness || '', maxTension: v.maxTension ?? '', price: v.price ?? '', stockQuantity: v.stockQuantity ?? 10 }); setEditError(null); setShowEditModal(true); }}
+                                            className="p-1 text-gray-300 dark:text-slate-600 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-colors"
+                                            title="Chỉnh sửa biến thể"
+                                        >
+                                            <Pencil size={13} />
+                                        </button>
+                                        <button
                                             onClick={(e) => handleDeleteVariant(v.detailId, e)}
                                             disabled={deleteLoading}
                                             className="p-1 text-gray-300 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors disabled:opacity-40"
@@ -638,6 +679,91 @@ const AdminProductDetail = () => {
                             >
                                 {addLoading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                                 Thêm biến thể
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Edit Variant Modal ── */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700">
+                            <div>
+                                <h3 className="font-bold text-gray-800 dark:text-white">Chỉnh sửa biến thể</h3>
+                                <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Detail ID: {editingVariant?.detailId}</p>
+                            </div>
+                            <button onClick={() => setShowEditModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg text-gray-400 dark:text-slate-500 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            {editError && (
+                                <div className="flex items-center gap-2 p-3 mb-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/30 rounded-xl text-xs text-rose-600 dark:text-rose-400">
+                                    <AlertCircle size={13} /> {editError}
+                                </div>
+                            )}
+                            {metaLoading ? (
+                                <div className="flex justify-center py-8"><Loader2 className="animate-spin text-gray-300" size={22} /></div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {FORM_FIELDS.map(({ label, metaKey, formKey }) => (
+                                        <div key={formKey} className="flex flex-col gap-1">
+                                            <label className="text-xs font-medium text-gray-600 dark:text-slate-400">{label}</label>
+                                            <select
+                                                className="p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:border-blue-400 transition-colors"
+                                                value={editVariantForm[formKey]}
+                                                onChange={(e) => setEditVariantForm((prev) => ({ ...prev, [formKey]: e.target.value }))}
+                                            >
+                                                <option value="">— Chọn —</option>
+                                                {(metaData?.[metaKey] ?? []).map((opt) => (
+                                                    <option key={String(opt.value)} value={opt.value ?? ''}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                    <div className="col-span-2 flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Lực căng tối đa / Speed</label>
+                                        <select
+                                            className="p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:border-blue-400 transition-colors"
+                                            value={editVariantForm.maxTension}
+                                            onChange={(e) => setEditVariantForm((prev) => ({ ...prev, maxTension: e.target.value }))}
+                                        >
+                                            <option value="">— Chọn —</option>
+                                            {(metaData?.maxTensions ?? []).map((opt) => (
+                                                <option key={String(opt.value)} value={opt.value ?? ''}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Giá bán (VNĐ) <span className="text-rose-500">*</span></label>
+                                        <input type="number" min="0"
+                                            className="p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:border-blue-400 transition-colors"
+                                            value={editVariantForm.price}
+                                            onChange={(e) => setEditVariantForm((prev) => ({ ...prev, price: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs font-medium text-gray-600 dark:text-slate-400">Tồn kho <span className="text-rose-500">*</span></label>
+                                        <input type="number" min="0"
+                                            className="p-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:border-blue-400 transition-colors"
+                                            value={editVariantForm.stockQuantity}
+                                            onChange={(e) => setEditVariantForm((prev) => ({ ...prev, stockQuantity: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-slate-700">
+                            <button onClick={() => setShowEditModal(false)} className="px-4 py-2.5 text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition-colors">
+                                Huỷ bỏ
+                            </button>
+                            <button onClick={handleEditVariant} disabled={editLoading}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
+                            >
+                                {editLoading ? <Loader2 size={14} className="animate-spin" /> : <Pencil size={14} />}
+                                Lưu thay đổi
                             </button>
                         </div>
                     </div>

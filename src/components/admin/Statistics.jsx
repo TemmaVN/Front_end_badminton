@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import {useStatistic} from "../../contexts/StatisticContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { productApi } from '../../api';
 
 const monthly2025 = [
   { thang: "T1",  doanhThu: 42, chiPhi: 28, loiNhuan: 14, donHang: 187 },
@@ -424,11 +425,36 @@ function BrandTab() {
 
 // ─── Products Tab ─────────────────────────────────────────────────────
 function ProductsTab() {
-  const [filterCat,   setFilterCat]   = useState('all');
-  const [filterTrend, setFilterTrend] = useState('all');
+  const [filterCat,      setFilterCat]      = useState('all');
+  const [filterTrend,    setFilterTrend]    = useState('all');
+  const [products,       setProducts]       = useState(topProductsData);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const cats = ['all', ...new Set(topProductsData.map((p) => p.danhMuc))];
-  const filtered = topProductsData
+  useEffect(() => {
+    productApi.getTopProducts({ top: 20 })
+      .then(res => {
+        const data = res.data?.data ?? res.data ?? [];
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data.map((p, i) => ({
+            rank:       p.rank         ?? i + 1,
+            ten:        p.productName  ?? p.ten        ?? '—',
+            danhMuc:    p.categoryName ?? p.danhMuc    ?? '—',
+            thuongHieu: p.brandName    ?? p.thuongHieu ?? '—',
+            daBan:      p.totalSold    ?? p.soldQuantity ?? p.daBan ?? 0,
+            doanhThu:   (p.totalRevenue ?? p.revenue) != null
+              ? (p.totalRevenue ?? p.revenue).toLocaleString('vi-VN')
+              : (p.doanhThu ?? '—'),
+            trend:  p.trend  ?? 'up',
+            change: p.change ?? '',
+          })));
+        }
+      })
+      .catch(() => { /* giữ dữ liệu tĩnh */ })
+      .finally(() => setLoadingProducts(false));
+  }, []);
+
+  const cats = ['all', ...new Set(products.map((p) => p.danhMuc))];
+  const filtered = products
     .filter((p) => filterCat   === 'all' || p.danhMuc === filterCat)
     .filter((p) => filterTrend === 'all' || p.trend   === filterTrend);
 
@@ -438,7 +464,9 @@ function ProductsTab() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h4 className="text-base font-bold text-slate-800 dark:text-white">Sản phẩm bán chạy</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Năm 2025 · top {filtered.length} sản phẩm</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {loadingProducts ? 'Đang tải...' : `Top ${filtered.length} sản phẩm`}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <select

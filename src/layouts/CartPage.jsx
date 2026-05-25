@@ -164,7 +164,11 @@ const CartPage = () => {
             quantity: item.quantity,
           })),
         };
-        console.log(orderPayload);
+        const previewRes = await orderApi.preview(orderPayload);
+        if (!previewRes.data?.isValid) {
+          setOrderError(previewRes.data?.errorMessage || 'Đơn hàng không hợp lệ. Vui lòng kiểm tra lại.');
+          return;
+        }
         const response = await orderApi.create(orderPayload);
         if (response.status === 200 || response.status === 201) {
           // Xóa cart riêng, KHÔNG để lỗi ở đây block UX
