@@ -23,7 +23,7 @@ const CategoryShowcase = ({ category, products, categoryImage }) => {
     <div className="max-w-300 mx-auto my-12 px-4">
       {/* Tiêu đề */}
       <div className="flex justify-between items-center mb-6 border-b-2 border-orange-500 pb-2">
-        <h2 className="text-3xl font-bold text-gray-800">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
           {category.categoryName}
         </h2>
         <FlashButton itemName="Xem tất cả" onClick={() => handleClickAll()}>

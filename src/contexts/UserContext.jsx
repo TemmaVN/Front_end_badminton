@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { userApi} from '../api';
 
@@ -27,7 +28,7 @@ export const UserProvider = ({ children }) => {
 
     const changePassword = async ({oldPassword, newPassword}) => {
         try {
-            const response = await userApi.changePassword({ oldPassword, newPassword });
+            await userApi.changePassword({ oldPassword, newPassword });
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Change password failed';
@@ -37,7 +38,7 @@ export const UserProvider = ({ children }) => {
 
     const UpdateProfile = async ({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress}) => {
         try {
-            const response = await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});    
+            await userApi.UpdateProfile({fullName, dateOfBirth, phoneNumber, city, district, detailedAddress});
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'Cập nhật thông tin thất bại';

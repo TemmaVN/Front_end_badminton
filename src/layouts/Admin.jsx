@@ -12,6 +12,7 @@ const Admin = () => {
 
   // Close mobile drawer when switching to desktop
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isDesktop) setMobileOpen(false);
   }, [isDesktop]);
 

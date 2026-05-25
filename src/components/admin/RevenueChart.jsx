@@ -1,5 +1,6 @@
 import React from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { useTheme } from '../../contexts/ThemeContext'
 
 const data = [
   { month: "T1",  revenue: 42, expenses: 28 },
@@ -17,6 +18,7 @@ const data = [
 ];
 
 const RevenueChart = () => {
+  const { isDark } = useTheme();
   return (
     <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-bl-2xl border 
     border-slate-200/50 dark:border-slate-700/50'>
@@ -76,12 +78,12 @@ const RevenueChart = () => {
                     axisLine={false} 
                     tickFormatter={(value) => `${value}M`}
                     />
-                    <Tooltip 
-                    contentStyle={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.95)", 
-                        border: "none", 
-                        borderRadius: "12px", 
-                        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)" 
+                    <Tooltip
+                    contentStyle={{
+                        backgroundColor: isDark ? "rgba(30, 41, 59, 0.95)" : "rgba(255, 255, 255, 0.95)",
+                        border: "none",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)"
                     }}
                     formatter={(value, name) => [`${value} triệu đ`, name === 'revenue' ? 'Doanh thu' : 'Chi phí']}
                     cursor={{ fill: '#f1f5f9' }}

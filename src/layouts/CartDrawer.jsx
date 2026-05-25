@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 
 const CartDrawer = ({ isOpen, setIsOpen }) => {
-  const {cart, totalItems, addToCart, fetchCart,updateCartItem, setCart ,deleteCartItem, clearCartState} = useCart()
+  const {cart, addToCart, fetchCart,updateCartItem, setCart ,deleteCartItem} = useCart()
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchCart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const changeQuantity = async (cartItemId, detailId, delta, currentQuantity) => {
@@ -55,14 +56,14 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
       />
 
       {/* 2. Drawer Panel: Trượt từ phải sang */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-112.5 bg-white shadow-2xl z-1000 transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 right-0 h-full w-full max-w-112.5 bg-white dark:bg-slate-900 shadow-2xl z-1000 transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         
         {/* Nút đóng (X) */}
         <button 
           onClick={() => setIsOpen(false)}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-all"
+          className="absolute top-4 right-4 p-2 text-gray-400 dark:text-slate-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-all"
         >
           <X size={24} />
         </button>
@@ -70,7 +71,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="pt-12 pb-6 text-center">
-            <h2 className="text-4xl font-bold text-[#001e3c]">Giỏ hàng</h2>
+            <h2 className="text-4xl font-bold text-[#001e3c] dark:text-white">Giỏ hàng</h2>
           </div>
 
           {/* Danh sách sản phẩm (Phần thân có thể cuộn) */}
@@ -78,6 +79,7 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
             [&::-webkit-scrollbar]:w-1.5
             [&::-webkit-scrollbar-track]:bg-transparent
             [&::-webkit-scrollbar-thumb]:bg-gray-200
+            dark:[&::-webkit-scrollbar-thumb]:bg-slate-700
             [&::-webkit-scrollbar-thumb]:rounded-full">
             
             {cart.map((item) => (
@@ -87,31 +89,31 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
                   <img 
                     src={item.imageUrl} 
                     alt={item.productName} 
-                    className="w-full h-full object-contain border border-gray-100 rounded-sm"
+                    className="w-full h-full object-contain border border-gray-100 dark:border-slate-700 rounded-sm"
                   />
                 </div>
 
                 {/* Chi tiết sản phẩm */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[16px] font-medium leading-tight text-gray-800 line-clamp-2 mb-3">
+                  <h3 className="text-[16px] font-medium leading-tight text-gray-800 dark:text-white line-clamp-2 mb-3">
                     {item.productName}
                   </h3>
-                  <p className="text-xs text-gray-400 mb-2">{item.variantInfo}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mb-2">{item.variantInfo}</p>
                   <div className="flex items-center justify-between">
                     {/* Bộ tăng giảm số lượng */}
-                    <div className="flex items-center border border-gray-200 rounded">
+                    <div className="flex items-center border border-gray-200 dark:border-slate-600 rounded">
                       <button 
                       onClick={() => changeQuantity(item.cartItemId, item.detailId, -1, item.quantity)}
-                      className="px-2 py-1 text-gray-500 hover:text-orange-500 transition-colors"
+                      className="px-2 py-1 text-gray-500 dark:text-slate-400 hover:text-orange-500 transition-colors"
                       >
                         <Minus size={14} />
                       </button>
-                      <span className="px-3 py-1 text-xs font-bold border-x border-gray-200">
+                      <span className="px-3 py-1 text-xs font-bold border-x border-gray-200 dark:border-slate-600 dark:text-white">
                         {item.quantity < 10 ? `0${item.quantity}` : item.quantity}
                       </span>
                       <button 
                       onClick={() => changeQuantity(item.cartItemId, item.detailId, 1, item.quantity)}
-                      className="px-2 py-1 text-gray-500 hover:text-orange-500 transition-colors">
+                      className="px-2 py-1 text-gray-500 dark:text-slate-400 hover:text-orange-500 transition-colors">
                         <Plus size={14} />
                       </button>
                     </div>
@@ -127,9 +129,9 @@ const CartDrawer = ({ isOpen, setIsOpen }) => {
           </div>
 
           {/* Footer (Cố định ở đáy) */}
-          <div className="p-6 border-t border-gray-100 bg-white">
+          <div className="p-6 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
             <div className="flex justify-between items-center mb-8">
-              <span className="text-lg font-bold text-gray-900">Tổng cộng</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">Tổng cộng</span>
               <span className="text-xl font-bold text-red-600">
                 {cart.reduce((sum, item) => sum + item.subTotal, 0).toLocaleString('vi-VN')}đ
               </span>

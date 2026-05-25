@@ -6,6 +6,7 @@ const ProductCategory = ({ mainSub, items = [],isSetUp }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   useEffect(() => {
     if (isSetUp) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedItems([]);
     }
   }, [isSetUp]);

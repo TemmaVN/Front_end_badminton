@@ -3,10 +3,10 @@ import { useWarranty } from '../../contexts/WarrantyContext';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const STATUS_CFG = {
-  'Chờ xử lý':   { color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',   dot: 'bg-amber-400',   icon: '⏳' },
-  'Đang xử lý':  { color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-200',    dot: 'bg-blue-400',    icon: '🔄' },
-  'Đã xử lý':    { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500', icon: '✅' },
-  'Từ chối':      { color: 'text-red-500',     bg: 'bg-red-50',     border: 'border-red-200',     dot: 'bg-red-400',     icon: '✖' },
+  'Chờ xử lý':   { color: 'text-amber-600 dark:text-amber-400',   bg: 'bg-amber-50 dark:bg-amber-500/15',   border: 'border-amber-200 dark:border-amber-500/30',   dot: 'bg-amber-400',   icon: '⏳' },
+  'Đang xử lý':  { color: 'text-blue-600 dark:text-blue-400',    bg: 'bg-blue-50 dark:bg-blue-500/15',    border: 'border-blue-200 dark:border-blue-500/30',    dot: 'bg-blue-400',    icon: '🔄' },
+  'Đã xử lý':    { color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/15', border: 'border-emerald-200 dark:border-emerald-500/30', dot: 'bg-emerald-500', icon: '✅' },
+  'Từ chối':      { color: 'text-red-500 dark:text-red-400',     bg: 'bg-red-50 dark:bg-red-500/15',     border: 'border-red-200 dark:border-red-500/30',     dot: 'bg-red-400',     icon: '✖' },
 };
 
 const STATUS_FLOW = ['Chờ xử lý', 'Đang xử lý', 'Đã xử lý', 'Từ chối'];
@@ -55,18 +55,18 @@ const DetailPanel = ({ claim, onClose, onUpdateStatus }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-2xl max-h-[92vh] bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="relative w-full sm:max-w-2xl max-h-[92vh] bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-start justify-between p-5 border-b border-gray-100 bg-gray-50">
+        <div className="flex items-start justify-between p-5 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
           <div>
-            <p className="text-xs text-gray-400 font-mono mb-1">BH-{claim.warrantyId}</p>
-            <h2 className="text-base font-bold text-gray-900">Chi tiết yêu cầu bảo hành</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{formatDate(claim.createdAt)}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 font-mono mb-1">BH-{claim.warrantyId}</p>
+            <h2 className="text-base font-bold text-gray-900 dark:text-white">Chi tiết yêu cầu bảo hành</h2>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{formatDate(claim.createdAt)}</p>
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={claim.status} />
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-gray-500 hover:text-gray-800 transition-colors text-lg">✕</button>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-700 text-gray-500 dark:text-slate-300 hover:text-gray-800 dark:hover:text-white transition-colors text-lg">✕</button>
           </div>
         </div>
 
@@ -107,14 +107,14 @@ const DetailPanel = ({ claim, onClose, onUpdateStatus }) => {
           <Section title="Xử lý yêu cầu">
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1.5 block">Cập nhật trạng thái</label>
+                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1.5 block">Cập nhật trạng thái</label>
                 <div className="flex flex-wrap gap-2">
                   {STATUS_FLOW.map((s) => {
                     const cfg = STATUS_CFG[s];
                     return (
                       <button key={s} onClick={() => setNewStatus(s)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all
-                          ${newStatus === s ? `${cfg.bg} ${cfg.color} ${cfg.border} ring-1 ring-offset-1 ${cfg.border}` : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                          ${newStatus === s ? `${cfg.bg} ${cfg.color} ${cfg.border} ring-1 ring-offset-1 ${cfg.border}` : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'}`}>
                         {cfg.icon} {s}
                       </button>
                     );
@@ -123,15 +123,15 @@ const DetailPanel = ({ claim, onClose, onUpdateStatus }) => {
               </div>
 
               <div>
-                <label className="text-xs text-gray-500 mb-1.5 block">Ghi chú nội bộ</label>
+                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1.5 block">Ghi chú nội bộ</label>
                 <textarea
                   value={adminNote} onChange={(e) => setAdminNote(e.target.value)}
                   rows={3} placeholder="Ghi chú cho nhóm xử lý hoặc phản hồi khách hàng..."
-                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none" />
+                  className="w-full text-sm border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-gray-800 dark:text-white bg-white dark:bg-slate-800 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
               </div>
 
               <button onClick={handleSave} disabled={saving || (newStatus === claim.status && adminNote === claim.adminNote)}
-                className="w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                className="w-full py-2.5 rounded-xl bg-gray-900 dark:bg-orange-500 text-white text-sm font-semibold hover:bg-gray-700 dark:hover:bg-orange-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                 {saving ? 'Đang lưu...' : saved ? '✅ Đã lưu' : 'Lưu thay đổi'}
               </button>
             </div>
@@ -144,7 +144,7 @@ const DetailPanel = ({ claim, onClose, onUpdateStatus }) => {
 
 const Section = ({ title, children }) => (
   <div>
-    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{title}</p>
+    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">{title}</p>
     {children}
   </div>
 );
@@ -154,37 +154,37 @@ const InfoGrid = ({ children }) => (
 );
 
 const InfoItem = ({ label, value, full = false }) => (
-  <div className={`bg-gray-50 rounded-xl p-3 ${full ? 'sm:col-span-2' : ''}`}>
-    <p className="text-xs text-gray-400 mb-1">{label}</p>
-    <p className="text-sm font-medium text-gray-800">{value || '—'}</p>
+  <div className={`bg-gray-50 dark:bg-slate-800 rounded-xl p-3 ${full ? 'sm:col-span-2' : ''}`}>
+    <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">{label}</p>
+    <p className="text-sm font-medium text-gray-800 dark:text-white">{value || '—'}</p>
   </div>
 );
 
 // ─── ROW ──────────────────────────────────────────────────────────────────────
 const ClaimRow = ({ claim, onClick }) => (
   <tr onClick={() => onClick(claim)}
-    className="hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0">
+    className="hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors border-b border-gray-100 dark:border-slate-700 last:border-0">
     <td className="px-4 py-3">
-      <p className="text-xs font-mono text-gray-400">BH-{claim.warrantyId}</p>
+      <p className="text-xs font-mono text-gray-400 dark:text-slate-500">BH-{claim.warrantyId}</p>
     </td>
     <td className="px-4 py-3">
-      <p className="text-sm font-medium text-gray-800 truncate max-w-[180px]">{claim.productName}</p>
-      <p className="text-xs font-mono text-gray-400">{claim.serialNumber}</p>
+      <p className="text-sm font-medium text-gray-800 dark:text-white truncate max-w-45">{claim.productName}</p>
+      <p className="text-xs font-mono text-gray-400 dark:text-slate-500">{claim.serialNumber}</p>
     </td>
     <td className="px-4 py-3 hidden sm:table-cell">
-      <p className="text-sm text-gray-700">{claim.customerName}</p>
+      <p className="text-sm text-gray-700 dark:text-slate-300">{claim.customerName}</p>
     </td>
     <td className="px-4 py-3 hidden md:table-cell">
-      <p className="text-xs text-gray-500">{claim.reasonLabel}</p>
+      <p className="text-xs text-gray-500 dark:text-slate-400">{claim.reasonLabel}</p>
     </td>
     <td className="px-4 py-3">
       <StatusBadge status={claim.status} />
     </td>
     <td className="px-4 py-3 hidden lg:table-cell text-right">
-      <p className="text-xs text-gray-400">{formatDate(claim.createdAt)}</p>
+      <p className="text-xs text-gray-400 dark:text-slate-500">{formatDate(claim.createdAt)}</p>
     </td>
     <td className="px-4 py-3 text-right">
-      <span className="text-gray-300 hover:text-gray-500 text-lg">›</span>
+      <span className="text-gray-300 dark:text-slate-600 hover:text-gray-500 dark:hover:text-slate-400 text-lg">›</span>
     </td>
   </tr>
 );
@@ -224,8 +224,8 @@ const WarrantyManagement = () => {
       {/* Page header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Quản lý bảo hành</h1>
-          <p className="text-sm text-gray-500 mt-0.5">{claims.length} yêu cầu tổng cộng</p>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Quản lý bảo hành</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{claims.length} yêu cầu tổng cộng</p>
         </div>
 
         {/* Stats chips */}
@@ -248,8 +248,8 @@ const WarrantyManagement = () => {
             <button key={tab.value} onClick={() => setFilter(tab.value)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all
                 ${activeFilter === tab.value
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                  ? 'bg-gray-900 dark:bg-orange-500 text-white border-gray-900 dark:border-orange-500'
+                  : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'}`}>
               {tab.label}
             </button>
           ))}
@@ -259,29 +259,29 @@ const WarrantyManagement = () => {
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm seri, khách, sản phẩm..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition" />
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-400 transition" />
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden shadow-sm">
         {filtered.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl mb-3">🛡️</p>
-            <p className="text-gray-500 font-medium">Không có yêu cầu bảo hành nào</p>
-            <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm</p>
+            <p className="text-gray-500 dark:text-slate-400 font-medium">Không có yêu cầu bảo hành nào</p>
+            <p className="text-gray-400 dark:text-slate-500 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khoá tìm kiếm</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã BH</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sản phẩm / Seri</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Khách hàng</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Lý do</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Ngày tạo</th>
+                <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Mã BH</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Sản phẩm / Seri</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">Khách hàng</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Lý do</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">Ngày tạo</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
