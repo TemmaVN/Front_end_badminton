@@ -1,79 +1,70 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, Eye, Loader2, RotateCcw } from "lucide-react";
-import { orderApi } from "../../api"; // Giả định API đã được tạo
+import { useOrder } from "../../contexts/OrderContext";
 import OrderDetail from "./OrderDetail";
 
 const STATUSES = {
-  1: { text: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-600" },
-  2: { text: "Đã xác nhận", color: "bg-blue-100 text-blue-600" },
-  3: { text: "Đang xử lý", color: "bg-indigo-100 text-indigo-600" },
-  4: { text: "Đang đan lưới", color: "bg-teal-100 text-teal-600" },
-  5: { text: "Đang giao hàng", color: "bg-purple-100 text-purple-600" },
-  6: { text: "Đã giao hàng", color: "bg-green-100 text-green-600" },
-  7: { text: "Hoàn tất", color: "bg-emerald-100 text-emerald-600" },
-  8: { text: "Đã huỷ", color: "bg-red-100 text-red-600" },
+  1: { text: "Chờ xác nhận",  color: "bg-yellow-100 dark:bg-yellow-500/15 text-yellow-700 dark:text-yellow-400" },
+  2: { text: "Đã xác nhận",   color: "bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400" },
+  3: { text: "Đang xử lý",    color: "bg-indigo-100 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400" },
+  4: { text: "Đang đan lưới", color: "bg-teal-100 dark:bg-teal-500/15 text-teal-700 dark:text-teal-400" },
+  5: { text: "Đang giao hàng",color: "bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400" },
+  6: { text: "Đã giao hàng",  color: "bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400" },
+  7: { text: "Hoàn tất",      color: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
+  8: { text: "Đã huỷ",        color: "bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400" },
 };
 
 const OrderList = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { orders, loading, pagination: ctxPagination, fetchAllOrders, fetchByStatus } = useOrder();
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    totalPages: 1,
-  });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [filters, setFilters] = useState({ status: "", keyword: "" });
-
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      let response;
-      if (filters.status) {
-        // Nếu có chọn trạng thái, gọi API lấy theo trạng thái
-        const params = { page: pagination.page, pageSize: pagination.pageSize };
-        response = await orderApi.getByStatus(filters.status, params);
-      } else {
-        // Nếu không chọn trạng thái, gọi API lấy tất cả
-        const params = {
-          page: pagination.page,
-          pageSize: pagination.pageSize,
-          keyword: filters.keyword || null,
-        };
-        response = await orderApi.getAll(params);
-      }
-      setOrders(response.data.orders || []);
-      setPagination((prev) => ({
-        ...prev,
-        totalPages: response.data.totalPages || 1,
-      }));
-    } catch (error) {
-      console.error("Failed to fetch orders:", error);
-      alert("Không thể tải danh sách đơn hàng.");
-    } finally {
-      setLoading(false);
+  const fetchOrders = useCallback(() => {
+    if (filters.status) {
+      fetchByStatus(filters.status, page, PAGE_SIZE);
+    } else {
+      fetchAllOrders(page, PAGE_SIZE);
     }
-  }, [pagination.page, pagination.pageSize, filters]);
+  }, [page, filters.status, fetchAllOrders, fetchByStatus]);
+
+  const displayedOrders = filters.keyword.trim()
+    ? orders.filter(
+        (o) =>
+          o.receiverName?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
+          o.phoneNumber?.includes(filters.keyword) ||
+          String(o.orderId).includes(filters.keyword)
+      )
+    : orders;
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= pagination.totalPages) {
-      setPagination((prev) => ({ ...prev, page: newPage }));
+    if (newPage >= 1 && newPage <= ctxPagination.totalPages) {
+      setPage(newPage);
     }
   };
 
+  const pageList = []
+  for (let i = page-2; i <= page+2; i++) {
+    if (i > 0 && i <= ctxPagination.totalPages) {
+      pageList.push(i)
+    }
+  }
+
+
   const resetFilters = () => {
     setFilters({ status: "", keyword: "" });
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    setPage(1);
   };
 
   const handleCloseDetail = () => {
@@ -81,9 +72,9 @@ const OrderList = () => {
   };
 
   return (
-    <div className="p-1 bg-slate-50 min-h-screen">
-      <div className="max-w-8xl mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-200">
+    <div className="p-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
+      <div className="max-w-8xl mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">
             Quản lý đơn hàng
           </h3>
@@ -98,14 +89,14 @@ const OrderList = () => {
                 value={filters.keyword}
                 onChange={handleFilterChange}
                 placeholder="Tìm theo tên khách hàng, SĐT..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-transparent rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <select
               name="status"
               value={filters.status}
               onChange={handleFilterChange}
-              className="py-2.5 px-3 bg-slate-100 border-transparent rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500"
+              className="py-2.5 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="">Tất cả trạng thái</option>
               {Object.entries(STATUSES).map(([id, { text }]) => (
@@ -116,7 +107,7 @@ const OrderList = () => {
             </select>
             <button
               onClick={resetFilters}
-              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 transition-all"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
             >
               <RotateCcw size={16} /> Làm mới
             </button>
@@ -125,31 +116,31 @@ const OrderList = () => {
 
         <div className="overflow-x-auto relative">
           {loading && (
-            <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10">
+            <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 flex items-center justify-center z-10">
               <Loader2 className="animate-spin text-orange-500" size={32} />
             </div>
           )}
           <table className="w-full text-left">
-            <thead className="bg-slate-50/50">
-              <tr className="text-xs font-semibold text-slate-500 uppercase">
-                <th className="p-4">Order ID</th>
-                <th className="p-4">Khách hàng</th>
-                <th className="p-4">Sản phẩm</th>
-                <th className="p-4 text-right">Tổng tiền</th>
-                <th className="p-4 text-center">Trạng thái</th>
-                <th className="p-4">Ngày tạo</th>
-                <th className="p-4 text-center">Hành động</th>
+            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+              <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                <th className="px-5 py-3">Order ID</th>
+                <th className="px-5 py-3">Khách hàng</th>
+                <th className="px-5 py-3">Sản phẩm</th>
+                <th className="px-5 py-3 text-right">Tổng tiền</th>
+                <th className="px-5 py-3 text-center">Trạng thái</th>
+                <th className="px-5 py-3">Ngày tạo</th>
+                <th className="px-5 py-3 text-center">Hành động</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {orders.map((order) => {
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+              {displayedOrders.map((order) => {
                 const firstProduct =
                   order.orderDetails?.[0]?.productName || "N/A";
                 const totalProducts = order.orderDetails?.length || 0;
 
                 let statusInfo = {
                   text: "Không xác định",
-                  color: "bg-gray-200 text-gray-700",
+                  color: "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
                 };
                 const rawStatus = order.status;
                 if (rawStatus !== undefined && rawStatus !== null) {
@@ -163,7 +154,7 @@ const OrderList = () => {
                     );
                     statusInfo = foundEntry || {
                       text: String(rawStatus),
-                      color: "bg-gray-200 text-gray-700",
+                      color: "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
                     };
                   }
                 }
@@ -171,48 +162,48 @@ const OrderList = () => {
                 return (
                   <tr
                     key={order.orderId}
-                    className="hover:bg-slate-50 transition-colors text-sm cursor-pointer"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-sm cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <td className="p-4 font-mono text-orange-600">
+                    <td className="px-5 py-3.5 font-mono text-orange-500 dark:text-orange-400 font-semibold">
                       #{order.orderId}
                     </td>
-                    <td className="p-4">
-                      <div className="font-medium text-slate-800">
+                    <td className="px-5 py-3.5">
+                      <div className="font-medium text-slate-800 dark:text-white">
                         {order.receiverName}
                       </div>
-                      <div className="text-slate-500 text-xs">
+                      <div className="text-slate-500 dark:text-slate-400 text-xs">
                         {order.phoneNumber}
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="px-5 py-3.5">
                       <p
-                        className="font-medium text-slate-700 truncate max-w-50"
+                        className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-50"
                         title={firstProduct}
                       >
                         {firstProduct}
                       </p>
                       {totalProducts > 1 && (
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-slate-400 dark:text-slate-500">
                           và {totalProducts - 1} sản phẩm khác
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-right font-bold text-slate-700">
-                      {order.totalAmount?.toLocaleString()}₫
+                    <td className="px-5 py-3.5 text-right font-bold text-slate-800 dark:text-white">
+                      {order.finalAmount?.toLocaleString()}₫
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-5 py-3.5 text-center">
                       <span
                         className={`px-2.5 py-1 text-[11px] font-bold rounded-full ${statusInfo.color}`}
                       >
                         {statusInfo.text}
                       </span>
                     </td>
-                    <td className="p-4 text-slate-500">
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-sm">
                       {new Date(order.orderDate).toLocaleDateString("vi-VN")}
                     </td>
-                    <td className="p-4 text-center">
-                      <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg">
+                    <td className="px-5 py-3.5 text-center">
+                      <button className="p-2 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-500 dark:text-blue-400 rounded-lg transition-colors">
                         <Eye size={16} />
                       </button>
                     </td>
@@ -222,23 +213,36 @@ const OrderList = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-sm text-slate-500">
-            Trang <span className="font-semibold">{pagination.page}</span> /{" "}
-            {pagination.totalPages}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            Trang <span className="font-semibold text-slate-700 dark:text-slate-200">{page}</span> /{" "}
+            {ctxPagination.totalPages || 1}
           </span>
           <div className="flex gap-2">
             <button
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-              className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               Trước
             </button>
+            {pageList.map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePageChange(p)}
+                className={`w-9 h-9 rounded-lg text-xs font-semibold transition-colors
+                ${p === page
+                  ? 'bg-orange-default text-white shadow shadow-orange-default/25'
+                  : 'text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
             <button
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-              className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page >= (ctxPagination.totalPages || 1)}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               Sau
             </button>

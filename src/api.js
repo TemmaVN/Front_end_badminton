@@ -53,20 +53,15 @@ export const userApi = {
     changePassword: ({ oldPassword, newPassword }) => api.put('/user/change-password', { oldPassword, newPassword }),
     UpdateProfile: ({ fullName, dateOfBirth, phoneNumber, city, district, detailedAddress }) => api.put('/User/profile', { fullName, dateOfBirth, phoneNumber, city, district, detailedAddress}),
     get_info: () => api.get('/User/user-info'),
-    getAll: (keyword = '') => api.get(`/User?keyword=${keyword}`),    
+    getAll: (page = 1, pageSize = 10) => api.get('/User', { params: { page, pageSize } }),
+    search: (keyword) => api.get('/User/search', { params: { keyword } }),
     create: (userData) => api.post('/User', userData),
-    getById: (id) => api.get(`/users/${id}`),
-    update: (id, data) => api.put(`/users/${id}`, data),
-    delete: (id) => api.delete(`/users/${id}`),
 };
 
 // Product API
 export const productApi = {
     getHomeProducts: () =>
         api.get('/Product/home'),
-
-    getAll: (params = {}) =>
-        api.get('/Product', { params }),
 
     search: (params = {}) =>
         api.get('/Product/searchAsync', { params }),
@@ -85,6 +80,12 @@ export const productApi = {
     getProductDetaildBySlug: (slug) =>
         api.get(`/Product/${slug}`),
 
+    getForAdmin: (params = {}) =>
+        api.get('/Product/product-management', { params }),
+
+    getTopProducts: (params = {}) =>
+        api.get('/admin/statistic/products/top', { params }),
+
     create: (data) =>
         api.post('/Product', data),
 
@@ -94,8 +95,49 @@ export const productApi = {
     delete: (id) =>
         api.delete(`/Product/${id}`),
 
-    addDetails: (productId, payload) =>
-        api.put(`/Product/${productId}`, payload),
+    getVariants: (productId, params = {}) =>
+        api.get(`/Product/${productId}/management-details`, { params }),
+
+    addVariant: (productId, data) =>
+        api.post(`/Product/${productId}/management-details`, data),
+
+    updateVariant: (detailId, data) =>
+        api.put(`/Product/management-details/${detailId}`, data),
+
+    deleteVariant: (detailId) =>
+        api.delete(`/Product/management-details/${detailId}`),
+
+    getSerials: (detailId, params = {}) =>
+        api.get(`/Product/management-details/${detailId}/serials`, { params }),
+
+    addSerial: (detailId, data) =>
+        api.post(`/Product/management-details/${detailId}/serials`, data),
+
+    // Quản lý ảnh sản phẩm
+    getImages: (productId) =>
+        api.get(`/Product/${productId}/management-images`),
+
+    addImage: (productId, data) =>
+        api.post(`/Product/${productId}/management-images`, data),
+
+    setMainImage: (productId, imageId) =>
+        api.put(`/Product/${productId}/management-images/set-main/${imageId}`),
+
+    reorderImages: (productId, data) =>
+        api.put(`/Product/management-images/reOrder`, data, { params: { productId } }),
+
+    deleteImage: (imageId) =>
+        api.delete(`/Product/management-images/${imageId}`),
+
+    importFromFile: (formData) =>
+        api.post(`/Product/admin/import-excel`, formData),
+
+    exportFromFile: () =>
+        api.get(`/Product/admin/export-excel`, {responseType: "blob"}),
+};
+
+export const metaDataApi = {
+    get: () => api.get('/MetaData'),
 };
 
 // Category API
@@ -136,35 +178,52 @@ export const cartApi = {
 
 // Order API
 export const orderApi = {
-    // ✅ Đã có sẵn
     create: (data) => api.post('/Order', data),
     getMyOrders: () => api.get('/Order/my-orders'),
-    getById: (id) => api.get(`/Order/${id}`),
-
-    // ✅ Bổ sung mới
-    getAllOrders: (page = 1, pageSize = 10) =>
+    getAll: (page = 1, pageSize = 10) =>
         api.get('/Order/all-orders', { params: { page, pageSize } }),
-
-    getOrdersByStatus: (statusId, page = 1, pageSize = 10) =>
+    getByStatus: (statusId, page = 1, pageSize = 10) =>
         api.get(`/Order/all-orders-by-status/${statusId}`, { params: { page, pageSize } }),
-
-    updateOrderStatus: (orderId, newOrderStatusId) =>
+    updateStatus: (orderId, newOrderStatusId) =>
         api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
             headers: { 'Content-Type': 'application/json' }
         }),
-
     cancelMyOrder: (orderId) =>
         api.put(`/Order/cancel-my-order/${orderId}`),
-    getByStatus: (statusId, params) =>
-    api.get(`/Order/all-orders-by-status/${statusId}`, { params }),
-  getAll: (params) => api.get("/Order/all-orders", { params }),
-  updateStatus: (orderId, statusId) =>
-    api.put(`/Order/updateStatus/${orderId}`, statusId, {
-      headers: { "Content-Type": "application/json" },
-    }), 
+    adminSearch: (params = {}) =>
+        api.get('/Order/admin-search', { params }),
+    preview: (data) =>
+        api.post('/Order/preview', data),
 };
+
+export const warrantyApi = {
+    create: (formData) => api.post('/Warranty', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+    getMyWarranties: () => api.get('/Warranty/my-claims'),
+    getAll: (params = {}) => api.get('/Warranty', { params }),
+    updateStatus: (warrantyId, status, adminNote) =>
+        api.put(`/Warranty/${warrantyId}/status`, { status, adminNote }),
+    delete: (warrantyId) => api.delete(`/Warranty/${warrantyId}`),
+};
+
+export const statisticApi = {
+    getOverview: (params = {}) => api.get('/admin/statistic/overview', { params }),
+    getRevenueByCategoy: (params = {}) => api.get('/admin/statistic/revenue/category', {params}),
+    getRevenueByBrand: (params = {}) => api.get('/admin/statistic/revenue/brand', {params}),
+    getRevenueByMonth: (params = {}) => api.get('/admin/statistic/revenue/monthly', {params}),
+    getRevenueCategoryByMonth: (params = {}) => api.get('/admin/statistic/revenue/category-monthly', {params}),
+    getFullReport: (params = {}) => api.get('/admin/statistic/full-report', {params}),
+}
+
+export const voucherApi = {
+    getAvailableVouchers: (paymentMethod) => api.get('/Voucher/my-voucher', {params: {paymentMethod}}),
+    getAllAvailable: () => api.get('/Voucher/all-available'),
+    saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
+    adminCreate: (data) => api.post('/Voucher/admin/add', data),
+}
 
 export default api;
 
-// Cart API
+
 

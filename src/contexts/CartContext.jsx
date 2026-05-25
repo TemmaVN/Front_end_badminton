@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, useCallback } from "react";
 import { cartApi } from "../api";
 
 const CartContext = createContext(null);
@@ -41,7 +42,6 @@ export const CartProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      console.log(detailId, quantity);
       const res = await cartApi.addToCart(detailId, quantity);
       setCart(extractItems(res.data));
       return res.data;

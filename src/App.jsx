@@ -3,7 +3,7 @@ import MainHeader from "./layouts/MainHeader";
 import { useMediaQuery } from "./mystate/useMediaQuery";
 import Login from "./layouts/Login";
 import Register from "./layouts/Register";
-import { BrowserRouter, Route, Routes, Navigate,useNavigate, useLocation} from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation} from "react-router-dom";
 import Advertisement from "./components/Advertisement";
 import Contract from "./layouts/Contract";
 import Sales from "./layouts/Sales";
@@ -27,11 +27,17 @@ import HomePage from "./layouts/HomePage";
 import ProductDetail from "./layouts/ProductDetail";
 import Footer from "./layouts/Footer";
 import { CartProvider } from "./contexts/CartContext";
+import { WarrantyProvider } from "./contexts/WarrantyContext";
 import CartPage from "./layouts/CartPage";
 import UserList from "./components/admin/UserList";
 import Payment from "./components/admin/Payment";
 import MyOrders from "./layouts/MyOrders";
 import AdminProductDetail from "./components/admin/AdminProductDetail";
+import WarrantyManagement from "./components/admin/WarrantyManagement";
+import Statistics from "./components/admin/Statistics";
+import VoucherManagement from "./components/admin/VoucherManagement";
+import { OrderProvider } from "./contexts/OrderContext";
+import { StatisticProvider } from "./contexts/StatisticContext";
 
 
 const PublicRoute = ({ children }) => {
@@ -39,9 +45,8 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const adminRedirectPaths = ['/', '/login', '/register'];
   
   if (isAdmin() && adminRedirectPaths.includes(location.pathname)) {
@@ -142,7 +147,7 @@ function AppRoutes() {
         {/* ✅ Nhóm bằng pathless route */}
         <Route path="product">
           <Route index element={<ProductList />} />
-          <Route path=":productSlug" element={<AdminProductDetail />} />
+          <Route path=":productId" element={<AdminProductDetail />} />
         </Route>
 
         <Route path="categories" element={<Categories />} />
@@ -152,6 +157,9 @@ function AppRoutes() {
         <Route path="users-list" element={<UserList />} />
         <Route path="payment" element={<Payment />} />
         <Route path="admin-info" element={<UserInfo />} />
+        <Route path="warranty" element={<WarrantyManagement />} />
+        <Route path="statistics" element={<Statistics />} />
+        <Route path="vouchers" element={<VoucherManagement />} />
       </Route>
 
       <Route
@@ -178,14 +186,20 @@ function App() {
       <UserProvider>
         <CategoryProvider>
           <CartProvider>
-            <div className="bg-white h-auto w-full">
-              {isHidePageHeader && <PageHeader />}
-              {isHideMainHeader && <MainHeader />}
-              <ProductProvider>
-                <AppRoutes />
-              </ProductProvider>
-              <Footer />
-            </div>
+            <OrderProvider>
+              <WarrantyProvider>
+                <StatisticProvider>
+                  <div className="bg-white dark:bg-slate-950 h-auto w-full">
+                    {isHidePageHeader && <PageHeader />}
+                    {isHideMainHeader && <MainHeader />}
+                    <ProductProvider>
+                      <AppRoutes />
+                    </ProductProvider>
+                    <Footer />
+                  </div>
+                </StatisticProvider>
+              </WarrantyProvider>
+            </OrderProvider>
           </CartProvider>
         </CategoryProvider>
       </UserProvider>

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {
     createContext,
     useContext,
@@ -34,13 +35,6 @@ export const ProductProvider = ({ children }) => {
             currentPage: page,
         });
     };
-
-    // ─── Search / Filter (trang danh sách chính) ─────────────────────────────
-    /**
-     * params: { keyword, categorySlug, brandSlug,
-     *           minPrice, maxPrice, Voucher, page, pagesize }
-     * return: { items, totalCount, totalPages, page } | null
-     */
     const searchProducts = useCallback(async (params = {}) => {
         setLoading(true);
         setError(null);
@@ -60,11 +54,7 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── Lấy sản phẩm theo danh mục (slug) ───────────────────────────────────
-    /**
-     * params: { page, pagesize, keyword, minPrice, maxPrice }
-     */
-    const fetchProductsBySlug = useCallback(async (params = {}) => {
+    const fetchProductsBySlug = useCallback(async (categorySlug, params = {}) => {
         setLoading(true);
         setError(null);
         try {
@@ -82,11 +72,28 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── Tạo sản phẩm mới (Admin) ─────────────────────────────────────────────
-    /**
-     * data: CreateProductRequest (xem swagger / controller)
-     * return: { productId } | null
-     */
+    // ─── Tìm kiếm sản phẩm cho trang Admin (trả về brandName, categoryName) ───
+    const searchProductsAdmin = useCallback(async (params = {}) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await productApi.getForAdmin(params);
+            const data = response.data;
+            setProducts(data.items ?? []);
+            setPaginationFromResponse({
+                totalCount: data.totalCount,
+                totalPages: data.totalPages,
+                page: data.page,
+            });
+            return data;
+        } catch (err) {
+            const msg = err.response?.data?.message ?? err.message;
+            setError(msg);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
     const addProduct = useCallback(async (data) => {
         setLoading(true);
         setError(null);
@@ -104,11 +111,6 @@ export const ProductProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
-
-    // ─── Cập nhật sản phẩm (Admin) ────────────────────────────────────────────
-    /**
-     * return: updated product | null
-     */
     const updateProduct = useCallback(async (id, data) => {
         setLoading(true);
         setError(null);
@@ -185,6 +187,62 @@ export const ProductProvider = ({ children }) => {
             setLoading(false);
         }
     }, []);
+
+    const importFromFile = useCallback(async (file) => {
+        if (!file) return null;
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await productApi.importFromFile(formData)
+            return {
+                success: true,
+                message: res.data?.message && "Thêm sản phẩm bằng file thành công"
+            };
+        } catch(err) {
+            const msg =
+                err.response?.data?.message  // message từ backend
+                ?? err.response?.data?.errors // ModelState errors
+                ?? err.message;
+            setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+            return {
+                success: false,
+                message: msg,
+            };
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    const exportFromFile = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await productApi.exportFromFile();
+
+            const disposition = res.headers["content-disposition"] || "";
+            const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i);
+            const fileName = match
+              ? decodeURIComponent(match[1])
+              : `Products_Export_${Date.now()}.xlsx`;
+            
+            const blob = new Blob([res.data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            })
+            return {
+                fileName: fileName,
+                blob: blob,
+            };
+        } catch (err) {
+            const msg = 
+                err.response?.data?.message
+                ?? err.response?.data?.errors 
+                ?? err.message;
+            setError(typeof msg === 'object'? JSON.stringify(msg): msg)
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }, [])
     // ─── Value ────────────────────────────────────────────────────────────────
     const value = {
         // state
@@ -196,11 +254,13 @@ export const ProductProvider = ({ children }) => {
         // actions
         getProductDetaildBySlug,
         searchProducts,
+        searchProductsAdmin,
         fetchProductsBySlug,
         addProduct,
         updateProduct,
         deleteProduct,
-        addProductDetails,
+        importFromFile,
+        exportFromFile,
         clearError,
     };
 

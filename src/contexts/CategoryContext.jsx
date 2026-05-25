@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { categoryApi } from '../api';
 
@@ -15,8 +16,8 @@ export const useCategory = () => {
 export const CategoryProvider = ({ children }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [pageCatagory, setPageCatagory] = useState('');
-
+    const [pageCatagory, setPageCatagory] = useState([]);
+    const [pageBrand, setPageBrand] = useState('')
     // 1. Hàm lấy tất cả danh mục (GetAll)
     const refreshCategories = async () => {
         setLoading(true);
@@ -75,6 +76,8 @@ export const CategoryProvider = ({ children }) => {
         categories,
         pageCatagory,
         setPageCatagory,
+        pageBrand,
+        setPageBrand,
         loading,
         refreshCategories,
         addCategory,

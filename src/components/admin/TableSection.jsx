@@ -1,38 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { MoreHorizontal, TrendingUp, TrendingDown } from 'lucide-react';
 import { useOrder } from '../../contexts/OrderContext';
-import OrderDetail from './OrderDetail';
 
 
 const topProducts = [
   {
-    name: 'MacBook Pro 16"',
-    sales: 1247,
-    revenue: "$2,987,530",
+    name: "Vợt Yonex Astrox 88D",
+    sales: 234,
+    revenue: "1.170.000.000 đ",
+    trend: "up",
+    change: "+18%",
+  },
+  {
+    name: "Vợt Victor Thruster K 12M",
+    sales: 186,
+    revenue: "892.800.000 đ",
     trend: "up",
     change: "+12%",
   },
   {
-    name: "iPhone 15 Pro",
-    sales: 842,
-    revenue: "$925,300",
+    name: "Cầu RSL Gold (hộp 12 quả)",
+    sales: 1520,
+    revenue: "760.000.000 đ",
     trend: "up",
-    change: "+8%",
+    change: "+24%",
   },
   {
-    name: "AirPods Pro",
-    sales: 642,
-    revenue: "$160,250",
+    name: "Giày Yonex SHB 65Z3",
+    sales: 142,
+    revenue: "567.000.000 đ",
     trend: "down",
     change: "-5%",
   },
-  {
-    name: "iPad Air",
-    sales: 442,
-    revenue: "$265,150",
-    trend: "up",
-    change: "+10%",
-  }
 ];
 
 const STATUSES = {
@@ -48,10 +47,6 @@ const STATUSES = {
 
 
 function TableSection() {
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const handleCloseDetail = () => {
-    setSelectedOrder(null);
-  };
   const getStatusColor = (status) => {
     const statusEntry = Object.values(STATUSES).find(
       (item) => item.text === status
@@ -64,9 +59,10 @@ function TableSection() {
     return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400";
   };
 
-    const {orders, getAll, getRecentOrders} = useOrder();
+    const {orders, fetchAllOrders, getRecentOrders} = useOrder();
     useEffect(() => {
-      getAll({page: 1, pagesize: 200});
+      fetchAllOrders({page: 1, pagesize: 200});
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     } , []);
 
     const ordersList = getRecentOrders(orders, 4);
@@ -95,28 +91,27 @@ function TableSection() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50">
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
-                  Mã đơn hàng
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  Order ID
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Khách hàng
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Tổng tiền
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Trạng thái
                 </th>
-                <th className="text-left p-4 text-sm font-semibold text-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-600 dark:text-slate-400">
                   Ngày tạo
                 </th>
               </tr>
             </thead>
                 <tbody>
                 {ordersList.map((order, index) => (
-                    <tr 
-                    onClick={() => setSelectedOrder(order)}
-                    key={index} 
+                    <tr
+                    key={index}
                     className="border-b border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
                     >
                     <td className="p-4">
@@ -167,7 +162,7 @@ function TableSection() {
                 Sản phẩm bán chạy
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                Các sản phẩm có hiệu suất tốt nhất
+                Hiệu suất bán hàng tốt nhất
                 </p>
             </div>
             <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
@@ -187,7 +182,7 @@ function TableSection() {
                     {product.name}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {product.sales} lượt bán
+                    {product.sales.toLocaleString()} lượt bán
                 </p>
                 </div>
 

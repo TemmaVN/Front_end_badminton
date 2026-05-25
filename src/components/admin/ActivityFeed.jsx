@@ -4,22 +4,34 @@ import { Clock } from 'lucide-react';
 const activities = [
   {
     title: "Đơn hàng mới",
-    description: "Đơn hàng #3852 từ Nguyễn Văn A",
+    description: "Đơn #3852 – Nguyễn Văn An đặt Vợt Yonex Astrox 88D",
     time: "2 phút trước",
-    color: "bg-blue-500"
+    color: "bg-blue-500",
   },
   {
-    title: "Cập nhật hệ thống",
-    description: "Nhân hệ thống đã được cập nhật lên v2.4.0",
-    time: "1 giờ trước",
-    color: "bg-emerald-500"
+    title: "Yêu cầu bảo hành",
+    description: "Trần Thị Bình gửi yêu cầu BH cho Vợt Victor Thruster K",
+    time: "35 phút trước",
+    color: "bg-amber-500",
   },
   {
     title: "Khách hàng mới",
-    description: "Trần Thị B vừa tạo tài khoản",
+    description: "Lê Minh Quân đăng ký tài khoản",
+    time: "1 giờ trước",
+    color: "bg-emerald-500",
+  },
+  {
+    title: "Sản phẩm sắp hết hàng",
+    description: "Cầu RSL Gold còn 8 hộp – cần nhập thêm",
+    time: "2 giờ trước",
+    color: "bg-rose-500",
+  },
+  {
+    title: "Đơn hàng hoàn tất",
+    description: "Đơn #3847 đã giao thành công đến Phạm Hồng Sơn",
     time: "3 giờ trước",
-    color: "bg-amber-500"
-  }
+    color: "bg-purple-500",
+  },
 ];
 
 function ActivityFeed() {
@@ -33,7 +45,7 @@ function ActivityFeed() {
               Hoạt động gần đây
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Các hoạt động hệ thống mới nhất
+              Hoạt động hệ thống mới nhất
             </p>
           </div>
           <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">

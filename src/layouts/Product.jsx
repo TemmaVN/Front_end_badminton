@@ -55,10 +55,12 @@ const Product = () => {
     setInputKeyword(keyword);
   }, [keyword]);
 
+  const isSearchRoute = categorySlug === 'search';
+
   // ── Fetch khi searchParams hoặc slug thay đổi ─────────────
   useEffect(() => {
     searchProducts({
-      ...(categorySlug   && { categorySlug }),
+      ...(!isSearchRoute && categorySlug && { categorySlug }),
       ...(brandSlug      && { brandSlug }),
       ...(keyword        && { keyword }),
       ...(minPrice       && { minPrice }),
@@ -69,6 +71,7 @@ const Product = () => {
       page,
       pageSize: 12,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, categorySlug, brandSlug]);
 
   // ── Helper: cập nhật URL ──────────────────────────────────
@@ -115,7 +118,7 @@ const Product = () => {
     <div className="w-full h-auto">
       <Advertisement linkAdvertisement={linkAdvertisement} />
 
-      <div className="min-h-screen text-[#333] p-4">
+      <div className="min-h-screen text-[#333] dark:text-slate-200 dark:bg-slate-950 p-4">
         <FilterDrawer
           isOpen={isFilterOpen}
           setIsOpen={setIsFilterOpen}
@@ -126,7 +129,7 @@ const Product = () => {
         <div className="container max-w-350 mx-auto px-4 py-8">
           {/* ── Quick-filter buttons ─────────────────────────── */}
           <div className={`flex grow ${isHighMediumScreen ? "" : "flex-col"} mb-20 items-center justify-between`}>
-            <h2 className="font-bold whitespace-nowrap text-3xl px-8">
+            <h2 className="font-bold whitespace-nowrap text-3xl px-8 dark:text-white">
               Phân loại sản phẩm
             </h2>
 
@@ -136,7 +139,7 @@ const Product = () => {
                   variant="search"
                   size="search"
                   onClick={handleBestSellerToggle}
-                  className={`whitespace-nowrap ${isHighMediumScreen ? "py-3 px-5 text-1xl" : "px-2 py-2 text-[18px]"} gap-2 flex items-center ${isBestSeller ? "border-orange-500 bg-orange-50 text-orange-600" : ""}`}
+                  className={`dark:bg-orange-default dark:hover:bg-orange-dark whitespace-nowrap ${isHighMediumScreen ? "py-3 px-5 text-1xl" : "px-2 py-2 text-[18px]"} gap-2 flex items-center ${isBestSeller ? "border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600" : "dark:border-slate-600 dark:text-slate-300"}`}
                 >
                   <HiFire className={`w-6 h-6 ${isBestSeller ? "text-orange-500" : "text-red-600"}`} />
                   Sản phẩm bán chạy
@@ -147,7 +150,7 @@ const Product = () => {
                   variant="search"
                   size="search"
                   onClick={handleVoucherToggle}
-                  className={`whitespace-nowrap ${isHighMediumScreen ? "py-3 px-5 text-1xl" : "px-2 py-2 text-[18px]"} gap-2 flex items-center ${voucher ? "border-orange-500 bg-orange-50 text-orange-600" : ""}`}
+                  className={`dark:bg-orange-default dark:hover:bg-orange-dark whitespace-nowrap ${isHighMediumScreen ? "py-3 px-5 text-1xl" : "px-2 py-2 text-[18px]"} gap-2 flex items-center ${voucher ? "border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600" : "dark:border-slate-600 dark:text-slate-300"}`}
                 >
                   <img
                     src="https://static.fbshop.vn/template/assets/images/icon-cate-tag.png"
@@ -164,7 +167,7 @@ const Product = () => {
                   variant="ghost"
                   size="search"
                   onClick={handleResetFilters}
-                  className="whitespace-nowrap px-3 py-2 text-sm text-red-500 border border-red-200 hover:bg-red-50 gap-1 flex items-center rounded-lg"
+                  className="whitespace-nowrap px-3 py-2 text-sm text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 gap-1 flex items-center rounded-lg"
                 >
                   <X size={14} /> Xóa bộ lọc
                 </Button>
@@ -184,14 +187,14 @@ const Product = () => {
 
             <div className="flex-1">
               {/* ── Toolbar ───────────────────────────────────── */}
-              <div className="flex flex-col justify-between mb-8 pb-4 border-b border-gray-100 gap-4">
+              <div className="flex flex-col justify-between mb-8 pb-4 border-b border-gray-100 dark:border-slate-700 gap-4">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold">{pageCatagorySession}</h1>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                  <h1 className="text-3xl font-bold dark:text-white">{isSearchRoute ? 'Kết quả tìm kiếm' : pageCatagorySession}</h1>
+                  <span className="text-xs text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                     {pagination.totalCount ?? 0} sản phẩm
                   </span>
                   {hasActiveFilters && (
-                    <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs bg-orange-100 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">
                       Đang lọc
                     </span>
                   )}
@@ -201,7 +204,7 @@ const Product = () => {
                   {/* Search input */}
                   <div className={`flex items-center flex-1 max-w-2xl ${isSmallScreen ? "w-full" : ""}`}>
                     <div className="relative flex-1">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500">
                         <Search size={18} />
                       </span>
                       <input
@@ -210,7 +213,7 @@ const Product = () => {
                         onChange={(e) => setInputKeyword(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Tìm kiếm sản phẩm trong danh mục..."
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-l-lg text-sm font-semibold hover:border-orange-500 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 rounded-l-lg text-sm font-semibold hover:border-orange-500 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-100 dark:focus:ring-orange-500/20"
                       />
                     </div>
                     <Button
@@ -237,14 +240,14 @@ const Product = () => {
 
                   {/* Sort */}
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className={`text-sm font-medium text-gray-600 ${isMediumScreen ? "mx-2" : ""}`}>
+                    <span className={`text-sm font-medium text-gray-600 dark:text-slate-400 ${isMediumScreen ? "mx-2" : ""}`}>
                       Sắp xếp:
                     </span>
                     <div className="relative">
                       <select
                         value={sortBy}
                         onChange={handleSortChange}
-                        className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-4 pr-10 py-2 text-sm font-medium focus:ring-1 focus:ring-orange-500 outline-none cursor-pointer text-gray-800"
+                        className="appearance-none bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg pl-4 pr-10 py-2 text-sm font-medium focus:ring-1 focus:ring-orange-500 outline-none cursor-pointer text-gray-800 dark:text-white"
                       >
                         {SORT_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>
@@ -252,7 +255,7 @@ const Product = () => {
                           </option>
                         ))}
                       </select>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 pointer-events-none">
                         <ChevronDown size={16} />
                       </span>
                     </div>
@@ -262,7 +265,7 @@ const Product = () => {
 
               {/* ── Product grid ──────────────────────────────── */}
               {loading ? (
-                <div className="py-20 text-center font-bold text-gray-500">
+                <div className="py-20 text-center font-bold text-gray-500 dark:text-slate-400">
                   Đang tải sản phẩm...
                 </div>
               ) : error ? (
@@ -287,7 +290,7 @@ const Product = () => {
                 </div>
               ) : (
                 <div className="pt-24 pb-32 text-center">
-                  <h3 className="text-xl font-bold text-gray-800">
+                  <h3 className="text-xl font-bold text-gray-800 dark:text-white">
                     {hasActiveFilters
                       ? "Không tìm thấy sản phẩm phù hợp với bộ lọc."
                       : "Chưa có sản phẩm nào trong danh mục này."}
@@ -305,19 +308,19 @@ const Product = () => {
 
               {/* ── Pagination ────────────────────────────────── */}
               {pagination.totalPages > 1 && (
-                <div className="p-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
-                  <div className="text-sm text-slate-500">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 mt-6">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
                     Trang{" "}
-                    <span className="font-semibold text-slate-800">{pagination.currentPage}</span>
+                    <span className="font-semibold text-slate-800 dark:text-white">{pagination.currentPage}</span>
                     {" "}trên{" "}
-                    <span className="font-semibold text-slate-800">{pagination.totalPages}</span>
+                    <span className="font-semibold text-slate-800 dark:text-white">{pagination.totalPages}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
                       disabled={pagination.currentPage === 1}
-                      className="px-3 py-1 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Trước
                     </button>
@@ -333,7 +336,7 @@ const Product = () => {
                           className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
                             pagination.currentPage === pageNum
                               ? "bg-orange-500 text-white shadow-md shadow-orange-200"
-                              : "text-slate-600 hover:bg-slate-100"
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
                           }`}
                         >
                           {pageNum}
@@ -344,7 +347,7 @@ const Product = () => {
                     <button
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
                       disabled={pagination.currentPage === pagination.totalPages}
-                      className="px-3 py-1 rounded-lg border border-slate-200 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       Sau
                     </button>

@@ -1,22 +1,24 @@
 import React from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { useTheme } from '../../contexts/ThemeContext'
 
 const data = [
-  { month: "T1", revenue: 45000, expenses: 32000 },
-  { month: "T2", revenue: 52000, expenses: 38000 },
-  { month: "T3", revenue: 48000, expenses: 35000 },
-  { month: "T4", revenue: 61000, expenses: 42000 },
-  { month: "T5", revenue: 55000, expenses: 40000 },
-  { month: "T6", revenue: 67000, expenses: 45000 },
-  { month: "T7", revenue: 72000, expenses: 48000 },
-  { month: "T8", revenue: 69000, expenses: 46000 },
-  { month: "T9", revenue: 78000, expenses: 52000 },
-  { month: "T10", revenue: 74000, expenses: 50000 },
-  { month: "T11", revenue: 82000, expenses: 55000 },
-  { month: "T12", revenue: 89000, expenses: 58000 },
+  { month: "T1",  revenue: 42, expenses: 28 },
+  { month: "T2",  revenue: 38, expenses: 26 },
+  { month: "T3",  revenue: 55, expenses: 36 },
+  { month: "T4",  revenue: 68, expenses: 44 },
+  { month: "T5",  revenue: 72, expenses: 47 },
+  { month: "T6",  revenue: 65, expenses: 43 },
+  { month: "T7",  revenue: 58, expenses: 39 },
+  { month: "T8",  revenue: 62, expenses: 41 },
+  { month: "T9",  revenue: 75, expenses: 49 },
+  { month: "T10", revenue: 82, expenses: 53 },
+  { month: "T11", revenue: 88, expenses: 57 },
+  { month: "T12", revenue: 70, expenses: 46 },
 ];
 
 const RevenueChart = () => {
+  const { isDark } = useTheme();
   return (
     <div className='bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-bl-2xl border 
     border-slate-200/50 dark:border-slate-700/50'>
@@ -26,7 +28,7 @@ const RevenueChart = () => {
                     Biểu đồ doanh thu
                 </h3>
                 <p className='text-sm text-slate-500 dark:text-slate-400'>
-                    Doanh thu và chi phí hàng tháng
+                    Doanh thu và chi phí theo tháng (triệu đồng)
                 </p>
             </div>
             <div className='flex items-center space-x-4'>
@@ -39,7 +41,7 @@ const RevenueChart = () => {
                     </div>
                 </div>
                 <div className='flex items-center space-x-2'>
-                    <div className='w-3 h-3 bg-linear-to-r from-slate-500 to-slate-700 
+                    <div className='w-3 h-3 bg-linear-to-r from-slate-500 to-slate-700
                     rounded-full'>
                     </div>
                     <div className='text-sm text-slate-600 dark:text-slate-400 '>
@@ -74,16 +76,16 @@ const RevenueChart = () => {
                     fontSize={12} 
                     tickLine={false} 
                     axisLine={false} 
-                    tickFormatter={(value) => `$${value / 1000}k`} 
+                    tickFormatter={(value) => `${value}M`}
                     />
-                    <Tooltip 
-                    contentStyle={{ 
-                        backgroundColor: "rgba(255, 255, 255, 0.95)", 
-                        border: "none", 
-                        borderRadius: "12px", 
-                        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)" 
+                    <Tooltip
+                    contentStyle={{
+                        backgroundColor: isDark ? "rgba(30, 41, 59, 0.95)" : "rgba(255, 255, 255, 0.95)",
+                        border: "none",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)"
                     }}
-                    formatter={(value) => [`$${value.toLocaleString()}`, ""]}
+                    formatter={(value, name) => [`${value} triệu đ`, name === 'revenue' ? 'Doanh thu' : 'Chi phí']}
                     cursor={{ fill: '#f1f5f9' }}
                     />
 

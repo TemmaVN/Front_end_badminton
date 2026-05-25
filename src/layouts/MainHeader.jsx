@@ -1,89 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import Racket from '../components/Racket';
 import { Link } from 'react-router-dom';
-import { categoryApi } from '../api';
+import { brandApi } from '../api';
 import { useCategory } from '../contexts/CategoryContext';
 
-const MENU_CONFIG = [
-  {
-    catIndex: 0, // category đầu tiên từ API
-    productCategories: [
-      {
-        brand: "VỢT CẦU LÔNG YONEX",
-        items: ["Dòng vợt Nanoflare", "Dòng vợt Astrox", "Dòng vợt Duora", "Dòng vợt Nanoray", "Dòng vợt Voltric", "Dòng vợt ArcSaber"],
-      },
-      {
-        brand: "VỢT CẦU LÔNG LINING",
-        items: ["Dòng vợt Aeronaut", "Dòng vợt Tectonic", "Dòng vợt Windstorm", "Dòng vợt Calibar", "Dòng vợt Halbertec", "Dòng Axforce"],
-      },
-      {
-        brand: "VỢT CẦU LÔNG VICTOR",
-        items: ["Dòng vợt DriveX", "Dòng vợt Hypernano", "Dòng vợt Brave Sword", "Dòng vợt Meteor X", "Dòng vợt Thruster K", "Dòng vợt Jetspeed"],
-      },
-      {
-        brand: "VỢT CẦU LÔNG MIZUNO",
-        items: ["Speedflex", "Carbo Pro", "Promax", "Caliber", "JPX", "Fortius"],
-      },
-    ],
-  },
-  {
-    catIndex: 1,
-    productCategories: [
-      {
-        brand: "GIÀY CẦU LÔNG YONEX",
-        items: ["Dòng Power Cushion 65Z", "Dòng Aerus Z", "Dòng Eclipsion", "Dòng Comfort Z", "Dòng SHB65Z3", "Dòng Power Cushion 88D"],
-      },
-      {
-        brand: "GIÀY CẦU LÔNG LINING",
-        items: ["Dòng Ranger", "Dòng Shadow", "Dòng Saga", "Dòng Halberd", "Dòng Cloud ACE", "Dòng Ultra III"],
-      },
-      {
-        brand: "GIÀY CẦU LÔNG VICTOR",
-        items: ["Dòng P9200", "Dòng A970", "Dòng P8500", "Dòng S82", "Dòng SH-A920", "Dòng VG-1"],
-      },
-      {
-        brand: "GIÀY CẦU LÔNG MIZUNO",
-        items: ["Wave Claw", "Wave Fang", "Sky Blaster", "Gate Sky", "Wave Drive", "Cyclone Speed"],
-      },
-    ],
-  },
-  {
-    catIndex: 2,
-    productCategories: [
-      {
-        brand: "BALO CẦU LÔNG YONEX",
-        items: ["Balo Expert Series", "Balo Tournament", "Balo Active", "Balo Team Series", "Balo Pro Series"],
-      },
-      {
-        brand: "BALO CẦU LÔNG LINING",
-        items: ["Balo Đa Năng", "Balo Chống Thấm", "Balo Đựng Vợt Chuyên Dụng", "Balo Thời Trang", "Balo National Team"],
-      },
-      {
-        brand: "BALO CẦU LÔNG VICTOR",
-        items: ["Balo Crown Collection", "Balo BR Series", "Balo Team Collection", "Balo Backpack", "Balo Pro Series"],
-      },
-      {
-        brand: "BALO CẦU LÔNG MIZUNO",
-        items: ["Balo Tour Series", "Balo Training", "Balo Pro", "Balo Lightweight", "Balo Mizuno Classic"],
-      },
-    ],
-  },
-];
+const slugify = (str = '') =>
+  str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const ACCESSORY_SLUG = 'phu-kien';
 
 const ACCESSORY_MENU = {
   label: 'PHỤ KIỆN',
+  slug: ACCESSORY_SLUG,
   productCategories: [
     {
-      brand: "QUẤN CÁN VỢT",
-      items: ["Quấn cán Yonex AC102EX", "Quấn cán vải mỏng", "Quấn cán lỗ thoáng khí", "Quấn cán Lining/Victor", "Quấn cán overgrip"],
+      brand: 'QUẤN CÁN VỢT',
+      items: ['Quấn cán Yonex AC102EX', 'Quấn cán vải mỏng', 'Quấn cán lỗ thoáng khí', 'Quấn cán Lining/Victor', 'Quấn cán overgrip'],
     },
     {
-      brand: "CƯỚC CẦU LÔNG",
-      items: ["Cước Yonex BG65/65Ti", "Cước Yonex BG80/80P", "Cước Lining No.1/No.7", "Cước Victor VBS-66N", "Cước Aerobite Boost"],
+      brand: 'CƯỚC CẦU LÔNG',
+      items: ['Cước Yonex BG65/65Ti', 'Cước Yonex BG80/80P', 'Cước Lining No.1/No.7', 'Cước Victor VBS-66N', 'Cước Aerobite Boost'],
     },
     {
-      brand: "PHỤ KIỆN KHÁC",
-      items: ["Băng chặn mồ hôi", "Tất (vớ) chuyên dụng", "Bột quấn cán", "Móc khóa cầu lông", "Cầu lông lông vũ/nhựa"],
+      brand: 'PHỤ KIỆN KHÁC',
+      items: ['Băng chặn mồ hôi', 'Tất (vớ) chuyên dụng', 'Bột quấn cán', 'Móc khóa cầu lông', 'Cầu lông lông vũ/nhựa'],
     },
   ],
 };
@@ -94,37 +40,80 @@ const MainHeader = () => {
   const [page, setPage] = useState('home');
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const {categories, refreshCategories ,pageCatagory, setPageCatagory} = useCategory();
+  const { categories, refreshCategories, setPageCatagory } = useCategory();
+  const [brandList, setBrandList] = useState([]);
+
+  const fetchBrands = async () => {
+    try {
+      const response = await brandApi.getAll();
+      setBrandList(response.data.data || []);
+    } catch (err) {
+      console.error('Không thể tải thương hiệu:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const buildMenu = async () => {
-      try { 
-        const built = MENU_CONFIG.map(({ catIndex, productCategories }) => ({
-          label: categories[catIndex]?.categoryName?.toUpperCase() ?? `DANH MỤC ${catIndex + 1}`,
-          slug: categories[catIndex]?.slug ?? `category-${catIndex}`,
-          productCategories,
-        }));
-        built.push(ACCESSORY_MENU);
-        setMenuItems(built);
-      } catch (err) {
-        console.error('Lỗi khi tải menu:', err);
-      } finally {
-        setLoading(false);
-      }
+    fetchBrands();
+    refreshCategories();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!categories.length) return;
+
+    const filtered = categories.filter(cat => cat.slug !== ACCESSORY_SLUG);
+    const mainCats = filtered.slice(0, 3);
+    const extraCats = filtered.slice(3);
+
+    const buildBrandColumns = (cat) => {
+      const catName = cat.categoryName ?? '';
+      const shortCat = catName.split(' ')[0];
+      return brandList.map(brand => {
+        const bSlug = brand.slug ?? slugify(brand.brandName ?? '');
+        return {
+          brand: `${catName.toUpperCase()} ${(brand.brandName ?? '').toUpperCase()}`,
+          brandTo: `/${cat.slug}/${bSlug}`,
+          items: [
+            { label: `Dòng ${shortCat.toLowerCase()} ${brand.brandName}`, to: `/${cat.slug}/${bSlug}` },
+            { label: `${shortCat} ${brand.brandName} bán chạy`, to: `/${cat.slug}/${bSlug}?isBestSeller=true` },
+            { label: `${shortCat} ${brand.brandName} khuyến mãi`, to: `/${cat.slug}/${bSlug}?voucher=true` },
+          ],
+        };
+      });
     };
 
-    buildMenu();
-  }, [categories]);
+    const built = mainCats.map(cat => ({
+      label: (cat.categoryName ?? '').toUpperCase(),
+      slug: cat.slug,
+      productCategories: buildBrandColumns(cat),
+    }));
 
-  useEffect(() => {
-    refreshCategories();
-  }, []);
+    // Extra categories (4+) go into PHỤ KIỆN dropdown alongside static accessories
+    const extraColumns = extraCats.map(cat => ({
+      brand: (cat.categoryName ?? '').toUpperCase(),
+      brandTo: `/${cat.slug}`,
+      items: brandList.map(brand => ({
+        label: `${cat.categoryName} ${brand.brandName}`,
+        to: `/${cat.slug}/${brand.slug ?? slugify(brand.brandName ?? '')}`,
+      })),
+    }));
+
+    built.push({
+      ...ACCESSORY_MENU,
+      productCategories: [...extraColumns, ...ACCESSORY_MENU.productCategories],
+    });
+
+    setMenuItems(built);
+  }, [categories, brandList]);
 
   return (
     <nav
-      className="relative bg-white text-gray-700 font-sans flex justify-center"
+      className="relative bg-white dark:bg-slate-950 text-gray-700 dark:text-slate-300 font-sans flex justify-center"
       onMouseLeave={() => setIsProductHovered(false)}
     >
-      <div className="container shadow-md border-x border-t border-gray-200 flex grow max-w-325 items-center justify-center">
+      <div className="container shadow-md border border-gray-200 dark:border-slate-700 flex grow max-w-325 items-center justify-center">
         <div className="flex space-x-15 uppercase text-sm font-bold py-4">
           <Link
             onClick={() => setPage('home')}
@@ -139,15 +128,13 @@ const MainHeader = () => {
           {!loading &&
             menuItems.map(({ label, slug, productCategories }) => (
               <Link
-                to={`${slug}`}
+                to={`/${slug}`}
                 key={slug}
-                onClick={
-                  () => {
-                    setPageCatagory(label)
-                    sessionStorage.setItem('pageCatagory', label);
-                  }
-                }
-                className="relative cursor-pointer pb-3 hover:border-b-2 border-orange-500 hover:text-orange-500 transition-colors"
+                onClick={() => {
+                  setPageCatagory(label);
+                  setPage(label);
+                }}
+                className={`pb-3 border-orange-500 hover:text-orange-500 hover:border-b-2 ${page === label ? 'text-orange-500 border-b-2' : ''}`}
                 onMouseEnter={() => {
                   setCurrentProduct(productCategories);
                   setIsProductHovered(true);

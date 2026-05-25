@@ -1,7 +1,6 @@
 import React from "react";
 import { Crown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useProduct } from "../contexts/ProductContext";
 
 function ProductPrice({ basePrice, sellingPrice }) {
   const parsePrice = (priceVal) => {
@@ -28,7 +27,7 @@ function ProductPrice({ basePrice, sellingPrice }) {
         <div className="text-[#f97316] font-bold text-[16px] md:text-[18px]">
           {formatVND(sellingPriceNum)}
         </div>
-        <div className="text-gray-400 line-through text-[13px] md:text-[14px]">
+        <div className="text-gray-400 dark:text-slate-500 line-through text-[13px] md:text-[14px]">
           {formatVND(basePriceNum)}
         </div>
       </div>
@@ -43,15 +42,13 @@ export default function ProductFrame_Minh({
   isBestSeller,
   discountPercent,
   productDetailSlug,
-  categorySlug,
 }) {
-  const { currentProduct, setCurrentProduct } = useProduct();
   return (
     // Bỏ w-full ở Link, thay bằng h-full để thẻ con trải dài hết chiều cao của ô Grid
     <Link 
     to={`/p/${productDetailSlug}`}
     className="block h-full group">
-      <div className="flex flex-col relative w-full h-full bg-white rounded-lg p-2.5 border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
+      <div className="flex flex-col relative w-full h-full bg-white dark:bg-slate-900 rounded-lg p-2.5 border-[1.6px] border-transparent group-hover:border-[#f97316] group-hover:shadow-md transition-all duration-300">
         {/* Nhãn Bán chạy & Giảm giá */}
         <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 items-end z-10">
           {isBestSeller && (
@@ -69,7 +66,7 @@ export default function ProductFrame_Minh({
 
         {/* Khu vực Hình ảnh */}
         {/* Vẫn giữ aspect-square để ảnh vuông */}
-        <div className="relative w-full aspect-square bg-white overflow-hidden rounded-md flex items-center justify-center">
+        <div className="relative w-full aspect-square bg-white dark:bg-slate-800 overflow-hidden rounded-md flex items-center justify-center">
           <img
             src={image}
             alt={productName}
@@ -86,10 +83,10 @@ export default function ProductFrame_Minh({
 
         {/* Nội dung Tên và Giá */}
         <div className="flex flex-col grow justify-between gap-2">
-          <h3 className="text-[16px] text-gray-800 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
+          <h3 className="text-[16px] text-gray-800 dark:text-slate-200 font-medium line-clamp-2 leading-snug group-hover:text-[#f97316] transition-colors">
             {productName}
           </h3>
-          <div className="mt-auto pt-1 border-t border-gray-50">
+          <div className="mt-auto pt-1 border-t border-gray-50 dark:border-slate-700">
             <ProductPrice basePrice={basePrice} sellingPrice={sellingPrice} />
           </div>
         </div>

@@ -1,15 +1,18 @@
-import { div, i } from "framer-motion/client";
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const data = [
-  { name: "Điện tử", value: 45, color: "#3b82f6" },
-  { name: "Thời trang", value: 30, color: "#8b5cf6" },
-  { name: "Sách", value: 15, color: "#10b981" },
-  { name: "Khác", value: 10, color: "#f59e0b" },
+  { name: "Vợt cầu lông",  value: 42, color: "#fb923c" },
+  { name: "Cầu lông",      value: 22, color: "#3b82f6" },
+  { name: "Giày cầu lông", value: 18, color: "#10b981" },
+  { name: "Túi & Balo",    value:  8, color: "#8b5cf6" },
+  { name: "Phụ kiện",      value:  7, color: "#f59e0b" },
+  { name: "Quần áo",       value:  3, color: "#ef4444" },
 ];
 
 function SalesChart() {
+  const { isDark } = useTheme();
   return (
     <div className="bg-white dark:bg-slate-900 backdrop-blur-xl rounded-b-2xl p-6 border border-slate-200/50 dark:border-slate-700/50">
       <div className="mb-6">
@@ -17,7 +20,7 @@ function SalesChart() {
           Doanh thu theo danh mục
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Phân bổ sản phẩm
+          Phân bổ doanh thu năm 2025
         </p>
       </div>
       <div className="h-48">
@@ -46,7 +49,7 @@ function SalesChart() {
                 </Pie>
                 <Tooltip
                 contentStyle={{
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    backgroundColor: isDark ? "rgba(30, 41, 59, 0.95)" : "rgba(255, 255, 255, 0.95)",
                     border: "none",
                     borderRadius: "12px",
                     boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",

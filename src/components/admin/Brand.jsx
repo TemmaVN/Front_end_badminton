@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, Globe, Package, Loader2, RefreshCw } from 'lucide-react';
 import { brandApi } from '../../api';
 
-const Brand = ({onBrandClick}) => {
+const Brand = () => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,7 +51,7 @@ const Brand = ({onBrandClick}) => {
       // Backend trả về: { Message: "...", data: { brandId, brandName, ... } }
       setBrands([response.data.data, ...brands]);
       alert("Thêm thành công!");
-    } catch (err) {
+    } catch {
       alert("Lỗi khi thêm thương hiệu!");
     } finally {
       setLoading(false);
@@ -95,9 +95,9 @@ const Brand = ({onBrandClick}) => {
           <p className="text-sm text-slate-500">Tổng số: {brands.length} nhãn hàng</p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={fetchBrands}
-            className="p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
           >
             <RefreshCw size={20} />
           </button>
@@ -111,7 +111,7 @@ const Brand = ({onBrandClick}) => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100">
+        <div className="p-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-xl border border-red-100 dark:border-red-500/20">
           {error}
         </div>
       )}
@@ -129,14 +129,14 @@ const Brand = ({onBrandClick}) => {
               </div>
               
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
+                <button
                 onClick={(e) => handleUpdate(e, brand.brandId, brand.brandName)}
-                className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors">
+                className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-blue-500 rounded-lg transition-colors">
                   <Edit2 size={14}/>
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(brand.brandId)}
-                  className="p-1.5 hover:bg-rose-50 text-rose-500 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors"
                 >
                   <Trash2 size={14}/>
                 </button>
@@ -170,8 +170,8 @@ const Brand = ({onBrandClick}) => {
       </div>
 
       {brands.length === 0 && !loading && (
-        <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-          <p className="text-slate-400">Chưa có dữ liệu thương hiệu nào.</p>
+        <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+          <p className="text-slate-400 dark:text-slate-500">Chưa có dữ liệu thương hiệu nào.</p>
         </div>
       )}
     </div>

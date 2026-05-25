@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
     User, Lock, Settings, Mail, Phone, Calendar, 
     Shield, Loader2, CheckCircle2, AlertCircle, Save, Eye, EyeOff 
 } from 'lucide-react';
-import { userApi } from '../../api';
 import { useUser } from '../../contexts/UserContext';
-import { a } from 'framer-motion/client';
 
 const AdminInfo = () => {
     const userLoad = localStorage.getItem('user');
     const user = JSON.parse(userLoad);
     const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'edit', 'password'
-    const [adminData, setAdminData] = useState(user);
-    const [loading, setLoading] = useState(true);
+    const [adminData] = useState(user);
+    const [loading] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -30,7 +28,6 @@ const AdminInfo = () => {
             if (result.success) {
                 setMessage({ type: 'success', text: 'Cập nhật hồ sơ thành công!' });
                 alert("Cập nhật thành công");
-                fetchAdminInfo(); // Refresh data
                 setActiveTab('profile');
             } else {
                 setMessage({ type: 'error', text: result.message });
@@ -77,35 +74,35 @@ const AdminInfo = () => {
     return (
         <div className="max-w-5xl mx-auto p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden mb-6">
                 <div className="bg-linear-to-r from-orange-500 to-red-500 h-32 relative">
                     <div className="absolute -bottom-12 left-8">
-                        <div className="w-24 h-24 bg-white rounded-2xl shadow-md flex items-center justify-center border-4 border-white">
+                        <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-2xl shadow-md flex items-center justify-center border-4 border-white dark:border-slate-700">
                             <User size={48} className="text-orange-500" />
                         </div>
                     </div>
                 </div>
-                <div className="pt-14 pb-6 px-8 flex justify-between items-end">
+                <div className="pt-14 pb-6 px-8 flex justify-between items-end flex-wrap gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">{adminData?.fullName}</h1>
-                        <p className="text-gray-500 flex items-center gap-1"><Shield size={14}/> Quản trị viên hệ thống</p>
+                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{adminData?.fullName}</h1>
+                        <p className="text-gray-500 dark:text-slate-400 flex items-center gap-1"><Shield size={14}/> Quản trị viên hệ thống</p>
                     </div>
-                    <div className="flex bg-gray-100 p-1 rounded-xl">
-                        <button 
+                    <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button
                             onClick={() => {setActiveTab('profile'); setMessage({type:'', text:''})}}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-white shadow text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-white dark:bg-slate-700 shadow text-orange-600' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
                         >
                             Tổng quan
                         </button>
-                        <button 
+                        <button
                             onClick={() => {setActiveTab('edit'); setMessage({type:'', text:''})}}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'edit' ? 'bg-white shadow text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'edit' ? 'bg-white dark:bg-slate-700 shadow text-orange-600' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
                         >
                             Sửa hồ sơ
                         </button>
-                        <button 
+                        <button
                             onClick={() => {setActiveTab('password'); setMessage({type:'', text:''})}}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'password' ? 'bg-white shadow text-orange-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'password' ? 'bg-white dark:bg-slate-700 shadow text-orange-600' : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200'}`}
                         >
                             Bảo mật
                         </button>
@@ -122,7 +119,7 @@ const AdminInfo = () => {
             )}
 
             {/* Tab Content */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8">
                 {/* 1. TỔNG QUAN (VIEW MODE) */}
                 {activeTab === 'profile' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -167,15 +164,15 @@ const AdminInfo = () => {
 
 const InfoItem = ({ icon, label, value, color, isTag }) => (
     <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-xl bg-${color}-50 text-${color}-600`}>{icon}</div>
+        <div className={`p-3 rounded-xl bg-${color}-50 dark:bg-${color}-500/10 text-${color}-600 dark:text-${color}-400`}>{icon}</div>
         <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
+            <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
             {isTag ? (
-                <span className="inline-block mt-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-bold">
+                <span className="inline-block mt-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-sm font-bold">
                     {value}
                 </span>
             ) : (
-                <p className="text-gray-800 font-semibold text-lg">{value}</p>
+                <p className="text-gray-800 dark:text-white font-semibold text-lg">{value}</p>
             )}
         </div>
     </div>
@@ -183,21 +180,21 @@ const InfoItem = ({ icon, label, value, color, isTag }) => (
 
 const InputGroup = ({ label, icon, ...props }) => (
     <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">{label}</label>
+        <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">{label}</label>
         <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>
-            <input {...props} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all focus:border-transparent bg-gray-50/50" />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500">{icon}</span>
+            <input {...props} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all focus:border-transparent bg-gray-50/50 dark:bg-slate-800 text-gray-800 dark:text-white" />
         </div>
     </div>
 );
 
 const PwdInput = ({ label, show, onToggle, ...props }) => (
     <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">{label}</label>
+        <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">{label}</label>
         <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={18}/></span>
-            <input type={show ? "text" : "password"} {...props} className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all bg-gray-50/50" />
-            <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500"><Lock size={18}/></span>
+            <input type={show ? "text" : "password"} {...props} className="w-full pl-10 pr-10 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all bg-gray-50/50 dark:bg-slate-800 text-gray-800 dark:text-white" />
+            <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300">
                 {show ? <EyeOff size={18}/> : <Eye size={18}/>}
             </button>
         </div>

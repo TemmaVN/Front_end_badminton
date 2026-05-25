@@ -4,8 +4,8 @@ import React from 'react'
 const stats = [
   {
     title: "Tổng doanh thu",
-    value: "$124,563",
-    change: "+12.5%",
+    value: "856 triệu đ",
+    change: "+18,1%",
     trend: "up",
     icon: DollarSign,
     color: "from-emerald-500 to-teal-600",
@@ -13,9 +13,9 @@ const stats = [
     textColor: "text-emerald-600 dark:text-emerald-400",
   },
   {
-    title: "Người dùng hoạt động",
-    value: "8,549",
-    change: "+8.2%",
+    title: "Khách hàng",
+    value: "1.247",
+    change: "+8,2%",
     trend: "up",
     icon: Users,
     color: "from-blue-500 to-indigo-600",
@@ -23,9 +23,9 @@ const stats = [
     textColor: "text-blue-600 dark:text-blue-400",
   },
   {
-    title: "Tổng đơn hàng",
-    value: "2,847",
-    change: "+15.3%",
+    title: "Đơn hàng",
+    value: "2.847",
+    change: "+15,3%",
     trend: "up",
     icon: ShoppingCart,
     color: "from-purple-500 to-pink-600",
@@ -34,8 +34,8 @@ const stats = [
   },
   {
     title: "Lượt xem trang",
-    value: "45,892",
-    change: "-2.1%",
+    value: "45.892",
+    change: "-2,1%",
     trend: "down",
     icon: Eye,
     color: "from-orange-500 to-red-600",
@@ -67,7 +67,9 @@ const StatsGrid = () => {
                                 <ArrowUpRight className='w-4 h-4 text-emerald-500'/> :
                                 <ArrowDownRight className='w-4 h-4 text-red-500'/>
                                 }
-                                <span className={``}>{stats.change}</span>
+                                <span className={`text-sm font-semibold ${stats.trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                  {stats.change}
+                                </span>
                                 <span className='text-sm text-slate-500 dark:text-slate-400'>so với tháng trước</span>
                             </div>
                         </div>

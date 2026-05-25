@@ -1,8 +1,7 @@
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import Filter from '../components/Filter';
 import { useMediaQuery } from '../mystate/useMediaQuery';
 import FilterDrawer from '../components/DrawerFilter';
-import { main } from 'framer-motion/client';
 import { ChevronDown, FilterIcon, Search } from 'lucide-react';
 import  Button  from '../components/Button';
 

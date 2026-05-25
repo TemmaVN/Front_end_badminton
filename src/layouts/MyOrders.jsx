@@ -1,62 +1,63 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { orderApi } from "../api";
-import { label } from "framer-motion/client";
+import WarrantyFormModal from "../components/WarrantyFormModal";
+import { useWarranty } from "../contexts/WarrantyContext";
 
 // ─── STATUS CONFIG ────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   "Chờ xác nhận": {
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-50 dark:bg-amber-500/15",
+    border: "border-amber-200 dark:border-amber-500/30",
     dot: "bg-amber-400",
     icon: "⏳",
   },
   "Đã xác nhận": {
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-500/15",
+    border: "border-blue-200 dark:border-blue-500/30",
     dot: "bg-blue-400",
     icon: "✅",
   },
   "Đang xử lý": {
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-50 dark:bg-violet-500/15",
+    border: "border-violet-200 dark:border-violet-500/30",
     dot: "bg-violet-400",
     icon: "📦",
   },
   "Đang đan lưới": {
-    color: "text-fuchsia-600",
-    bg: "bg-fuchsia-50",
-    border: "border-fuchsia-200",
+    color: "text-fuchsia-600 dark:text-fuchsia-400",
+    bg: "bg-fuchsia-50 dark:bg-fuchsia-500/15",
+    border: "border-fuchsia-200 dark:border-fuchsia-500/30",
     dot: "bg-fuchsia-400",
     icon: "🏸",
   },
   "Đang giao hàng": {
-    color: "text-sky-600",
-    bg: "bg-sky-50",
-    border: "border-sky-200",
+    color: "text-sky-600 dark:text-sky-400",
+    bg: "bg-sky-50 dark:bg-sky-500/15",
+    border: "border-sky-200 dark:border-sky-500/30",
     dot: "bg-sky-400",
     icon: "🚚",
   },
   "Đã giao hàng": {
-    color: "text-teal-600",
-    bg: "bg-teal-50",
-    border: "border-teal-200",
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-50 dark:bg-teal-500/15",
+    border: "border-teal-200 dark:border-teal-500/30",
     dot: "bg-teal-400",
     icon: "📬",
   },
   "Hoàn tất": {
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-500/15",
+    border: "border-emerald-200 dark:border-emerald-500/30",
     dot: "bg-emerald-500",
     icon: "🎉",
   },
   "Đã hủy": {
-    color: "text-red-500",
-    bg: "bg-red-50",
-    border: "border-red-200",
+    color: "text-red-500 dark:text-red-400",
+    bg: "bg-red-50 dark:bg-red-500/15",
+    border: "border-red-200 dark:border-red-500/30",
     dot: "bg-red-400",
     icon: "✖",
   },
@@ -64,9 +65,9 @@ const STATUS_CONFIG = {
 
 const getStatusConfig = (status) =>
   STATUS_CONFIG[status] || {
-    color: "text-gray-500",
-    bg: "bg-gray-50",
-    border: "border-gray-200",
+    color: "text-gray-500 dark:text-slate-400",
+    bg: "bg-gray-50 dark:bg-slate-800",
+    border: "border-gray-200 dark:border-slate-700",
     dot: "bg-gray-400",
     icon: "•",
   };
@@ -102,9 +103,17 @@ const StatusBadge = ({ status }) => {
 };
 
 // ─── ORDER DETAIL PANEL ───────────────────────────────────────────────────────
-const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
+const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) => {
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
+  const canWarranty = order.status === "Hoàn tất";
+  const { isClaimedOrderDetail } = useWarranty();
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleExpand = (id) =>
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -115,19 +124,19 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
       />
 
       {/* Panel */}
-      <div className="relative w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[85vh] bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+      <div className="relative w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[85vh] bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
         {/* Header */}
-        <div className={`flex items-start justify-between p-5 border-b border-gray-100 ${cfg.bg}`}>
+        <div className={`flex items-start justify-between p-5 border-b border-gray-100 dark:border-slate-700 ${cfg.bg}`}>
           <div>
-            <p className="text-xs text-gray-400 font-mono mb-1">#{order.orderId}</p>
-            <h2 className="text-lg font-bold text-gray-800">Chi tiết đơn hàng</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{formatDate(order.orderDate)}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 font-mono mb-1">#{order.orderId}</p>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Chi tiết đơn hàng</h2>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{formatDate(order.orderDate)}</p>
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={order.status} />
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/70 text-gray-500 hover:bg-white hover:text-gray-800 transition-colors text-lg"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/70 dark:bg-slate-800/70 text-gray-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-gray-800 dark:hover:text-white transition-colors text-lg"
             >
               ✕
             </button>
@@ -158,56 +167,135 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
 
           {/* Products */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wider">
-              Sản phẩm
+            <h3 className="text-sm font-semibold text-gray-600 dark:text-slate-400 mb-2 uppercase tracking-wider">
+              Sản phẩm 
             </h3>
             <div className="space-y-2">
-              {order.orderDetails.map((od) => (
-                <div
-                  key={od.orderDetailId}
-                  className="flex items-start gap-3 bg-gray-50 rounded-xl p-3"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xl shrink-0">
-                    {od.isStringingService ? "🏸" : "📦"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">
-                      {od.productName || "Sản phẩm"}
-                    </p>
-                    {od.isStringingService && (
-                      <p className="text-xs text-fuchsia-600 mt-0.5">
-                        Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+              {order.orderDetails.map((od) => {
+                const isClaimed = isClaimedOrderDetail(od.orderDetailId);
+                const hasSerials = !od.isStringingService && od.serialNumbers?.length > 0;
+                const isExpanded = expandedIds.includes(od.orderDetailId);
+
+                return (
+                  <div key={od.orderDetailId} className="bg-gray-50 dark:bg-slate-800/50 rounded-xl overflow-hidden">
+                    {/* ── Dòng sản phẩm ── */}
+                    <div
+                      className={`flex items-start gap-3 p-3 ${hasSerials ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors" : ""}`}
+                      onClick={() => hasSerials && toggleExpand(od.orderDetailId)}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 flex items-center justify-center text-xl shrink-0">
+                        {od.isStringingService ? "🏸" : "📦"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
+                          {od.productName || "Sản phẩm"}
+                        </p>
+                        {od.isStringingService && (
+                          <p className="text-xs text-fuchsia-600 dark:text-fuchsia-400 mt-0.5">
+                            Dịch vụ đan lưới · {od.stringBrand} · {od.tensionKg} kg
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                          SL: {od.quantity} × {formatCurrency(od.unitPrice)}
+                        </p>
+                        {hasSerials && (
+                          <p className="text-xs text-blue-500 dark:text-blue-400 mt-1 font-medium">
+                            {isExpanded ? "▲ Ẩn số seri" : `▼ Xem ${od.serialNumbers.length} số seri`}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 dark:text-white shrink-0">
+                        {formatCurrency(od.quantity * od.unitPrice)}
                       </p>
+                    </div>
+
+                    {/* ── Panel seri (expand) ── */}
+                    {hasSerials && isExpanded && (
+                      <div className="border-t border-gray-200 dark:border-slate-700 px-3 pb-3 pt-2 space-y-3 bg-white dark:bg-slate-900">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                          Số seri sản phẩm
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {od.serialNumbers.map((sn, idx) => (
+                            <div key={sn} className="flex items-center gap-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2">
+                              <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0">#{idx + 1}</span>
+                              <span className="text-xs font-mono font-semibold text-gray-800 dark:text-slate-200 tracking-wider truncate">{sn}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Nút bảo hành - chỉ hiện khi đơn Hoàn tất */}
+                        {canWarranty && (
+                          isClaimed ? (
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                              <span>✅</span> Đã gửi yêu cầu bảo hành
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onWarranty(order, od, od.serialNumbers ?? []); }}
+                              className="w-full py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                            >
+                              🔧 Yêu cầu bảo hành
+                            </button>
+                          )
+                        )}
+                      </div>
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      SL: {od.quantity} × {formatCurrency(od.unitPrice)}
-                    </p>
+
+                    {/* Warranty cho đơn hoàn tất không có seri */}
+                    {canWarranty && !od.isStringingService && !hasSerials && (
+                      <div className="px-3 pb-3">
+                        {isClaimed ? (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium px-1">
+                            <span>✅</span> Đã gửi yêu cầu bảo hành
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => onWarranty(order, od, [])}
+                            className="w-full py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            🔧 Yêu cầu bảo hành
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm font-semibold text-gray-800 shrink-0">
-                    {formatCurrency(od.quantity * od.unitPrice)}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Payment summary */}
-          <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-            <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
+          <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-4 space-y-2">
+            <h3 className="text-sm font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider mb-3">
               Thanh toán
             </h3>
-            <SummaryRow
-              label="Phương thức"
-              value={order.paymentMethod}
-            />
-            <SummaryRow
-              label="Phí vận chuyển"
-              value={formatCurrency(order.shippingFee)}
-            />
-            <div className="border-t border-gray-200 pt-2 mt-2">
+            <SummaryRow label="Phương thức" value={order.paymentMethod} />
+            <SummaryRow label="Tạm tính" value={formatCurrency(order.subTotal)} />
+            <SummaryRow label="Phí vận chuyển" value={formatCurrency(order.shippingFee)} />
+            {order.totalDiscount > 0 && (
+              <SummaryRow
+                label="Giảm giá voucher"
+                value={`− ${formatCurrency(order.totalDiscount)}`}
+                discount
+              />
+            )}
+            {order.appliedVouchers?.length > 0 && (
+              <div className="pt-1 space-y-1">
+                {order.appliedVouchers.map((v, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 rounded font-mono font-bold">{v.voucherCode}</span>
+                    </span>
+                    <span className="text-emerald-600 font-medium">− {formatCurrency(v.appliedDiscount)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="border-t border-gray-200 dark:border-slate-700 pt-2 mt-2">
               <SummaryRow
                 label="Tổng cộng"
-                value={formatCurrency(order.totalAmount)}
+                value={formatCurrency(order.finalAmount)}
                 bold
               />
             </div>
@@ -216,11 +304,11 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
 
         {/* Footer actions */}
         {canCancel && (
-          <div className="p-4 border-t border-gray-100 bg-white">
+          <div className="p-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
             <button
               onClick={() => onCancel(order.orderId)}
               disabled={cancelling}
-              className="w-full py-2.5 rounded-xl bg-red-50 text-red-600 border border-red-200 font-semibold text-sm hover:bg-red-100 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-semibold text-sm hover:bg-red-100 dark:hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {cancelling ? "Đang hủy..." : "Hủy đơn hàng"}
             </button>
@@ -232,43 +320,38 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling }) => {
 };
 
 const InfoBlock = ({ label, value, icon, className = "" }) => (
-  <div className={`bg-gray-50 rounded-xl p-3 ${className}`}>
-    <p className="text-xs text-gray-400 mb-1">
+  <div className={`bg-gray-50 dark:bg-slate-800 rounded-xl p-3 ${className}`}>
+    <p className="text-xs text-gray-400 dark:text-slate-500 mb-1">
       {icon} {label}
     </p>
-    <p className="text-sm text-gray-800 font-medium">{value || "—"}</p>
+    <p className="text-sm text-gray-800 dark:text-white font-medium">{value || "—"}</p>
   </div>
 );
 
-const SummaryRow = ({ label, value, bold = false }) => (
+const SummaryRow = ({ label, value, bold = false, discount = false }) => (
   <div className="flex justify-between items-center">
-    <span className={`text-sm ${bold ? "font-bold text-gray-800" : "text-gray-500"}`}>
-      {label}
-    </span>
-    <span className={`text-sm ${bold ? "font-bold text-gray-900" : "text-gray-700"}`}>
-      {value}
-    </span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-800 dark:text-white" : "text-gray-500 dark:text-slate-400"}`}>{label}</span>
+    <span className={`text-sm ${bold ? "font-bold text-gray-900 dark:text-white" : discount ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-gray-700 dark:text-slate-300"}`}>{value}</span>
   </div>
 );
 
 // ─── ORDER CARD ───────────────────────────────────────────────────────────────
 const OrderCard = ({ order, onClick }) => {
-  const cfg = getStatusConfig(order.status);
   const itemCount = order.orderDetails?.length || 0;
   const firstProduct = order.orderDetails?.[0]?.productName || "Sản phẩm";
 
   return (
     <button
       onClick={() => onClick(order)}
-      className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md hover:border-gray-200 active:scale-[0.99] transition-all duration-200 group"
+      className="w-full text-left bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-4 hover:shadow-md hover:border-gray-200 dark:hover:border-slate-700 active:scale-[0.99] transition-all duration-200 group"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
-          <p className="text-xs text-gray-400 font-mono">#{order.orderId}</p>
-          <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">
+          <p className="text-xs text-gray-400 dark:text-slate-500 font-mono">#{order.orderId}</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-white truncate mt-0.5">
             {firstProduct}
             {itemCount > 1 && (
-              <span className="text-gray-400 font-normal"> +{itemCount - 1} sản phẩm</span>
+              <span className="text-gray-400 dark:text-slate-500 font-normal"> +{itemCount - 1} sản phẩm</span>
             )}
           </p>
         </div>
@@ -276,15 +359,15 @@ const OrderCard = ({ order, onClick }) => {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-slate-500">
           <span>🕐</span>
           <span>{formatDate(order.orderDate)}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-gray-900">
-            {formatCurrency(order.totalAmount)}
+          <span className="text-base font-bold text-gray-900 dark:text-white">
+            {formatCurrency(order.finalAmount)}
           </span>
-          <span className="text-gray-300 group-hover:text-gray-500 transition-colors text-lg">›</span>
+          <span className="text-gray-300 dark:text-slate-600 group-hover:text-gray-500 dark:group-hover:text-slate-400 transition-colors text-lg">›</span>
         </div>
       </div>
     </button>
@@ -295,7 +378,8 @@ const OrderCard = ({ order, onClick }) => {
 const FILTER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "⏳ Chờ xác nhận", value: "Chờ xác nhận" },
-  { label: "📦 Đang xử lý", value: "Đang xử lý"},
+  { label: "✅ Đã xác nhận", value: "Đã xác nhận" },
+  { label: "🏸 Đang đan lưới", value: "Đang đan lưới" },
   { label: "🚚 Đang giao", value: "Đang giao hàng" },
   { label: "🎉 Hoàn tất", value: "Hoàn tất" },
   { label: "✖ Đã hủy", value: "Đã hủy" },
@@ -328,18 +412,21 @@ const MyOrders = () => {
   const [cancelling, setCancelling] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [warrantyTarget, setWarrantyTarget] = useState(null);
+
+  const { fetchMyWarranties } = useWarranty();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user?.id || user?.userId || user?.Id;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await orderApi.getMyOrders();
-      // API GET /api/Order/my-orders returns array directly
       const data = response.data;
       setOrders(Array.isArray(data) ? data : []);
-    } catch (err) {
+    } catch {
       setError("Không thể tải đơn hàng. Vui lòng thử lại.");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -347,7 +434,8 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    fetchMyWarranties();
+  }, [fetchOrders, fetchMyWarranties]);
 
   const handleCancel = async (orderId) => {
     setCancelling(true);
@@ -382,7 +470,7 @@ const MyOrders = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/70">
+    <div className="w-full h-full bg-gray-50/70 dark:bg-slate-950/50">
       {/* ── Inline styles for animations ── */}
       <style>{`
         @keyframes slide-up {
@@ -397,11 +485,11 @@ const MyOrders = () => {
         .animate-fade-in { animation: fade-in 0.3s ease both; }
       `}</style>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-full mx-auto px-4 py-8">
         {/* ── Page header ── */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Đơn hàng của tôi</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Đơn hàng của tôi</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
             {loading ? "Đang tải..." : `${orders.length} đơn hàng`}
           </p>
         </div>
@@ -421,7 +509,7 @@ const MyOrders = () => {
             placeholder="Tìm theo mã, tên sản phẩm, người nhận..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 transition"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-slate-600 transition"
           />
         </div>
 
@@ -433,8 +521,8 @@ const MyOrders = () => {
               onClick={() => setActiveFilter(tab.value)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                 activeFilter === tab.value
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  ? "bg-gray-900 dark:bg-slate-100 text-white dark:text-slate-900 border-gray-900 dark:border-slate-100"
+                  : "bg-white dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"
               }`}
             >
               {tab.label}
@@ -488,6 +576,21 @@ const MyOrders = () => {
           onClose={() => setSelectedOrder(null)}
           onCancel={handleCancel}
           cancelling={cancelling}
+          onWarranty={(order, od, serial) => setWarrantyTarget({ order, orderDetail: od, serial })}
+        />
+      )}
+
+      {/* ── Warranty form modal ── */}
+      {warrantyTarget && (
+        <WarrantyFormModal
+          order={warrantyTarget.order}
+          orderDetail={warrantyTarget.orderDetail}
+          serialNumbers={warrantyTarget.serial}
+          userId={userId}
+          onClose={() => setWarrantyTarget(null)}
+          onSuccess={() => {
+            fetchMyWarranties();
+          }}
         />
       )}
     </div>

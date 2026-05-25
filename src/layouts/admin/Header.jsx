@@ -1,18 +1,20 @@
-import {User, LogOut, Filter, Menu, Plus, Search, Sun ,Bell, Settings, ChevronDown} from 'lucide-react'
+import {User, LogOut, Filter, Menu, Plus, Search, Sun, Moon, Bell, Settings, ChevronDown} from 'lucide-react'
 import React, {useEffect, useRef, useState} from 'react'
 import {useAuth} from  "../../contexts/AuthContext"
-import {useNavigate, Link, useLocation} from "react-router-dom"
-import {useUser} from "../../contexts/UserContext"
+import {useNavigate, Link} from "react-router-dom"
+import {useMediaQuery} from '../../mystate/useMediaQuery';
+import {useTheme} from '../../contexts/ThemeContext';
 
 
-const Header = ({sideBarCollapsed, onToggleSidebar}) => {
+const Header = ({onToggleSidebar}) => {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const { isDark, toggleTheme } = useTheme();
     const dropdownRef = useRef(null);
-    const {isAuthenticated, logout, loading} = useAuth();
-    const [error, setError] = useState('')
+    const { logout } = useAuth();
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
-    const [fullName, setFullName] = useState(user.fullName);
+    const fullName = user?.fullName ?? '';
+    const isMedium = useMediaQuery('(min-width: 1280px)');
     useEffect(() => {
         const handleClickOutside = (event) => {
           if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -25,15 +27,12 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
 
     const handleLogout = async (e) => {
         e.preventDefault();
-        setError('')        
         const result = await logout();
-        
         if (result.success) {
             alert("Đăng xuất thành công");
             navigate('/');
         } else {
-            setError(result.message);
-            alert(message);
+            alert(result.message);
         }
       };
   return (
@@ -55,8 +54,9 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                     <p>Chào mừng trở lại, Quản trị viên!</p>
                 </div>
             </div>
-            {/*Giữa*/}
-            <div className='flex-1 max-w-md mx-8'>
+            {/*Center*/}
+            {isMedium && (
+              <div className='flex-1 max-w-md mx-8'>
                 <div className='relative'>
                     <Search className='w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400'/>
                     <input 
@@ -72,7 +72,8 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                     </button>
                 </div>
             </div>
-            {/*Bên phải*/}
+            )}
+            {/*Right side*/}
             <div className='flex items-center space-x-3'>
                 {/*Thao tác nhanh*/}
                 <button className='hidden lg:flex items-center space-x-2 py-2 px-4
@@ -81,10 +82,14 @@ const Header = ({sideBarCollapsed, onToggleSidebar}) => {
                     <Plus className='w-4 h-4'/>
                     <span className='text-sm font-medium'>Tạo mới</span>
                 </button>
-                {/*Chế độ sáng/tối*/}
-                <button className='p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
-                 dark:hover:bg-slate-800 transition-colors'>
-                    <Sun className='w-5 h-5'/>
+                {/*Toggle*/}
+                <button
+                    onClick={toggleTheme}
+                    className='p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
+                 dark:hover:bg-slate-800 transition-colors'
+                    title={isDark ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+                >
+                    {isDark ? <Sun className='w-5 h-5'/> : <Moon className='w-5 h-5'/>}
                 </button>
                 {/*Thông báo*/}
                 <button className='relative p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100
