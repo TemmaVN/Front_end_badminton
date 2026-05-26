@@ -10,6 +10,7 @@ import CartDrawer from './CartDrawer'
 import { useCart } from '../contexts/CartContext'
 import { productApi } from '../api'
 import { useTheme } from '../contexts/ThemeContext'
+import Logo from '../Logo/Logo.jpg'
 
 const formatPrice = (price) => {
   if (!price || price <= 0) return null;
@@ -111,7 +112,7 @@ const PageHeader = () => {
         {!isShowFullWidthSearch &&
         <div>
           <Link to="/">
-            <img src="https://static.fbshop.vn/wp-content/uploads/2026/01/cropped-logo-4.webp" alt="" className='w-12 h-12'/>
+            <img src={Logo} alt="" className='w-12 h-12'/>
           </Link>
         </div>}
         {isShowFullWidthSearch &&

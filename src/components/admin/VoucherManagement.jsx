@@ -106,7 +106,7 @@ const VoucherCard = ({ v }) => {
 
 /* ── Component chính ── */
 const VoucherManagement = () => {
-  const [tab, setTab] = useState("create");
+  const [tab, setTab] = useState("list");
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
@@ -185,7 +185,7 @@ const VoucherManagement = () => {
 
   return (
     <div className="p-4 bg-slate-50 dark:bg-slate-950 min-h-screen">
-      <div className="max-w-3xl mx-auto">
+      <div className={`${tab === "create"? "max-w-3xl":"max-w-7xl"} mx-auto`}>
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
 
           {/* Header */}
@@ -201,8 +201,8 @@ const VoucherManagement = () => {
             </div>
             <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
               {[
-                { key: "create", label: "Tạo mới" },
                 { key: "list", label: "Danh sách" },
+                { key: "create", label: "Tạo mới" },
               ].map((t) => (
                 <button
                   key={t.key}

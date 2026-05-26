@@ -10,6 +10,7 @@ import {useCart} from '../contexts/CartContext'
 import { orderApi, voucherApi } from '../api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ALargeSmall } from 'lucide-react';
+import QrCode from '../Logo/Test.png';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -313,6 +314,28 @@ const CartPage = () => {
                     <PaymentOption id="E-Wallet" title="Ví điện tử" desc="Thanh toán nhanh qua ví điện tử" icon={<WalletIcon className="w-6 h-6" />} selected={paymentMethod === 'E-Wallet'} onSelect={() => handlePaymentMethodChange('E-Wallet')} />
                   </div>
                 </div>
+
+                {/* QR Code khi chọn chuyển khoản hoặc ví điện tử */}
+                {(paymentMethod === 'Bank Transfer' || paymentMethod === 'E-Wallet') && (
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm text-center">
+                    <p className="text-sm font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Quét mã QR để thanh toán
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">
+                      {paymentMethod === 'Bank Transfer' ? 'Chuyển khoản ngân hàng' : 'Ví điện tử'} · {Math.round(finalTotal).toLocaleString()} đ
+                    </p>
+                    <div className="flex justify-center">
+                      <img
+                        src={QrCode}
+                        alt="QR thanh toán"
+                        className="w-52 h-52 object-contain rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-3">
+                      Chụp ảnh màn hình hoặc quét trực tiếp bằng app ngân hàng / ví điện tử
+                    </p>
+                  </div>
+                )}
 
                 {/* Shield Note */}
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-500/10 rounded-2xl flex items-center gap-3 text-orange-default border border-orange-100/50 dark:border-orange-500/20">

@@ -5,10 +5,36 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useProduct } from "../contexts/ProductContext";
 import { useCart } from "../contexts/CartContext";
 
+const getVariantLabel = (productName = "") => {
+  const name = productName.toLowerCase().trim();
+
+  if (name.includes("cước")) {
+    return { type: "none", label:""};
+  }
+
+  // Vợt -> Cỡ cán
+  if (name.includes("vợt")) {
+    return { type: "grip", label: "Cỡ cán :" };
+  }
+
+  // Giày, áo, quần -> Size
+  if (
+    name.includes("giày") ||
+    name.includes("áo") ||
+    name.includes("quần")
+  ) {
+    return { type: "size", label: "Size" };
+  }
+
+  // Mặc định
+  return { type: "none", label: "" };
+};
+
 
 const ProductDetail = (
 ) => {
   const { productSlug } = useParams();
+  const [variantName, setVariantName] = useState('Cỡ cán: ')
 const [loading, setLoading] = useState(true);
 const {addToCart, fetchCart } = useCart();
 const { getProductDetaildBySlug } = useProduct();
@@ -24,6 +50,8 @@ const tabs = [
   { id: 'reviews', label: 'Đánh giá 0 ⭐' },
 ];
 
+
+
 // Thêm state cho variant
 const [selectedWeight, setSelectedWeight] = useState(null);
 const [selectedGrip, setSelectedGrip] = useState(null);
@@ -35,6 +63,7 @@ useEffect(() => {
       const result = await getProductDetaildBySlug(productSlug);
       if (result) {
         setProduct(result);
+        setVariantName(getVariantLabel(result.productName).label)        
       }
     } catch (error) {
       console.error('Failed to load product:', error);
@@ -173,9 +202,7 @@ const handleOrder = () => {
           <div className="flex flex-col">
             <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-4 leading-snug">
               {product.productName}
-            </h1>
-            <div className="mb-4"><span className="bg-teal-400 text-white px-3 py-1 rounded text-xs font-bold uppercase">✨ Mới</span></div>
-            
+            </h1>            
             <div className="flex gap-6 text-sm mb-6 pb-6 border-b border-gray-100 dark:border-slate-700">
               <p>Xuất xứ: <span className="font-bold text-gray-900 dark:text-white">Nhật Bản</span></p>
               <p>Tình trạng: {
@@ -188,12 +215,12 @@ const handleOrder = () => {
             </div>
 
             <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/30 rounded-xl p-4 text-orange-800 dark:text-orange-300 mb-8">
-              Liên hệ hotline <span className="font-bold">0979.170.274</span> để được tư vấn và đặt hàng nhanh nhất!
+              Liên hệ hotline <span className="font-bold">038.2350.127</span> để được tư vấn và đặt hàng nhanh nhất!
             </div>
             {/* Variant Selector */}
         <div className="mb-6 space-y-5">
           {/* Weight Class */}
-          <div>
+          {weightOptions[0] && <div>
             <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
               Trọng lượng: <span className="text-gray-900 dark:text-white">{selectedWeight}</span>
             </p>
@@ -218,12 +245,12 @@ const handleOrder = () => {
                 );
               })}
             </div>
-          </div>
+          </div>}
 
       {/* Grip Size */}
-      <div>
+      {variantName !=="" && <div>
         <p className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-          Cỡ cán: <span className="text-gray-900 dark:text-white">{selectedGrip}</span>
+          {variantName}<span className="text-gray-900 dark:text-white pl-2">{selectedGrip}</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {gripOptions.map(g => {
@@ -246,15 +273,16 @@ const handleOrder = () => {
             );
           })}
         </div>
-      </div>
+      </div>}
+
 
       {/* Thông tin variant được chọn */}
       {selectedVariant && (
         <div className="flex flex-wrap gap-4 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
-          <span>Cân bằng: <strong className="text-gray-800 dark:text-white">{selectedVariant.balancePoint}</strong></span>
-          <span>Độ cứng: <strong className="text-gray-800 dark:text-white">{selectedVariant.stiffness}</strong></span>
-          <span>Căng max: <strong className="text-gray-800 dark:text-white">{selectedVariant.maxTension} lbs</strong></span>
-          <span>Tồn kho: <strong className="text-gray-800 dark:text-white">{selectedVariant.stockQuantity} cái</strong></span>
+          {selectedVariant.balancePoint && <span>Cân bằng: <strong className="text-gray-800 dark:text-white">{selectedVariant.balancePoint}</strong></span>}
+          {selectedVariant.stiffness && <span>Độ cứng: <strong className="text-gray-800 dark:text-white">{selectedVariant.stiffness}</strong></span>}
+          {selectedVariant.maxTension && <span>Căng max: <strong className="text-gray-800 dark:text-white">{selectedVariant.maxTension} lbs</strong></span>}
+          {selectedVariant.stockQuantity && <span>Tồn kho: <strong className="text-gray-800 dark:text-white">{selectedVariant.stockQuantity} cái</strong></span>}
         </div>
       )}
     </div>
