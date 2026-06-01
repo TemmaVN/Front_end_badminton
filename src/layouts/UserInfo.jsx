@@ -15,6 +15,8 @@ const UserInfo = () => {
     const [page, setPage] = useState('info');
     const { logout, isAdmin } = useAuth();
     const { isDark, toggleTheme } = useTheme();
+    const user = JSON.parse(localStorage.getItem('user'));
+    const fullName = user?.fullName ?? '';
     return (
     <div className='text-slate-900 dark:text-white flex justify-center bg-white dark:bg-slate-950 min-h-screen'>
         <div className={`w-300 h-auto my-30 p-15 flex ${isMini? 'flex-col':''} gap-8 shadow-2xl bg-white dark:bg-slate-900 rounded-2xl`}>
@@ -23,7 +25,7 @@ const UserInfo = () => {
                 <div className='flex'>
                 <img src="https://static.fbshop.vn/template/assets/images/im-des.png" className='rounded-full h-20 w-20'/>
                     <div className='px-3 flex flex-col justify-center'>
-                        <div>Hello</div>
+                        <h2 className='text-lg'>{fullName}</h2>
                         <Link
                         to="/"
                         onClick={logout}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { ArrowLeft, LogOut, MenuIcon, Moon, Search, ShoppingCart, Sun, User2 } from 'lucide-react'
+import { ArrowLeft, LogOut, MenuIcon, Moon, Search, ShoppingCart, Sun, Tag, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 import MenuHeader from './MenuHeader'
@@ -206,6 +206,11 @@ const PageHeader = () => {
           >
             {isDark ? <Sun size={20}/> : <Moon size={20}/>}
           </Button>
+          <Link to="/khuyen-mai" title="Khuyến mãi & Voucher">
+            <Button size='icon'>
+              <Tag size={20} />
+            </Button>
+          </Link>
           <Link
             to={isAuthenticated ? "/user-info" : "/login"}           >
             <Button size='icon'>
