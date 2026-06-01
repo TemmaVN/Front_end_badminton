@@ -49,8 +49,8 @@ const Header = ({onToggleSidebar}) => {
                     <Menu className='w-5 h-5'/>
                 </button>
 
-                <div className='hidden md:block'>
-                    <h1 className='text-2xl font-black text-slate-800 dark:text-white'>Tổng quan</h1>
+                <div className='hidden md:block text-slate-800 dark:text-white'>
+                    <h1 className='text-2xl font-black'>Tổng quan</h1>
                     <p>Chào mừng trở lại, Quản trị viên!</p>
                 </div>
             </div>

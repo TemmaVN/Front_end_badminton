@@ -89,8 +89,7 @@ const ProductList = () => {
     };
 
     const resetFilters = () =>
-        setFilters({ keyword: '', categoryId: '', brandId: '', page: 1, pagesize: 10 });
-        setFilters({ key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
+        setFilters({ keyword: '', categoryId: '', brandId: '', key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -328,7 +327,7 @@ const ProductList = () => {
                 <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Quản lý kho hàng</h3>
+                            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Quản lý kho hàng</h3>
                             {pagination?.totalCount > 0 && (
                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{pagination.totalCount} sản phẩm</p>
                             )}
@@ -344,7 +343,7 @@ const ProductList = () => {
                             <button
                                 onClick={() => importFileRef.current?.click()}
                                 disabled={importLoading}
-                                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-60 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                                className="flex items-center gap-2 bg-cyan-400 hover:bg-cyan-500 disabled:opacity-60 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
                             >
                                 {importLoading ? <Loader2 size={16} className="animate-spin" /> : <Import size={16} />}
                                 Nhập từ file
@@ -352,7 +351,7 @@ const ProductList = () => {
                             <button
                                 onClick={handleExportFile}
                                 disabled={exportLoading}
-                                className="flex items-center gap-2 bg-slate-700 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-60 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                                className="flex items-center gap-2 bg-emerald-400 hover:bg-emerald-500 disabled:opacity-60 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
                             >
                                 {exportLoading ? <Loader2 size={16} className="animate-spin" /> : <BiExport size={16} />}
                                 Xuất ra file
@@ -366,8 +365,6 @@ const ProductList = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="relative">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                         <div className="relative lg:col-span-2">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
@@ -430,7 +427,6 @@ const ProductList = () => {
                             <RotateCcw size={14} /> Làm mới
                         </button>
                     </div>
-                </div>
 
                 {/* ── Table ── */}
                 <div className="overflow-x-auto relative" style={{ minHeight: 300 }}>
@@ -977,7 +973,8 @@ const ProductList = () => {
                     </div>
                 );
             })()}
-    </div>
+            </div>
+        </div>
     );
 };
 

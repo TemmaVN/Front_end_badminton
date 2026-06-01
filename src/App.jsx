@@ -38,6 +38,8 @@ import Statistics from "./components/admin/Statistics";
 import VoucherManagement from "./components/admin/VoucherManagement";
 import { OrderProvider } from "./contexts/OrderContext";
 import { StatisticProvider } from "./contexts/StatisticContext";
+import { VoucherProvider } from "./contexts/VoucherContext";
+import VoucherPage from "./layouts/VoucherPage";
 
 
 const PublicRoute = ({ children }) => {
@@ -84,6 +86,14 @@ function AppRoutes() {
         element={
           <PublicRoute>
             <Contract />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/khuyen-mai"
+        element={
+          <PublicRoute>
+            <VoucherPage />
           </PublicRoute>
         }
       />
@@ -189,14 +199,16 @@ function App() {
             <OrderProvider>
               <WarrantyProvider>
                 <StatisticProvider>
-                  <div className="bg-white dark:bg-slate-950 h-auto w-full">
-                    {isHidePageHeader && <PageHeader />}
-                    {isHideMainHeader && <MainHeader />}
-                    <ProductProvider>
-                      <AppRoutes />
-                    </ProductProvider>
-                    <Footer />
-                  </div>
+                  <VoucherProvider>
+                    <div className="bg-white dark:bg-slate-950 h-auto w-full">
+                      {isHidePageHeader && <PageHeader />}
+                      {isHideMainHeader && <MainHeader />}
+                      <ProductProvider>
+                        <AppRoutes />
+                      </ProductProvider>
+                      <Footer />
+                    </div>
+                  </VoucherProvider>
                 </StatisticProvider>
               </WarrantyProvider>
             </OrderProvider>

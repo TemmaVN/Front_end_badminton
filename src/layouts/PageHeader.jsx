@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { ArrowLeft, LogOut, MenuIcon, Moon, Search, ShoppingCart, Sun, User2 } from 'lucide-react'
+import { ArrowLeft, LogOut, MenuIcon, Moon, Search, ShoppingCart, Sun, Tag, User2 } from 'lucide-react'
 import Button from '../components/Button'
 import {useMediaQuery} from '../mystate/useMediaQuery'
 import MenuHeader from './MenuHeader'
@@ -10,6 +10,7 @@ import CartDrawer from './CartDrawer'
 import { useCart } from '../contexts/CartContext'
 import { productApi } from '../api'
 import { useTheme } from '../contexts/ThemeContext'
+import Logo from '../Logo/Logo.jpg'
 
 const formatPrice = (price) => {
   if (!price || price <= 0) return null;
@@ -111,7 +112,7 @@ const PageHeader = () => {
         {!isShowFullWidthSearch &&
         <div>
           <Link to="/">
-            <img src="https://static.fbshop.vn/wp-content/uploads/2026/01/cropped-logo-4.webp" alt="" className='w-12 h-12'/>
+            <img src={Logo} alt="" className='w-12 h-12'/>
           </Link>
         </div>}
         {isShowFullWidthSearch &&
@@ -205,6 +206,11 @@ const PageHeader = () => {
           >
             {isDark ? <Sun size={20}/> : <Moon size={20}/>}
           </Button>
+          <Link to="/khuyen-mai" title="Khuyến mãi & Voucher">
+            <Button size='icon'>
+              <Tag size={20} />
+            </Button>
+          </Link>
           <Link
             to={isAuthenticated ? "/user-info" : "/login"}           >
             <Button size='icon'>

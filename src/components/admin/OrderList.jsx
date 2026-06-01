@@ -75,7 +75,7 @@ const OrderList = () => {
     <div className="p-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
       <div className="max-w-8xl mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">
+          <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
             Quản lý đơn hàng
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

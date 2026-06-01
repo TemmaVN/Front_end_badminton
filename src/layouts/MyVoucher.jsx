@@ -178,7 +178,8 @@ const MyVoucher = () => {
     setMyLoading(true);
     setMyError(null);
     try {
-      const res = await voucherApi.getAvailableVouchers();
+      // POST /Voucher/my-voucher với body rỗng → trả về voucher khả dụng của user
+      const res = await voucherApi.getAvailableVouchers({});
       setMyVouchers(Array.isArray(res.data) ? res.data : []);
     } catch {
       setMyError("Không thể tải danh sách voucher. Vui lòng thử lại.");
@@ -192,7 +193,9 @@ const MyVoucher = () => {
     setAllError(null);
     try {
       const res = await voucherApi.getAllAvailable();
-      setAllVouchers(Array.isArray(res.data) ? res.data : []);
+      // backend trả về { message, data: [] }
+      const data = res.data?.data ?? res.data;
+      setAllVouchers(Array.isArray(data) ? data : []);
     } catch {
       setAllError("Không thể tải danh sách voucher. Vui lòng thử lại.");
     } finally {

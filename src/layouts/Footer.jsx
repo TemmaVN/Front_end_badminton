@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Logo from '../Logo/Logo.jpg'
 import {
   MapPin,
   User,
@@ -23,7 +24,7 @@ const Footer = () => {
           <Link to="/">
             <div className="bg-white dark:bg-slate-900 p-3 rounded-full border-2 border-orange-100 dark:border-slate-700 shadow-sm mb-2 hover:shadow-md transition-shadow">
               <img
-                src="../Logo/logo.jpeg"
+                src={Logo}
                 alt="Logo"
                 className="w-16 h-16 object-contain"
               />

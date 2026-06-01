@@ -157,13 +157,15 @@ const HomePage = () => {
     fetchHomeProducts();
   }, []);
 
+  console.log(categories)
+
   const categoryImages = {
     "Vợt cầu lông":
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Artboard-5-copy-2@2x.webp",
     "Giày cầu lông":
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
-    "Bao vợt & Balo":
-      "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
+    "Balo cầu lông":
+      "https://res.cloudinary.com/dfbelvtzh/image/upload/v1780300391/Artboard-5-copy-3_2x_f1xdfi.webp",
   };
 
   if (loading) {

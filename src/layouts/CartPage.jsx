@@ -10,6 +10,7 @@ import {useCart} from '../contexts/CartContext'
 import { orderApi, voucherApi } from '../api';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ALargeSmall } from 'lucide-react';
+import QrCode from '../Logo/Test.png';
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -39,11 +40,13 @@ const CartPage = () => {
   };
 
   useEffect(() => {
-    voucherApi.getAvailableVouchers(paymentMethod)
+    const orderDetails = displayItems.map(item => ({ detailId: item.detailId, quantity: item.quantity }));
+    voucherApi.getAvailableVouchers({ paymentMethod, orderDetails })
       .then(res => {
-        setVouchers(Array.isArray(res.data) ? res.data : [])
+        setVouchers(Array.isArray(res.data) ? res.data : []);
       })
-      .catch((err) => {alert(err.response?.data ?? err)})
+      .catch(() => setVouchers([]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentMethod]);
   const calcDiscount = (voucher, base) => {
     if (base < voucher.minOrderValue) return 0;
@@ -68,10 +71,14 @@ const CartPage = () => {
     }
 
     try {
-      const res = await voucherApi.getAvailableVouchers(newMethod);
+      const orderDetails = displayItems.map(item => ({ detailId: item.detailId, quantity: item.quantity }));
+      const res = await voucherApi.getAvailableVouchers({ paymentMethod: newMethod, orderDetails });
       const newVouchers = Array.isArray(res.data) ? res.data : [];
-      const newVoucherIds = new Set(newVouchers.map(v => v.voucherId));
-      const incompatible = selectedVouchers.filter(v => !newVoucherIds.has(v.voucherId));
+      // Voucher bị incompatible = không có trong response mới, HOẶC isEligible: false với phương thức mới
+      const incompatible = selectedVouchers.filter(sv => {
+        const found = newVouchers.find(nv => nv.voucherId === sv.voucherId);
+        return !found || !found.isEligible;
+      });
 
       if (incompatible.length > 0) {
         setIncompatibleVouchers(incompatible);
@@ -314,6 +321,28 @@ const CartPage = () => {
                   </div>
                 </div>
 
+                {/* QR Code khi chọn chuyển khoản hoặc ví điện tử */}
+                {(paymentMethod === 'Bank Transfer' || paymentMethod === 'E-Wallet') && (
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm text-center">
+                    <p className="text-sm font-bold text-gray-700 dark:text-slate-300 mb-1">
+                      Quét mã QR để thanh toán
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500 mb-4">
+                      {paymentMethod === 'Bank Transfer' ? 'Chuyển khoản ngân hàng' : 'Ví điện tử'} · {Math.round(finalTotal).toLocaleString()} đ
+                    </p>
+                    <div className="flex justify-center">
+                      <img
+                        src={QrCode}
+                        alt="QR thanh toán"
+                        className="w-52 h-52 object-contain rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-3">
+                      Chụp ảnh màn hình hoặc quét trực tiếp bằng app ngân hàng / ví điện tử
+                    </p>
+                  </div>
+                )}
+
                 {/* Shield Note */}
                 <div className="p-4 bg-orange-50/50 dark:bg-orange-500/10 rounded-2xl flex items-center gap-3 text-orange-default border border-orange-100/50 dark:border-orange-500/20">
                   <ShieldCheckIcon className="w-5 h-5 shrink-0" />
@@ -364,7 +393,8 @@ const CartPage = () => {
              </div>
 
              {/* ── Voucher selector ── */}
-             {(vouchers.length > 0 && step === 2)  && (
+             {/* Chỉ hiện những voucher isEligible: true (phù hợp phương thức thanh toán hiện tại) */}
+             {(vouchers.some(v => v.isEligible) && step === 2) && (
                <div className="mt-5 border border-dashed border-orange-200 dark:border-orange-500/30 rounded-2xl overflow-hidden">
                  <button
                    onClick={() => setVoucherOpen(o => !o)}
@@ -386,17 +416,17 @@ const CartPage = () => {
 
                  {voucherOpen && (
                    <div className="divide-y divide-orange-50 dark:divide-slate-700 max-h-56 overflow-y-auto">
-                     {vouchers.map(v => {
+                     {vouchers.filter(v => v.isEligible).map(v => {
                        const isSelected = selectedVoucherIds.includes(v.voucherId);
                        const discount   = calcDiscount(v, subtotal);
-                       const eligible   = discount > 0;
+                       const meetsMin   = discount > 0;
                        return (
                          <button
                            key={v.voucherId}
-                           onClick={() => eligible && toggleVoucher(v.voucherId)}
-                           disabled={!eligible}
+                           onClick={() => meetsMin && toggleVoucher(v.voucherId)}
+                           disabled={!meetsMin}
                            className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors
-                             ${isSelected ? 'bg-emerald-50 dark:bg-emerald-500/10' : eligible ? 'hover:bg-gray-50 dark:hover:bg-slate-700' : 'opacity-50 cursor-not-allowed bg-white dark:bg-slate-800'}
+                             ${isSelected ? 'bg-emerald-50 dark:bg-emerald-500/10' : meetsMin ? 'hover:bg-gray-50 dark:hover:bg-slate-700' : 'opacity-50 cursor-not-allowed bg-white dark:bg-slate-800'}
                            `}
                          >
                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
@@ -411,12 +441,12 @@ const CartPage = () => {
                                {' · '}Tối thiểu {v.minOrderValue.toLocaleString()}đ
                              </p>
                            </div>
-                           {eligible && (
+                           {meetsMin && (
                              <span className="text-xs font-bold text-emerald-600 shrink-0">
                                −{Math.round(discount).toLocaleString()}đ
                              </span>
                            )}
-                           {!eligible && (
+                           {!meetsMin && (
                              <span className="text-[10px] text-gray-400 dark:text-slate-500 shrink-0">Chưa đủ ĐK</span>
                            )}
                          </button>
