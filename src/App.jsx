@@ -3,7 +3,7 @@ import MainHeader from "./layouts/MainHeader";
 import { useMediaQuery } from "./mystate/useMediaQuery";
 import Login from "./layouts/Login";
 import Register from "./layouts/Register";
-import { BrowserRouter, Route, Routes, Navigate,useNavigate, useLocation} from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation} from "react-router-dom";
 import Advertisement from "./components/Advertisement";
 import Contract from "./layouts/Contract";
 import Sales from "./layouts/Sales";
@@ -38,6 +38,8 @@ import Statistics from "./components/admin/Statistics";
 import VoucherManagement from "./components/admin/VoucherManagement";
 import { OrderProvider } from "./contexts/OrderContext";
 import { StatisticProvider } from "./contexts/StatisticContext";
+import { VoucherProvider } from "./contexts/VoucherContext";
+import VoucherPage from "./layouts/VoucherPage";
 
 
 const PublicRoute = ({ children }) => {
@@ -45,9 +47,8 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const adminRedirectPaths = ['/', '/login', '/register'];
   
   if (isAdmin() && adminRedirectPaths.includes(location.pathname)) {
@@ -85,6 +86,14 @@ function AppRoutes() {
         element={
           <PublicRoute>
             <Contract />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/khuyen-mai"
+        element={
+          <PublicRoute>
+            <VoucherPage />
           </PublicRoute>
         }
       />
@@ -190,14 +199,16 @@ function App() {
             <OrderProvider>
               <WarrantyProvider>
                 <StatisticProvider>
-                  <div className="bg-white h-auto w-full">
-                    {isHidePageHeader && <PageHeader />}
-                    {isHideMainHeader && <MainHeader />}
-                    <ProductProvider>
-                      <AppRoutes />
-                    </ProductProvider>
-                    <Footer />
-                  </div>
+                  <VoucherProvider>
+                    <div className="bg-white dark:bg-slate-950 h-auto w-full">
+                      {isHidePageHeader && <PageHeader />}
+                      {isHideMainHeader && <MainHeader />}
+                      <ProductProvider>
+                        <AppRoutes />
+                      </ProductProvider>
+                      <Footer />
+                    </div>
+                  </VoucherProvider>
                 </StatisticProvider>
               </WarrantyProvider>
             </OrderProvider>

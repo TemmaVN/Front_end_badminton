@@ -96,7 +96,7 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "0s" }}
       >
         <ShuttlecockSVG
-          className={`w-20 h-20 ${isLeft ? "rotate-[15deg]" : "-rotate-[15deg]"}`}
+          className={`w-20 h-20 ${isLeft ? "rotate-15" : "-rotate-15"}`}
         />
       </div>
       <div
@@ -104,7 +104,7 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "1.5s" }}
       >
         <RacketSVG
-          className={`w-24 h-24 ${isLeft ? "rotate-[-30deg]" : "rotate-[30deg]"}`}
+          className={`w-24 h-24 ${isLeft ? "rotate-[-30deg]" : "rotate-30"}`}
         />
       </div>
       <div
@@ -112,7 +112,7 @@ const FloatingBadmintonDeco = ({ side }) => {
         style={{ animationDelay: "0.8s" }}
       >
         <ShuttlecockSVG
-          className={`w-16 h-16 ${isLeft ? "rotate-[75deg]" : "-rotate-[75deg]"}`}
+          className={`w-16 h-16 ${isLeft ? "rotate-75" : "-rotate-75"}`}
         />
       </div>
     </div>
@@ -157,18 +157,20 @@ const HomePage = () => {
     fetchHomeProducts();
   }, []);
 
+  console.log(categories)
+
   const categoryImages = {
     "Vợt cầu lông":
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Artboard-5-copy-2@2x.webp",
     "Giày cầu lông":
       "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
-    "Bao vợt & Balo":
-      "https://static.fbshop.vn/wp-content/uploads/2024/01/Banner-website-balo.webp",
+    "Balo cầu lông":
+      "https://res.cloudinary.com/dfbelvtzh/image/upload/v1780300391/Artboard-5-copy-3_2x_f1xdfi.webp",
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-white dark:bg-slate-950 text-gray-800 dark:text-white">
         Đang tải...
       </div>
     );
@@ -176,7 +178,7 @@ const HomePage = () => {
 
   return (
     // Wrap toàn bộ bằng relative overflow-hidden để mỏ neo cho cái Decoration
-    <div className="relative w-full overflow-hidden bg-white">
+    <div className="relative w-full overflow-hidden bg-white dark:bg-slate-950">
       {/* CSS KEYFRAMES CHO HIỆU ỨNG SÓNG CHUYỂN ĐỘNG */}
       <style>
         {`
@@ -205,7 +207,7 @@ const HomePage = () => {
 
       <Advertisement linkAdvertisement={linkAdvertisement} />
 
-      <div className="relative bg-gray-50 py-1">
+      <div className="relative bg-gray-50 dark:bg-slate-950 py-1">
         {/* RENDER DẢI TRANG TRÍ CHẠY DỌC 2 BÊN */}
         <AnimatedSideDecoration side="left" />
         <AnimatedSideDecoration side="right" />

@@ -83,8 +83,8 @@ export const productApi = {
     getForAdmin: (params = {}) =>
         api.get('/Product/product-management', { params }),
 
-    getTopProducts: (params = {}) => 
-        api.get('/Statistics/products/top', {params}),
+    getTopProducts: (params = {}) =>
+        api.get('/admin/statistic/products/top', { params }),
 
     create: (data) =>
         api.post('/Product', data),
@@ -112,13 +112,32 @@ export const productApi = {
 
     addSerial: (detailId, data) =>
         api.post(`/Product/management-details/${detailId}/serials`, data),
+
+    // Quản lý ảnh sản phẩm
+    getImages: (productId) =>
+        api.get(`/Product/${productId}/management-images`),
+
+    addImage: (productId, data) =>
+        api.post(`/Product/${productId}/management-images`, data),
+
+    setMainImage: (productId, imageId) =>
+        api.put(`/Product/${productId}/management-images/set-main/${imageId}`),
+
+    reorderImages: (productId, data) =>
+        api.put(`/Product/management-images/reOrder`, data, { params: { productId } }),
+
+    deleteImage: (imageId) =>
+        api.delete(`/Product/management-images/${imageId}`),
+
+    importFromFile: (formData) =>
+        api.post(`/Product/admin/import-excel`, formData),
+
+    exportFromFile: () =>
+        api.get(`/Product/admin/export-excel`, {responseType: "blob"}),
 };
 
 export const metaDataApi = {
     get: () => api.get('/MetaData'),
-
-    addDetails: (productId, payload) =>
-        api.put(`/Product/${productId}`, payload),
 };
 
 // Category API
@@ -177,6 +196,8 @@ export const orderApi = {
         api.put(`/Order/cancel-my-order/${orderId}`),
     adminSearch: (params = {}) =>
         api.get('/Order/admin-search', { params }),
+    preview: (data) =>
+        api.post('/Order/preview', data),
 };
 
 export const warrantyApi = {
@@ -200,7 +221,9 @@ export const statisticApi = {
 }
 
 export const voucherApi = {
-    getAvailableVouchers: () => api.get('/Voucher/my-voucher'),
+    // POST - returns vouchers applicable to a specific cart/checkout (requires auth)
+    getAvailableVouchers: (data) => api.post('/Voucher/my-voucher', data ?? {}),
+    // GET - returns all public available vouchers
     getAllAvailable: () => api.get('/Voucher/all-available'),
     saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
     adminCreate: (data) => api.post('/Voucher/admin/add', data),

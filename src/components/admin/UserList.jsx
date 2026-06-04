@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, Users, Phone, Mail, MapPin, Calendar,
   Eye, X, User, Home, ShoppingBag, Shield, AlertCircle,
+  Plus, Loader2,
 } from 'lucide-react';
 import { userApi } from '../../api';
 
@@ -41,7 +42,8 @@ const fmtDate = (dateStr) => {
 const profileComplete = (c) => !!(c.phoneNumber && c.city && c.detailedAddress);
 
 // ─── Info Row (used in detail panel) ─────────────────────────────────
-function InfoRow({ icon: Icon, label, value, mono = false }) {
+function InfoRow({ icon: IconComp, label, value, mono = false }) {
+  const Icon = IconComp;
   return (
     <div className="flex items-start gap-3">
       <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5">
@@ -179,6 +181,12 @@ const UserList = () => {
   const [selected,  setSelected]    = useState(null);
   const [page,      setPage]        = useState(1);
 
+  const EMPTY_USER = { email: '', password: '', fullName: '', phoneNumber: '', dateOfBirth: '', roles: ['Customer'] };
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm,      setCreateForm]      = useState(EMPTY_USER);
+  const [createLoading,   setCreateLoading]   = useState(false);
+  const [createError,     setCreateError]     = useState('');
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -208,6 +216,30 @@ const UserList = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     setKeyword(searchVal.trim());
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!createForm.email || !createForm.password) {
+      setCreateError('Email và mật khẩu không được để trống');
+      return;
+    }
+    if (createForm.password.length < 6) {
+      setCreateError('Mật khẩu phải ít nhất 6 ký tự');
+      return;
+    }
+    setCreateLoading(true);
+    setCreateError('');
+    try {
+      await userApi.create(createForm);
+      setShowCreateModal(false);
+      setCreateForm(EMPTY_USER);
+      setKeyword(keyword);
+    } catch (err) {
+      setCreateError(err.response?.data?.message ?? 'Không thể tạo tài khoản');
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   // Derived
@@ -301,9 +333,16 @@ const UserList = () => {
                 Xóa lọc
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => { setCreateForm(EMPTY_USER); setCreateError(''); setShowCreateModal(true); }}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition-colors shadow shadow-emerald-500/20 shrink-0"
+            >
+              <Plus className="w-4 h-4" /> Tạo tài khoản
+            </button>
           </form>
           {keyword && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Kết quả cho: <span className="font-semibold text-orange-500">"{keyword}"</span> — {total} khách hàng
             </p>
           )}
@@ -513,6 +552,99 @@ const UserList = () => {
       {/* Detail Panel */}
       {selected && (
         <CustomerDetailPanel customer={selected} onClose={() => setSelected(null)} />
+      )}
+
+      {/* Create User Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-white">Tạo tài khoản mới</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Tạo tài khoản cho khách hàng hoặc admin</p>
+              </div>
+              <button onClick={() => setShowCreateModal(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+              {createError && (
+                <div className="flex items-center gap-2 p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/30 rounded-xl text-xs text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {createError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Email <span className="text-rose-500">*</span></label>
+                  <input type="email" required placeholder="example@email.com"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Mật khẩu <span className="text-rose-500">*</span></label>
+                  <input type="password" required placeholder="Ít nhất 6 ký tự"
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, password: e.target.value }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Họ và tên</label>
+                  <input type="text" placeholder="Nguyễn Văn A"
+                    value={createForm.fullName}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, fullName: e.target.value }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Số điện thoại</label>
+                  <input type="text" placeholder="0901234567"
+                    value={createForm.phoneNumber}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Ngày sinh</label>
+                  <input type="date"
+                    value={createForm.dateOfBirth}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  />
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Vai trò</label>
+                  <select
+                    value={createForm.roles[0] ?? 'Customer'}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, roles: [e.target.value] }))}
+                    className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
+                  >
+                    <option value="Customer">Khách hàng</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-sm font-medium transition-colors"
+                >
+                  Huỷ bỏ
+                </button>
+                <button type="submit" disabled={createLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {createLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Tạo tài khoản
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

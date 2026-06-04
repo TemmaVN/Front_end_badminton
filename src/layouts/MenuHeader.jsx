@@ -10,13 +10,14 @@ const MenuHeader = ({isOpen, setIsOpen}) => {
         }`}
         onClick={() => setIsOpen(false)}
       />
-      <div className={`fixed left-0 h-full w-full max-w-150 bg-white z-100 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed left-0 h-full w-full max-w-150 bg-white dark:bg-slate-900 z-100 shadow-2xl transform transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="h-full overflow-y-auto pt-12 px-2 
           [&::-webkit-scrollbar]:w-1.5
           [&::-webkit-scrollbar-track]:bg-transparent
           [&::-webkit-scrollbar-thumb]:bg-gray-200
+          dark:[&::-webkit-scrollbar-thumb]:bg-slate-700
           [&::-webkit-scrollbar-thumb]:rounded-full">
           <MenuData isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>

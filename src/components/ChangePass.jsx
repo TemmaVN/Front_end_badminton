@@ -12,7 +12,6 @@ const ChangePass = () => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const { changePassword } = useUser();
@@ -32,7 +31,6 @@ const ChangePass = () => {
             return;
         }
 
-        setError('');
         setLoading(true);
 
         const result =  await changePassword({oldPassword, newPassword});
@@ -42,17 +40,16 @@ const ChangePass = () => {
             navigate('/');
         } else {
             alert('Thay đổi mật khẩu thất bại: ' + result.message);
-            setError(result.message);
         }
 
         setLoading(false);
     };
 
   return (
-    <form className={`max-w-160 h-full p-8 gap-4 flex flex-col grow border-gray-300 ${isMini? 'border-t-2':'border-l-2'}`} action="">
-        <h2 className='font-bold text-2xl pb-4'>Thay đổi mật khẩu</h2>
+    <form className={`max-w-160 h-full p-8 gap-4 flex flex-col grow border-gray-300 dark:border-slate-700 ${isMini? 'border-t-2':'border-l-2'}`} action="">
+        <h2 className='font-bold text-2xl pb-4 text-slate-900 dark:text-white'>Thay đổi mật khẩu</h2>
         <div className='gap-3 flex flex-col font-medium'>
-            <label htmlFor="oldPassword">Mật khẩu cũ</label>
+            <label htmlFor="oldPassword" className='text-slate-700 dark:text-slate-300'>Mật khẩu cũ</label>
             <MyInput 
             size="300" 
             type="password" 
@@ -62,7 +59,7 @@ const ChangePass = () => {
             />
         </div>
         <div className='gap-3 flex flex-col font-medium'>
-            <label htmlFor="newPassword">Mật khẩu mới</label>
+            <label htmlFor="newPassword" className='text-slate-700 dark:text-slate-300'>Mật khẩu mới</label>
             <MyInput 
             size="300" 
             type="password" 
@@ -73,7 +70,7 @@ const ChangePass = () => {
             {(newPassword && newPassword.length < 6) && <span className='text-red-500 text-sm'>Mật khẩu mới phải có ít nhất 6 ký tự</span>}            
         </div>
         <div className='gap-3 flex flex-col font-medium'>
-            <label htmlFor="confirmPassword">Nhập lại mật khẩu mới</label>
+            <label htmlFor="confirmPassword" className='text-slate-700 dark:text-slate-300'>Nhập lại mật khẩu mới</label>
             <MyInput 
             size="300" 
             type="password" 
