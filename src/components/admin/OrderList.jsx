@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Search, Eye, Loader2, RotateCcw } from "lucide-react";
 import { useOrder } from "../../contexts/OrderContext";
 import OrderDetail from "./OrderDetail";
+import { orderApi } from "../../api";
 
 const STATUSES = {
   1: { text: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-600" },
@@ -17,6 +18,7 @@ const STATUSES = {
 const OrderList = () => {
   const { orders, loading, pagination: ctxPagination, fetchAllOrders, fetchByStatus } = useOrder();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [detailLoadingId, setDetailLoadingId] = useState(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 10;
   const [filters, setFilters] = useState({ status: "", keyword: "" });
@@ -68,6 +70,22 @@ const OrderList = () => {
 
   const handleCloseDetail = () => {
     setSelectedOrder(null);
+  };
+
+  const handleOpenDetail = async (orderId) => {
+    setDetailLoadingId(orderId);
+    try {
+      const response = await orderApi.getAdminDetail(orderId);
+      setSelectedOrder(response.data?.data || response.data);
+    } catch (error) {
+      console.error("Failed to fetch order detail:", error);
+      alert(
+        "Không thể lấy chi tiết đơn hàng: " +
+          (error.response?.data?.message || error.message),
+      );
+    } finally {
+      setDetailLoadingId(null);
+    }
   };
 
   return (
@@ -134,8 +152,11 @@ const OrderList = () => {
             <tbody className="divide-y divide-slate-100">
               {displayedOrders.map((order) => {
                 const firstProduct =
-                  order.orderDetails?.[0]?.productName || "N/A";
-                const totalProducts = order.orderDetails?.length || 0;
+                  order.firstProductName ||
+                  order.orderDetails?.[0]?.productName ||
+                  "N/A";
+                const totalProducts =
+                  order.totalProducts ?? order.orderDetails?.length ?? 0;
 
                 let statusInfo = {
                   text: "Không xác định",
@@ -162,7 +183,7 @@ const OrderList = () => {
                   <tr
                     key={order.orderId}
                     className="hover:bg-slate-50 transition-colors text-sm cursor-pointer"
-                    onClick={() => setSelectedOrder(order)}
+                    onClick={() => handleOpenDetail(order.orderId)}
                   >
                     <td className="p-4 font-mono text-orange-600">
                       #{order.orderId}
@@ -202,8 +223,15 @@ const OrderList = () => {
                       {new Date(order.orderDate).toLocaleDateString("vi-VN")}
                     </td>
                     <td className="p-4 text-center">
-                      <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg">
-                        <Eye size={16} />
+                      <button
+                        disabled={detailLoadingId === order.orderId}
+                        className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg disabled:opacity-50"
+                      >
+                        {detailLoadingId === order.orderId ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </td>
                   </tr>

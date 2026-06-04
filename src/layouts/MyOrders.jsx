@@ -164,6 +164,17 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
                 className="sm:col-span-2"
               />
             )}
+            {order.status === "Đã hủy" && order.cancelReason && (
+              <div className="sm:col-span-2 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">
+                <p className="font-semibold">Lý do hủy đơn</p>
+                <p className="mt-1">{order.cancelReason}</p>
+                {order.cancelledAt && (
+                  <p className="mt-1 text-xs text-red-400">
+                    {new Date(order.cancelledAt).toLocaleString("vi-VN")}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Products */}

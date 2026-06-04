@@ -64,6 +64,19 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
   const canCancel = !isCancelled && !isCompleted && [1, 2, 3, 5].includes(currentStatusId);
 
   const handleUpdateStatus = async (newStatusId) => {
+    let cancelReason = "";
+
+    if (newStatusId === CANCEL_STATUS_ID) {
+      cancelReason = window.prompt("Nhập lý do hủy đơn hàng:");
+      if (cancelReason === null) return;
+
+      cancelReason = cancelReason.trim();
+      if (!cancelReason) {
+        alert("Vui lòng nhập lý do hủy đơn.");
+        return;
+      }
+    }
+
     const confirmationText =
       newStatusId === CANCEL_STATUS_ID
         ? "Bạn có chắc muốn HỦY đơn hàng này không?"
@@ -73,11 +86,10 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
 
     setIsUpdating(true);
     try {
-      // 1. Gọi API cập nhật trạng thái
-      const response = await orderApi.updateStatus(
-        localOrder.orderId,
-        newStatusId,
-      );
+      const response =
+        newStatusId === CANCEL_STATUS_ID
+          ? await orderApi.cancelByAdmin(localOrder.orderId, cancelReason)
+          : await orderApi.updateStatus(localOrder.orderId, newStatusId);
 
       // 2. Cập nhật state nội bộ BẰNG DỮ LIỆU BE VỪA TRẢ VỀ (giúp UI nhảy trạng thái lập tức)
       const updatedOrderData = response.data?.data || response.data || response;
@@ -282,6 +294,20 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-start gap-2 text-sm text-gray-500">
                   <span className="mt-0.5 text-gray-400">📝</span>
                   {localOrder.note}
+                </div>
+              )}
+              {isCancelled && localOrder.cancelReason && (
+                <div className="mt-4 pt-4 border-t border-red-100 flex items-start gap-2 text-sm text-red-600">
+                  <span className="mt-0.5">!</span>
+                  <div>
+                    <p className="font-semibold">Lý do hủy đơn</p>
+                    <p>{localOrder.cancelReason}</p>
+                    {localOrder.cancelledAt && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {new Date(localOrder.cancelledAt).toLocaleString("vi-VN")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
