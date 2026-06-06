@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { orderApi } from "../api";
+import { orderApi, reviewApi } from "../api";
 import WarrantyFormModal from "../components/WarrantyFormModal";
 import { useWarranty } from "../contexts/WarrantyContext";
 
@@ -73,6 +73,7 @@ const getStatusConfig = (status) =>
   };
 
 const CANCELLABLE = ["Chờ xác nhận", "Đã xác nhận"];
+const REVIEWABLE = ["Đã giao hàng", "Hoàn tất"];
 
 // ─── FORMATTERS ───────────────────────────────────────────────────────────────
 const formatCurrency = (amount) =>
@@ -102,13 +103,175 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+// ─── STAR RATING ──────────────────────────────────────────────────────────────
+const StarRating = ({ value, onChange, readonly = false }) => {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          disabled={readonly}
+          onClick={() => onChange?.(star)}
+          onMouseEnter={() => !readonly && setHover(star)}
+          onMouseLeave={() => !readonly && setHover(0)}
+          className={`text-xl leading-none transition-transform ${
+            readonly ? "cursor-default" : "hover:scale-110 cursor-pointer"
+          } ${star <= (hover || value) ? "text-yellow-400" : "text-gray-200 dark:text-slate-600"}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ─── REVIEW MODAL ─────────────────────────────────────────────────────────────
+const ReviewModal = ({ orderDetail, existingReview, onClose, onSuccess }) => {
+  const [rating, setRating] = useState(existingReview?.rating ?? 0);
+  const [comment, setComment] = useState(existingReview?.comment ?? "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) { setError("Vui lòng chọn số sao đánh giá."); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      if (existingReview) {
+        await reviewApi.update(existingReview.reviewId, { rating, comment: comment.trim() || null });
+      } else {
+        await reviewApi.create({ orderDetailId: orderDetail.orderDetailId, rating, comment: comment.trim() || null });
+      }
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message ?? "Đã xảy ra lỗi. Vui lòng thử lại.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!existingReview || !window.confirm("Bạn có chắc muốn xóa đánh giá này?")) return;
+    setSubmitting(true);
+    try {
+      await reviewApi.delete(existingReview.reviewId);
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message ?? "Không thể xóa đánh giá.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl animate-slide-up overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+          <div>
+            <h3 className="text-base font-bold text-gray-800 dark:text-white">
+              {existingReview ? "Sửa đánh giá" : "Đánh giá sản phẩm"}
+            </h3>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate max-w-65">
+              {orderDetail.productName || "Sản phẩm"}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors text-sm"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* Stars */}
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Chất lượng sản phẩm</p>
+            <StarRating value={rating} onChange={setRating} />
+            <p className="text-xs text-gray-400 dark:text-slate-500">
+              {["", "Rất tệ", "Tệ", "Bình thường", "Tốt", "Rất tốt"][rating] || "Chọn số sao"}
+            </p>
+          </div>
+
+          {/* Comment */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-slate-300">
+              Nhận xét <span className="text-gray-400 font-normal">(tùy chọn)</span>
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm..."
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500/50 resize-none transition"
+            />
+            <p className="text-right text-xs text-gray-400">{comment.length}/500</p>
+          </div>
+
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-1">
+            {existingReview && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={submitting}
+                className="px-4 py-2 rounded-xl border border-red-200 dark:border-red-500/30 text-red-500 dark:text-red-400 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                Xóa
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={submitting || rating === 0}
+              className="flex-1 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 text-white font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? "Đang gửi..." : existingReview ? "Cập nhật" : "Gửi đánh giá"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ─── ORDER DETAIL PANEL ───────────────────────────────────────────────────────
 const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) => {
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
   const canWarranty = order.status === "Hoàn tất";
+  const canReview = REVIEWABLE.includes(order.status);
   const { isClaimedOrderDetail } = useWarranty();
   const [expandedIds, setExpandedIds] = useState([]);
+  const [orderReviews, setOrderReviews] = useState({});
+  const [reviewTarget, setReviewTarget] = useState(null);
+
+  const loadReviews = useCallback(() => {
+    if (!canReview) return;
+    reviewApi.getByOrder(order.orderId)
+      .then((res) => {
+        const map = {};
+        (res.data.items ?? []).forEach((r) => { map[r.orderDetailId] = r; });
+        setOrderReviews(map);
+      })
+      .catch(() => {});
+  }, [order.orderId, canReview]);
+
+  useEffect(() => { loadReviews(); }, [loadReviews]);
 
   const toggleExpand = (id) =>
     setExpandedIds((prev) =>
@@ -270,6 +433,37 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
                         )}
                       </div>
                     )}
+
+                    {/* Đánh giá sản phẩm */}
+                    {canReview && !od.isStringingService && (
+                      <div className="px-3 pb-3">
+                        {orderReviews[od.orderDetailId] ? (
+                          <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-100 dark:border-yellow-500/20 rounded-lg p-2.5 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <StarRating value={orderReviews[od.orderDetailId].rating} readonly />
+                              <button
+                                onClick={() => setReviewTarget({ orderDetail: od, existingReview: orderReviews[od.orderDetailId] })}
+                                className="text-xs text-blue-500 dark:text-blue-400 hover:underline font-medium"
+                              >
+                                Sửa đánh giá
+                              </button>
+                            </div>
+                            {orderReviews[od.orderDetailId].comment && (
+                              <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-2">
+                                {orderReviews[od.orderDetailId].comment}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setReviewTarget({ orderDetail: od, existingReview: null })}
+                            className="w-full py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-yellow-200 dark:border-yellow-500/30 text-xs font-semibold text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-500/10 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                          >
+                            ⭐ Đánh giá sản phẩm
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -326,6 +520,16 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
           </div>
         )}
       </div>
+
+      {/* Review modal */}
+      {reviewTarget && (
+        <ReviewModal
+          orderDetail={reviewTarget.orderDetail}
+          existingReview={reviewTarget.existingReview}
+          onClose={() => setReviewTarget(null)}
+          onSuccess={loadReviews}
+        />
+      )}
     </div>
   );
 };
@@ -462,7 +666,6 @@ const MyOrders = () => {
       setCancelling(false);
     }
   };
-  console.log(orders);
   // ── Filter + search ──
   const filtered = orders.filter((o) => {
     const matchStatus = activeFilter === "all" || o.status === activeFilter;

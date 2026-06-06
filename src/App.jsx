@@ -40,6 +40,7 @@ import { OrderProvider } from "./contexts/OrderContext";
 import { StatisticProvider } from "./contexts/StatisticContext";
 import { VoucherProvider } from "./contexts/VoucherContext";
 import VoucherPage from "./layouts/VoucherPage";
+import { ReviewProvider } from "./contexts/ReviewContext";
 
 
 const PublicRoute = ({ children }) => {
@@ -200,6 +201,7 @@ function App() {
               <WarrantyProvider>
                 <StatisticProvider>
                   <VoucherProvider>
+                    <ReviewProvider>
                     <div className="bg-white dark:bg-slate-950 h-auto w-full">
                       {isHidePageHeader && <PageHeader />}
                       {isHideMainHeader && <MainHeader />}
@@ -208,6 +210,7 @@ function App() {
                       </ProductProvider>
                       <Footer />
                     </div>
+                    </ReviewProvider>
                   </VoucherProvider>
                 </StatisticProvider>
               </WarrantyProvider>

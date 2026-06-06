@@ -229,6 +229,35 @@ export const voucherApi = {
     adminCreate: (data) => api.post('/Voucher/admin/add', data),
 }
 
+// Review API
+export const reviewApi = {
+    // Public
+    getByProduct: (productId, page = 1, pageSize = 10) =>
+        api.get(`/Review/product/${productId}`, { params: { page, pageSize } }),
+
+    // Customer (auth required)
+    getMyReviews: (page = 1, pageSize = 10) =>
+        api.get('/Review/my-reviews', { params: { page, pageSize } }),
+    getMyReviewableItems: (page = 1, pageSize = 10) =>
+        api.get('/Review/my-reviewable-items', { params: { page, pageSize } }),
+    getByOrder: (orderId) =>
+        api.get(`/Order/${orderId}/reviews`),
+    create: (data) =>
+        api.post('/Review', data),
+    update: (reviewId, data) =>
+        api.put(`/Review/${reviewId}`, data),
+    delete: (reviewId) =>
+        api.delete(`/Review/${reviewId}`),
+
+    // Admin (auth + Admin role)
+    getForAdmin: (page = 1, pageSize = 10, isVisible = undefined) =>
+        api.get('/Review/admin', {
+            params: { page, pageSize, ...(isVisible !== undefined && { isVisible }) },
+        }),
+    setVisibility: (reviewId, isVisible) =>
+        api.put(`/Review/admin/${reviewId}/visibility`, { isVisible }),
+}
+
 export default api;
 
 
