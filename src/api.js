@@ -258,6 +258,30 @@ export const reviewApi = {
         api.put(`/Review/admin/${reviewId}/visibility`, { isVisible }),
 }
 
+// Admin Management API
+export const adminManagementApi = {
+    getAuditLogs: (params = {}) =>
+        api.get('/admin/management/audit-logs', { params }),
+    createAuditLog: (data) =>
+        api.post('/admin/management/audit-logs', data),
+    getAlertSummary: (params = {}) =>
+        api.get('/admin/management/alerts/summary', { params }),
+    getSlowMovingProducts: (params = {}) =>
+        api.get('/admin/management/products/slow-moving', { params }),
+}
+
+// Inventory API
+export const inventoryApi = {
+    getLowStock: (threshold = 5) =>
+        api.get('/admin/inventory/low-stock', { params: { threshold } }),
+    getSerialsByStatus: (status, page = 1, pageSize = 10) =>
+        api.get('/admin/inventory/serials/by-status', { params: { status, page, pageSize } }),
+    markDefective: (serialId) =>
+        api.put(`/admin/inventory/serials/${serialId}/mark-defective`),
+    markInStock: (serialId) =>
+        api.put(`/admin/inventory/serials/${serialId}/mark-in-stock`),
+}
+
 export default api;
 
 

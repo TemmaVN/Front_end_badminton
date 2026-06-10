@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo  } from 'react';
 import { Plus, Pencil, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { productApi, metaDataApi } from '../../api';
 
 const STATUS = {
-    0: { label: 'Còn hàng',  cls: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
-    1: { label: 'Đã bán',    cls: 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700',                   dot: 'bg-gray-400 dark:bg-slate-500'    },
-    2: { label: 'Lỗi/Hỏng', cls: 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-500/30',                 dot: 'bg-rose-500'    },
-    3: { label: 'Đã đặt',   cls: 'bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-500/30',      dot: 'bg-orange-500'  },
+    'InStock': { label: 'Còn hàng',  cls: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/30', dot: 'bg-emerald-500' },
+    'Sold': { label: 'Đã bán',    cls: 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border-gray-200 dark:border-slate-700',                   dot: 'bg-gray-400 dark:bg-slate-500'    },
+    'Defective': { label: 'Lỗi/Hỏng', cls: 'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-500/30',                 dot: 'bg-rose-500'    },
+    'Reserved': { label: 'Đã đặt',   cls: 'bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-500/30',      dot: 'bg-orange-500'  },
 };
 
 const SERIAL_TABS = [
     { key: 'all', label: 'Tất cả'   },
-    { key: '0',   label: 'Còn hàng' },
-    { key: '1',   label: 'Đã bán'   },
-    { key: '2',   label: 'Lỗi/Hỏng'},
-    { key: '3',   label: 'Đã đặt'  },
+    { key: 'InStock',   label: 'Còn hàng' },
+    { key: 'Sold',   label: 'Đã bán'   },
+    { key: 'Defective',   label: 'Lỗi/Hỏng'},
+    { key: 'Reserved',   label: 'Đã đặt'  },
 ];
 
 // Backend nhận Status dạng string
@@ -239,8 +239,11 @@ const AdminProductDetail = () => {
                 stockQuantity: parseInt(editVariantForm.stockQuantity) || 1,
             };
             await productApi.updateVariant(editingVariant.detailId, payload);
+            const data = await productApi.getSerials(editingVariant.detailId, { page: 1, pageSize: 200 });
+            setSerialsMap((prev) => ({ ...prev, [editingVariant.detailId]: data.data?.data ?? null }));
             setShowEditModal(false);
             await loadVariants();
+            await ensureSerials(editingVariant.detailId);
         } catch (err) {
             setEditError(err.response?.data?.message ?? 'Không thể cập nhật biến thể');
         } finally {
@@ -294,8 +297,7 @@ const AdminProductDetail = () => {
     const filteredModalSerials = useMemo(() => {
         let list = modalSerials;
         if (serialTab !== 'all') {
-            const statusNum = parseInt(serialTab);
-            list = list.filter((s) => s.status === statusNum);
+            list = list.filter((s) => s.status === serialTab);
         }
         if (serialSearch.trim()) {
             const q = serialSearch.trim().toLowerCase();
@@ -306,15 +308,15 @@ const AdminProductDetail = () => {
 
     const tabCount = (key) => {
         if (key === 'all') return modalSerials.length;
-        const statusNum = parseInt(key);
-        return modalSerials.filter((s) => s.status === statusNum).length;
+        return modalSerials.filter((s) => s.status === key).length;
     };
 
     const formatDate = (iso) => {
         if (!iso) return '—';
         return new Date(iso).toLocaleDateString('vi-VN');
     };
-
+    console.log(variants)
+    console.log(serialsMap)
     return (
         <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
 
@@ -413,7 +415,6 @@ const AdminProductDetail = () => {
                         const isExpanded = expandedId === v.detailId;
                         const serials = serialsMap[v.detailId];
                         const isLoadingSerials = serialsLoadingId === v.detailId;
-
                         return (
                             <div key={v.detailId} className="border-b border-gray-50 dark:border-slate-800 last:border-0">
                                 {/* Variant row */}

@@ -41,6 +41,10 @@ import { StatisticProvider } from "./contexts/StatisticContext";
 import { VoucherProvider } from "./contexts/VoucherContext";
 import VoucherPage from "./layouts/VoucherPage";
 import { ReviewProvider } from "./contexts/ReviewContext";
+import { AdminManagementProvider } from "./contexts/AdminManagementContext";
+import { InventoryProvider } from "./contexts/InventoryContext";
+import InventoryManagement from "./components/admin/InventoryManagement";
+import AuditManagement from "./components/admin/AuditManagement";
 
 
 const PublicRoute = ({ children }) => {
@@ -171,6 +175,8 @@ function AppRoutes() {
         <Route path="warranty" element={<WarrantyManagement />} />
         <Route path="statistics" element={<Statistics />} />
         <Route path="vouchers" element={<VoucherManagement />} />
+        <Route path="inventory" element={<InventoryManagement />} />
+        <Route path="audit" element={<AuditManagement />} />
       </Route>
 
       <Route
@@ -202,6 +208,8 @@ function App() {
                 <StatisticProvider>
                   <VoucherProvider>
                     <ReviewProvider>
+                    <AdminManagementProvider>
+                    <InventoryProvider>
                     <div className="bg-white dark:bg-slate-950 h-auto w-full">
                       {isHidePageHeader && <PageHeader />}
                       {isHideMainHeader && <MainHeader />}
@@ -210,6 +218,8 @@ function App() {
                       </ProductProvider>
                       <Footer />
                     </div>
+                    </InventoryProvider>
+                    </AdminManagementProvider>
                     </ReviewProvider>
                   </VoucherProvider>
                 </StatisticProvider>

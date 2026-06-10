@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   X,
   BarChart2,
+  Warehouse,
+  ClipboardList,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -37,10 +39,11 @@ const menuItems = [
     label: "Bán hàng",
     path: "sales-overview",
     submenu: [
-      { id: "don-hang",  label: "Đơn hàng",  path: "orders"   },
-      { id: "bao-hanh",  label: "Bảo hành",  path: "warranty", icon: ShieldCheck },
-      { id: "thanh-toan", label: "Thanh toán", path: "payment" },
-      { id: "voucher", label: "Voucher", path: "vouchers" },
+      { id: "don-hang",   label: "Đơn hàng",       path: "orders"    },
+      { id: "bao-hanh",   label: "Bảo hành",        path: "warranty", icon: ShieldCheck },
+      { id: "thanh-toan", label: "Thanh toán",       path: "payment"  },
+      { id: "voucher",    label: "Voucher",          path: "vouchers" },
+      { id: "kho-hang",   label: "Quản lý kho",      path: "inventory", icon: Warehouse },
     ],
   },
   {
@@ -61,8 +64,9 @@ const menuItems = [
     icon: Settings,
     label: "Hệ thống",
     submenu: [
-      { id: "quan-tri-vien", label: "Quản trị viên", path: "admin-info" },
-      { id: "vai-tro", label: "Vai trò & Quyền hạn", path: "roles" },
+      { id: "quan-tri-vien", label: "Quản trị viên",     path: "admin-info" },
+      { id: "vai-tro",       label: "Vai trò & Quyền hạn", path: "roles"    },
+      { id: "nhat-ky",       label: "Nhật ký & Cảnh báo",  path: "audit", icon: ClipboardList },
     ],
   },
 ];
