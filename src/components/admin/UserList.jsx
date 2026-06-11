@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, Users, Phone, Mail, MapPin, Calendar,
   Eye, X, User, Home, ShoppingBag, Shield, AlertCircle,
-  Plus, Loader2,
+  Plus, Loader2, Lock, Unlock,
 } from 'lucide-react';
 import { userApi } from '../../api';
 
@@ -242,6 +242,20 @@ const UserList = () => {
     }
   };
 
+  const handleToggleActive = async (e, customer) => {
+    e.stopPropagation();
+    const uid = customer.userId ?? customer.id;
+    const newActive = !customer.isActive;
+    try {
+      await userApi.setActive(uid, newActive);
+      setCustomers(prev => prev.map(c =>
+        (c.userId ?? c.id) === uid ? { ...c, isActive: newActive } : c
+      ));
+    } catch {
+      alert('Không thể thay đổi trạng thái tài khoản');
+    }
+  };
+
   // Derived
   const total       = customers.length;
   const withPhone   = customers.filter((c) => c.phoneNumber).length;
@@ -396,6 +410,9 @@ const UserList = () => {
                     Hồ sơ
                   </th>
                   <th className="text-center px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Trạng thái
+                  </th>
+                  <th className="text-center px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     Chi tiết
                   </th>
                 </tr>
@@ -479,6 +496,24 @@ const UserList = () => {
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isComplete ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                           {isComplete ? 'Đầy đủ' : 'Thiếu'}
                         </span>
+                      </td>
+
+                      {/* Lock/Unlock */}
+                      <td className="px-5 py-4 text-center">
+                        <button
+                          onClick={(e) => handleToggleActive(e, customer)}
+                          title={customer.isActive ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            customer.isActive
+                              ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                              : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                          }`}
+                        >
+                          {customer.isActive
+                            ? <><Lock className="w-3.5 h-3.5" /> Khóa</>
+                            : <><Unlock className="w-3.5 h-3.5" /> Mở khóa</>
+                          }
+                        </button>
                       </td>
 
                       {/* Action */}

@@ -11,6 +11,8 @@ import {
   BarChart2,
   Warehouse,
   ClipboardList,
+  Star,
+  RotateCcw,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -44,6 +46,8 @@ const menuItems = [
       { id: "thanh-toan", label: "Thanh toán",       path: "payment"  },
       { id: "voucher",    label: "Voucher",          path: "vouchers" },
       { id: "kho-hang",   label: "Quản lý kho",      path: "inventory", icon: Warehouse },
+      { id: "danh-gia",   label: "Đánh giá",          path: "reviews",   icon: Star },
+      { id: "tra-hang",   label: "Trả hàng/Hoàn tiền", path: "returns",   icon: RotateCcw },
     ],
   },
   {

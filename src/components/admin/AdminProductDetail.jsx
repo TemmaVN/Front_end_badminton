@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo  } from 'react';
-import { Plus, Pencil, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check } from 'lucide-react';
+import { Plus, Pencil, Hash, ArrowLeft, Loader2, AlertCircle, Trash2, X, ChevronDown, ChevronRight, Info, Search, Check, Upload, Download } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { productApi, metaDataApi } from '../../api';
 
@@ -69,6 +69,44 @@ const AdminProductDetail = () => {
     const [editVariantForm, setEditVariantForm] = useState(EMPTY_FORM);
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState(null);
+
+    // Import/Export Excel for variants
+    const [excelLoading, setExcelLoading] = useState(false);
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setExcelLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            await productApi.importVariantsExcel(productId, formData);
+            await loadVariants();
+            alert('Import Excel thành công!');
+        } catch (err) {
+            alert(err.response?.data?.message ?? 'Import thất bại');
+        } finally {
+            setExcelLoading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleExportExcel = async () => {
+        setExcelLoading(true);
+        try {
+            const res = await productApi.exportVariantsExcel(productId);
+            const url = URL.createObjectURL(res.data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `variants_product_${productId}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch {
+            alert('Export thất bại');
+        } finally {
+            setExcelLoading(false);
+        }
+    };
 
     // Serial management modal (# SNs badge click)
     const [serialModal, setSerialModal] = useState({ open: false, variant: null });
@@ -373,19 +411,32 @@ const AdminProductDetail = () => {
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700/50 overflow-hidden">
 
                 {/* Section header */}
-                <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-slate-700">
+                <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-slate-700 flex-wrap gap-3">
                     <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-800 dark:text-white">Biến thể / Detail</span>
                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-full text-xs font-medium">
                             {loading ? '…' : variants.length}
                         </span>
                     </div>
-                    <button
-                        onClick={() => { setNewVariantForm(EMPTY_FORM); setAddError(null); setShowAddModal(true); }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-orange-default hover:bg-orange-dark text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
-                    >
-                        <Plus size={15} /> Thêm biến thể
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <label className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-sm ${excelLoading ? 'opacity-50 pointer-events-none' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700'}`}>
+                            <Upload size={14} /> Nhập Excel
+                            <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImportExcel} disabled={excelLoading} />
+                        </label>
+                        <button
+                            onClick={handleExportExcel}
+                            disabled={excelLoading}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            <Download size={14} /> Xuất Excel
+                        </button>
+                        <button
+                            onClick={() => { setNewVariantForm(EMPTY_FORM); setAddError(null); setShowAddModal(true); }}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-orange-default hover:bg-orange-dark text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                        >
+                            <Plus size={15} /> Thêm biến thể
+                        </button>
+                    </div>
                 </div>
 
                 {/* Table header */}

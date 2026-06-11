@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Package, CheckCircle, XCircle, Loader2, Clock } from "lucide-react";
-import { orderApi } from "../../api";
+import { orderApi, returnApi } from "../../api";
 
 const STATUS_TIMELINE = [
   { id: 1, text: "Chờ xác nhận" },
@@ -33,10 +33,123 @@ const NEXT_ACTIONS = {
   6: { nextStatusId: 7, label: "Hoàn thành đơn",          btnClass: "bg-emerald-500 hover:bg-emerald-600 text-white" },
 };
 
+const DELIVERY_STATUS_ID = 6;
+
+const isBase64Url = (s) => s.trimStart().startsWith("data:");
+
+const DeliveryProofModal = ({ onConfirm, onCancel, isUpdating }) => {
+  const [imageUrl, setImageUrl]     = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [note, setNote]             = useState("");
+
+  const isBase64 = isBase64Url(imageUrl);
+  const valid    = imageUrl.trim().length > 0 && !isBase64;
+
+  const handleUrlChange = (e) => {
+    const val = e.target.value;
+    // Reject base64 immediately — truncate to avoid storing huge strings
+    if (isBase64Url(val)) {
+      setImageUrl(val.slice(0, 30));
+      return;
+    }
+    setImageUrl(val);
+  };
+
+  useEffect(() => {
+    const next = isBase64Url(imageUrl) ? "" : imageUrl.trim();
+    const delay = next ? 600 : 0;
+    const t = setTimeout(() => setPreviewUrl(next), delay);
+    return () => clearTimeout(t);
+  }, [imageUrl]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl p-6">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+          Xác nhận đã giao hàng
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
+          Vui lòng cung cấp hình ảnh bằng chứng giao hàng trước khi xác nhận.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+              URL hình ảnh bằng chứng <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="https://..."
+              value={imageUrl}
+              onChange={handleUrlChange}
+              className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent ${isBase64 ? "border-red-400 focus:ring-red-400" : "border-gray-200 dark:border-slate-700 focus:ring-green-500"}`}
+            />
+            {isBase64 && (
+              <p className="mt-1.5 text-xs text-red-500">
+                Không hỗ trợ ảnh base64. Vui lòng tải ảnh lên hosting (imgur, cloudinary...) rồi dán link <strong>https://</strong>.
+              </p>
+            )}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="preview"
+                className="mt-2 w-full max-h-48 object-contain rounded-lg border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800"
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
+              Ghi chú giao hàng <span className="text-gray-400 font-normal">(tùy chọn)</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder="VD: Đã giao tận tay khách, ký nhận lúc 14:30..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onCancel}
+            disabled={isUpdating}
+            className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-sm font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={() => onConfirm(imageUrl.trim(), note.trim())}
+            disabled={!valid || isUpdating}
+            className="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+            Xác nhận đã giao
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const OrderDetail = ({ order, onClose, onUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showDeliveryProof, setShowDeliveryProof] = useState(false);
+  const [deliveryProofs, setDeliveryProofs] = useState([]);
 
   const [localOrder, setLocalOrder] = useState(order);
+
+  useEffect(() => {
+    if (localOrder.orderId && currentStatusId >= DELIVERY_STATUS_ID) {
+      returnApi.getDeliveryProofs(localOrder.orderId)
+        .then((res) => setDeliveryProofs(Array.isArray(res.data) ? res.data : []))
+        .catch(() => setDeliveryProofs([]));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localOrder.orderId, localOrder.status]);
 
   let currentStatusId = 1;
   const rawStatus = localOrder.status;
@@ -63,7 +176,13 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
   // Per state machine: cancel allowed from 1,2,3,5 (not 4=đan lưới, not 6,7,8)
   const canCancel = !isCancelled && !isCompleted && [1, 2, 3, 5].includes(currentStatusId);
 
-  const handleUpdateStatus = async (newStatusId) => {
+  const handleUpdateStatus = async (newStatusId, deliveryProofImageUrl = null, deliveryProofNote = null) => {
+    // Delivery confirmation requires proof — open modal instead
+    if (newStatusId === DELIVERY_STATUS_ID && !deliveryProofImageUrl) {
+      setShowDeliveryProof(true);
+      return;
+    }
+
     let cancelReason = "";
 
     if (newStatusId === CANCEL_STATUS_ID) {
@@ -77,19 +196,24 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
       }
     }
 
-    const confirmationText =
-      newStatusId === CANCEL_STATUS_ID
+    // Delivery status already confirmed via DeliveryProofModal — skip second dialog
+    if (newStatusId !== DELIVERY_STATUS_ID) {
+      const confirmationText = newStatusId === CANCEL_STATUS_ID
         ? "Bạn có chắc muốn HỦY đơn hàng này không?"
-        : `Bạn có chắc muốn chuyển trạng thái đơn hàng?`;
-
-    if (!window.confirm(confirmationText)) return;
+        : "Bạn có chắc muốn chuyển trạng thái đơn hàng?";
+      if (!window.confirm(confirmationText)) return;
+    }
 
     setIsUpdating(true);
     try {
+      const body = newStatusId === DELIVERY_STATUS_ID
+        ? { newOrderStatusId: newStatusId, deliveryProofImageUrl, deliveryProofNote }
+        : { newOrderStatusId: newStatusId };
+
       const response =
         newStatusId === CANCEL_STATUS_ID
           ? await orderApi.cancelByAdmin(localOrder.orderId, cancelReason)
-          : await orderApi.updateStatus(localOrder.orderId, newStatusId);
+          : await orderApi.updateStatus(localOrder.orderId, body);
 
       // 2. Cập nhật state nội bộ BẰNG DỮ LIỆU BE VỪA TRẢ VỀ (giúp UI nhảy trạng thái lập tức)
       const updatedOrderData = response.data?.data || response.data || response;
@@ -216,6 +340,29 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
               })}
             </div>
           </div>
+
+          {/* Card: Ảnh bằng chứng giao hàng */}
+          {deliveryProofs.length > 0 && (
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-green-100 dark:border-green-500/30 p-5 mb-5">
+              <h3 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-3 flex items-center gap-2">
+                <CheckCircle size={15} /> Bằng chứng giao hàng
+              </h3>
+              <div className="flex flex-wrap gap-3">
+                {deliveryProofs.map((p) => (
+                  <div key={p.proofId ?? p.imageUrl} className="space-y-1">
+                    <a href={p.imageUrl} target="_blank" rel="noreferrer"
+                      className="block w-28 h-28 rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700 hover:opacity-80 transition-opacity">
+                      <img src={p.imageUrl} alt="" className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = "none"; }} />
+                    </a>
+                    {p.note && (
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 max-w-28 truncate" title={p.note}>{p.note}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
             {/* Card: Thông tin khách hàng */}
@@ -407,6 +554,17 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
           </div>
         </div>
       </div>
+
+      {showDeliveryProof && (
+        <DeliveryProofModal
+          isUpdating={isUpdating}
+          onCancel={() => setShowDeliveryProof(false)}
+          onConfirm={(imageUrl, note) => {
+            setShowDeliveryProof(false);
+            handleUpdateStatus(DELIVERY_STATUS_ID, imageUrl, note);
+          }}
+        />
+      )}
     </div>
   );
 };

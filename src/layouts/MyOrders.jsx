@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { orderApi, reviewApi } from "../api";
+import { orderApi, reviewApi, returnApi } from "../api";
 import WarrantyFormModal from "../components/WarrantyFormModal";
 import { useWarranty } from "../contexts/WarrantyContext";
 
@@ -61,6 +61,27 @@ const STATUS_CONFIG = {
     dot: "bg-red-400",
     icon: "✖",
   },
+  "Đang yêu cầu trả hàng/hoàn tiền": {
+    color: "text-orange-600 dark:text-orange-400",
+    bg: "bg-orange-50 dark:bg-orange-500/15",
+    border: "border-orange-200 dark:border-orange-500/30",
+    dot: "bg-orange-400",
+    icon: "↩",
+  },
+  "Đã chấp thuận trả hàng/hoàn tiền": {
+    color: "text-teal-600 dark:text-teal-400",
+    bg: "bg-teal-50 dark:bg-teal-500/15",
+    border: "border-teal-200 dark:border-teal-500/30",
+    dot: "bg-teal-400",
+    icon: "✔",
+  },
+  "Đã hoàn hàng/hoàn tiền": {
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-500/15",
+    border: "border-emerald-200 dark:border-emerald-500/30",
+    dot: "bg-emerald-500",
+    icon: "💰",
+  },
 };
 
 const getStatusConfig = (status) =>
@@ -72,8 +93,10 @@ const getStatusConfig = (status) =>
     icon: "•",
   };
 
-const CANCELLABLE = ["Chờ xác nhận", "Đã xác nhận"];
-const REVIEWABLE = ["Đã giao hàng", "Hoàn tất"];
+const CANCELLABLE   = ["Chờ xác nhận", "Đã xác nhận"];
+const REVIEWABLE    = ["Đã giao hàng", "Hoàn tất"];
+const RETURNABLE    = ["Đã giao hàng", "Hoàn tất"];
+const RETURN_IN_PROGRESS = ["Đang yêu cầu trả hàng/hoàn tiền", "Đã chấp thuận trả hàng/hoàn tiền", "Đã hoàn hàng/hoàn tiền"];
 
 // ─── FORMATTERS ───────────────────────────────────────────────────────────────
 const formatCurrency = (amount) =>
@@ -249,12 +272,220 @@ const ReviewModal = ({ orderDetail, existingReview, onClose, onSuccess }) => {
   );
 };
 
+// ─── RETURN REQUEST MODAL ────────────────────────────────────────────────────
+const ReturnRequestModal = ({ order, onClose, onSuccess }) => {
+  const [reasons,         setReasons]         = useState([]);
+  const [mainReason,      setMainReason]      = useState(null);  // reason object
+  const [detailReason,    setDetailReason]    = useState(null);  // detail object
+  const [description,     setDescription]     = useState('');
+  const [imageUrls,       setImageUrls]       = useState(['']);
+  const [deliveryProofs,  setDeliveryProofs]  = useState([]);
+  const [submitting,      setSubmitting]      = useState(false);
+  const [error,           setError]           = useState(null);
+
+  useEffect(() => {
+    returnApi.getReasons()
+      .then((res) => setReasons(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!detailReason?.shouldShowDeliveryProof) return;
+    returnApi.getDeliveryProofs(order.orderId)
+      .then((res) => setDeliveryProofs(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setDeliveryProofs([]));
+  }, [detailReason, order.orderId]);
+
+  const selectMain = (r) => { setMainReason(r); setDetailReason(null); setDescription(''); setImageUrls(['']); };
+
+  const addImageField   = () => setImageUrls((prev) => [...prev, '']);
+  const removeImageField = (i) => setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
+  const updateImageUrl  = (i, val) => setImageUrls((prev) => prev.map((u, idx) => (idx === i ? val : u)));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!mainReason || !detailReason) { setError('Vui lòng chọn lý do trả hàng.'); return; }
+    if (detailReason.requiresDescription && !description.trim()) {
+      setError('Vui lòng mô tả chi tiết vấn đề.'); return;
+    }
+    const filteredUrls = imageUrls.filter((u) => u.trim());
+    if (detailReason.requiresImage && filteredUrls.length === 0) {
+      setError('Vui lòng cung cấp ít nhất một ảnh minh chứng.'); return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await returnApi.createRequest({
+        orderId: order.orderId,
+        mainReason: mainReason.code,
+        detailReason: detailReason.code,
+        customerDescription: description.trim() || null,
+        imageUrls: filteredUrls,
+      });
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message ?? err.response?.data?.Message ?? 'Đã xảy ra lỗi. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-lg max-h-[92vh] sm:max-h-[88vh] bg-white dark:bg-slate-900 sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
+          <div>
+            <h3 className="text-base font-bold text-gray-800 dark:text-white">Yêu cầu trả hàng / hoàn tiền</h3>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Đơn hàng #{order.orderId}</p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors text-sm">
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-5 space-y-5">
+          {/* Note from API (shown on first reason) */}
+          {mainReason?.note && (
+            <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 rounded-xl px-3 py-2.5">
+              ⚠️ {mainReason.note}
+            </div>
+          )}
+
+          {/* Step 1: Main reason */}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">1. Chọn lý do</p>
+            <div className="space-y-2">
+              {reasons.map((r) => (
+                <button key={r.code} type="button" onClick={() => selectMain(r)}
+                  className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                    mainReason?.code === r.code
+                      ? 'border-orange-400 bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'
+                  }`}>
+                  {r.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Step 2: Detail reason */}
+          {mainReason && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">2. Chi tiết vấn đề</p>
+              <div className="space-y-2">
+                {mainReason.details.map((d) => (
+                  <button key={d.code} type="button" onClick={() => setDetailReason(d)}
+                    className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm transition-all ${
+                      detailReason?.code === d.code
+                        ? 'border-orange-400 bg-orange-50 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300 font-medium'
+                        : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-600'
+                    }`}>
+                    {d.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Delivery proofs (for "chưa nhận được hàng") */}
+          {detailReason?.shouldShowDeliveryProof && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">Ảnh giao hàng của shop</p>
+              {deliveryProofs.length === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-slate-500 italic">Shop chưa cung cấp ảnh giao hàng.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {deliveryProofs.map((p) => (
+                    <a key={p.proofId} href={p.imageUrl} target="_blank" rel="noreferrer"
+                      className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 overflow-hidden hover:opacity-80 transition-opacity">
+                      <img src={p.imageUrl} alt="" className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Images */}
+          {detailReason?.requiresImage && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+                Ảnh minh chứng <span className="text-red-500">*</span>
+              </p>
+              <div className="space-y-2">
+                {imageUrls.map((url, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input type="text" value={url} onChange={(e) => updateImageUrl(i, e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-300 transition" />
+                    {imageUrls.length > 1 && (
+                      <button type="button" onClick={() => removeImageField(i)}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors text-sm">
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {imageUrls.length < 5 && (
+                  <button type="button" onClick={addImageField}
+                    className="w-full py-2 rounded-xl border border-dashed border-gray-300 dark:border-slate-600 text-sm text-gray-500 dark:text-slate-400 hover:border-orange-300 dark:hover:border-orange-500/50 hover:text-orange-500 transition-colors">
+                    + Thêm ảnh
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Description */}
+          {detailReason?.requiresDescription && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700 dark:text-slate-200">
+                Mô tả chi tiết <span className="text-red-500">*</span>
+              </label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={500}
+                placeholder="Mô tả chi tiết tình trạng sản phẩm, vấn đề gặp phải..."
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none transition" />
+              <p className="text-right text-xs text-gray-400">{description.length}/500</p>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl px-3 py-2.5">
+              {error}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-1 pb-2">
+            <button type="button" onClick={onClose}
+              className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+              Huỷ
+            </button>
+            <button type="submit" disabled={submitting || !detailReason}
+              className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ─── ORDER DETAIL PANEL ───────────────────────────────────────────────────────
-const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) => {
+const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty, onReturn }) => {
   const cfg = getStatusConfig(order.status);
   const canCancel = CANCELLABLE.includes(order.status);
   const canWarranty = order.status === "Hoàn tất";
   const canReview = REVIEWABLE.includes(order.status);
+  const canReturn = RETURNABLE.includes(order.status);
+  const returnInProgress = RETURN_IN_PROGRESS.includes(order.status);
   const { isClaimedOrderDetail } = useWarranty();
   const [expandedIds, setExpandedIds] = useState([]);
   const [orderReviews, setOrderReviews] = useState({});
@@ -508,15 +739,31 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty }) 
         </div>
 
         {/* Footer actions */}
-        {canCancel && (
-          <div className="p-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900">
-            <button
-              onClick={() => onCancel(order.orderId)}
-              disabled={cancelling}
-              className="w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-semibold text-sm hover:bg-red-100 dark:hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {cancelling ? "Đang hủy..." : "Hủy đơn hàng"}
-            </button>
+        {(canCancel || canReturn || returnInProgress) && (
+          <div className="p-4 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-2">
+            {canCancel && (
+              <button
+                onClick={() => onCancel(order.orderId)}
+                disabled={cancelling}
+                className="w-full py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30 font-semibold text-sm hover:bg-red-100 dark:hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancelling ? "Đang hủy..." : "Hủy đơn hàng"}
+              </button>
+            )}
+            {canReturn && (
+              <button
+                onClick={() => onReturn(order)}
+                className="w-full py-2.5 rounded-xl bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/30 font-semibold text-sm hover:bg-orange-100 dark:hover:bg-orange-500/20 active:scale-[0.98] transition-all"
+              >
+                ↩ Yêu cầu trả hàng / hoàn tiền
+              </button>
+            )}
+            {returnInProgress && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30 text-sm text-orange-700 dark:text-orange-300 font-medium">
+                <span>↩</span>
+                <span>{order.status}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -628,6 +875,7 @@ const MyOrders = () => {
   const [cancelSuccess, setCancelSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [warrantyTarget, setWarrantyTarget] = useState(null);
+  const [returnTarget, setReturnTarget] = useState(null);
 
   const { fetchMyWarranties } = useWarranty();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -791,6 +1039,20 @@ const MyOrders = () => {
           onCancel={handleCancel}
           cancelling={cancelling}
           onWarranty={(order, od, serial) => setWarrantyTarget({ order, orderDetail: od, serial })}
+          onReturn={(o) => setReturnTarget(o)}
+        />
+      )}
+
+      {/* ── Return request modal ── */}
+      {returnTarget && (
+        <ReturnRequestModal
+          order={returnTarget}
+          onClose={() => setReturnTarget(null)}
+          onSuccess={() => {
+            setReturnTarget(null);
+            setSelectedOrder(null);
+            fetchOrders();
+          }}
         />
       )}
 

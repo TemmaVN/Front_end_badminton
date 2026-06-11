@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Tag, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { Plus, Tag, CheckCircle, AlertCircle, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";
 import { voucherApi } from "../../api";
 
 const PAYMENT_METHODS = ["COD", "Bank Transfer", "E-Wallet"];
@@ -37,11 +37,11 @@ const inputCls =
   "w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-orange-500";
 
 /* ── Card hiển thị 1 voucher trong danh sách ── */
-const VoucherCard = ({ v }) => {
+const VoucherCard = ({ v, onToggleActive }) => {
   const daysLeft = Math.ceil((new Date(v.endDate) - new Date()) / 86400000);
   const expired = daysLeft <= 0;
   return (
-    <div className={`border rounded-xl p-4 ${expired ? "opacity-60 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>
+    <div className={`border rounded-xl p-4 ${!v.isActive ? "opacity-60 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700" : expired ? "opacity-70 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <code className="text-sm font-bold font-mono text-orange-600 bg-orange-50 dark:bg-orange-500/10 px-2.5 py-1 rounded-lg">
@@ -50,10 +50,22 @@ const VoucherCard = ({ v }) => {
           <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${v.isGlobal ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600" : "bg-purple-50 dark:bg-purple-500/10 text-purple-600"}`}>
             {v.isGlobal ? "🌐 Toàn sàn" : "👤 Cá nhân"}
           </span>
+          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${v.isActive ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600" : "bg-slate-100 dark:bg-slate-700 text-slate-500"}`}>
+            {v.isActive ? "Đang hoạt động" : "Đã tắt"}
+          </span>
         </div>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 ${expired ? "bg-red-50 dark:bg-red-500/10 text-red-500" : daysLeft <= 7 ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600"}`}>
-          {expired ? "Hết hạn" : `Còn ${daysLeft} ngày`}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 ${expired ? "bg-red-50 dark:bg-red-500/10 text-red-500" : daysLeft <= 7 ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600"}`}>
+            {expired ? "Hết hạn" : `Còn ${daysLeft} ngày`}
+          </span>
+          <button
+            onClick={() => onToggleActive(v)}
+            title={v.isActive ? 'Tắt voucher' : 'Kích hoạt voucher'}
+            className={`p-1.5 rounded-lg transition-colors ${v.isActive ? 'text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+          >
+            {v.isActive ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
@@ -116,12 +128,24 @@ const VoucherManagement = () => {
   const fetchVouchers = async () => {
     setLoadingList(true);
     try {
-      const res = await voucherApi.getAllAvailable();
+      const res = await voucherApi.adminGetAll({ page: 1, pageSize: 100 });
       setVouchers(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch {
       setVouchers([]);
     } finally {
       setLoadingList(false);
+    }
+  };
+
+  const handleToggleActive = async (voucher) => {
+    const newActive = !voucher.isActive;
+    try {
+      await voucherApi.adminSetActive(voucher.voucherId, newActive);
+      setVouchers(prev => prev.map(v =>
+        v.voucherId === voucher.voucherId ? { ...v, isActive: newActive } : v
+      ));
+    } catch {
+      alert('Không thể thay đổi trạng thái voucher');
     }
   };
 
@@ -457,7 +481,7 @@ const VoucherManagement = () => {
 
               <div className="space-y-3">
                 {vouchers.map((v) => (
-                  <VoucherCard key={v.voucherId} v={v} />
+                  <VoucherCard key={v.voucherId} v={v} onToggleActive={handleToggleActive} />
                 ))}
               </div>
             </div>

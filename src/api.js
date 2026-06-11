@@ -56,6 +56,10 @@ export const userApi = {
     getAll: (page = 1, pageSize = 10) => api.get('/User', { params: { page, pageSize } }),
     search: (keyword) => api.get('/User/search', { params: { keyword } }),
     create: (userData) => api.post('/User', userData),
+    // Admin endpoints
+    setActive: (userId, isActive) => api.put(`/User/admin/${userId}/active`, { isActive }),
+    getAdminDetail: (userId) => api.get(`/User/admin/${userId}`),
+    getAdminOrderHistory: (userId, params = {}) => api.get(`/User/admin/${userId}/orders`, { params }),
 };
 
 // Product API
@@ -80,8 +84,8 @@ export const productApi = {
     getProductDetaildBySlug: (slug) =>
         api.get(`/Product/${slug}`),
 
-    getForAdmin: (params = {}) =>
-        api.get('/Product/product-management', { params }),
+    getForAdmin: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management', { params: { ...rest, pagesize: pageSize } }),
 
     getTopProducts: (params = {}) =>
         api.get('/admin/statistic/products/top', { params }),
@@ -134,6 +138,14 @@ export const productApi = {
 
     exportFromFile: () =>
         api.get(`/Product/admin/export-excel`, {responseType: "blob"}),
+
+    importVariantsExcel: (productId, formData) =>
+        api.post(`/Product/${productId}/management-details/import-excel`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+
+    exportVariantsExcel: (productId) =>
+        api.get(`/Product/${productId}/management-details/export-excel`, { responseType: 'blob' }),
 };
 
 export const metaDataApi = {
@@ -186,10 +198,8 @@ export const orderApi = {
         api.get(`/Order/all-orders-by-status/${statusId}`, { params: { page, pageSize } }),
     getAdminDetail: (orderId) =>
         api.get(`/Order/admin/${orderId}`),
-    updateStatus: (orderId, newOrderStatusId) =>
-        api.put(`/Order/updateStatus/${orderId}`, newOrderStatusId, {
-            headers: { 'Content-Type': 'application/json' }
-        }),
+    updateStatus: (orderId, body) =>
+        api.put(`/Order/updateStatus/${orderId}`, body),
     cancelByAdmin: (orderId, reason) =>
         api.put(`/Order/admin/${orderId}/cancel`, { reason }),
     cancelMyOrder: (orderId) =>
@@ -218,6 +228,10 @@ export const statisticApi = {
     getRevenueByMonth: (params = {}) => api.get('/admin/statistic/revenue/monthly', {params}),
     getRevenueCategoryByMonth: (params = {}) => api.get('/admin/statistic/revenue/category-monthly', {params}),
     getFullReport: (params = {}) => api.get('/admin/statistic/full-report', {params}),
+    getOrderStatus: (params = {}) => api.get('/admin/statistic/orders/status', {params}),
+    getRevenueByPaymentMethod: (params = {}) => api.get('/admin/statistic/revenue/payment-method', {params}),
+    getVoucherEffectiveness: (params = {}) => api.get('/admin/statistic/vouchers/effectiveness', {params}),
+    getTopCustomers: (params = {}) => api.get('/admin/statistic/customers/top', {params}),
 }
 
 export const voucherApi = {
@@ -227,6 +241,9 @@ export const voucherApi = {
     getAllAvailable: () => api.get('/Voucher/all-available'),
     saveVoucher: (voucherId) => api.post(`/Voucher/save/${voucherId}`),
     adminCreate: (data) => api.post('/Voucher/admin/add', data),
+    // Admin endpoints
+    adminGetAll: (params = {}) => api.get('/Voucher/admin', { params }),
+    adminSetActive: (voucherId, isActive) => api.put(`/Voucher/admin/${voucherId}/active`, { isActive }),
 }
 
 // Review API
@@ -282,7 +299,24 @@ export const inventoryApi = {
         api.put(`/admin/inventory/serials/${serialId}/mark-in-stock`),
 }
 
+// Return Request API
+export const returnApi = {
+  // Public
+  getReasons: () => api.get('/Return/reasons'),
+
+  // Customer (auth required)
+  getDeliveryProofs: (orderId) => api.get(`/Return/orders/${orderId}/delivery-proofs`),
+  createRequest: (data) => api.post('/Return/request', data),
+  getMyRequests: (page = 1, pageSize = 10) => api.get('/Return/my-requests', { params: { page, pageSize } }),
+  getMyRequestDetail: (returnRequestId) => api.get(`/Return/my-requests/${returnRequestId}`),
+
+  // Admin
+  addDeliveryProof: (orderId, data) => api.post(`/Return/admin/orders/${orderId}/delivery-proofs`, data),
+  adminGetAll: (params = {}) => api.get('/Return/admin/requests', { params }),
+  adminGetDetail: (returnRequestId) => api.get(`/Return/admin/requests/${returnRequestId}`),
+  adminApprove: (returnRequestId, data) => api.put(`/Return/admin/requests/${returnRequestId}/approve`, data),
+  adminReject: (returnRequestId, data) => api.put(`/Return/admin/requests/${returnRequestId}/reject`, data),
+  adminMarkRefunded: (returnRequestId, data) => api.put(`/Return/admin/requests/${returnRequestId}/mark-refunded`, data),
+};
+
 export default api;
-
-
-

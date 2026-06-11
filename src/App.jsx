@@ -45,6 +45,8 @@ import { AdminManagementProvider } from "./contexts/AdminManagementContext";
 import { InventoryProvider } from "./contexts/InventoryContext";
 import InventoryManagement from "./components/admin/InventoryManagement";
 import AuditManagement from "./components/admin/AuditManagement";
+import ReviewManagement from "./components/admin/ReviewManagement";
+import ReturnRequestManagement from "./components/admin/ReturnRequestManagement";
 
 
 const PublicRoute = ({ children }) => {
@@ -177,6 +179,8 @@ function AppRoutes() {
         <Route path="vouchers" element={<VoucherManagement />} />
         <Route path="inventory" element={<InventoryManagement />} />
         <Route path="audit" element={<AuditManagement />} />
+        <Route path="reviews" element={<ReviewManagement />} />
+        <Route path="returns" element={<ReturnRequestManagement />} />
       </Route>
 
       <Route

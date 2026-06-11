@@ -7,106 +7,20 @@ import {
   TrendingUp, TrendingDown, Package, ShoppingCart, Users,
   Wallet, Award, Layers, Download, Tag,
 } from 'lucide-react';
-import {useStatistic} from "../../contexts/StatisticContext";
+import { useStatistic } from "../../contexts/StatisticContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { productApi } from '../../api';
+import { productApi, statisticApi } from '../../api';
 
-const monthly2025 = [
-  { thang: "T1",  doanhThu: 42, chiPhi: 28, loiNhuan: 14, donHang: 187 },
-  { thang: "T2",  doanhThu: 38, chiPhi: 26, loiNhuan: 12, donHang: 163 },
-  { thang: "T3",  doanhThu: 55, chiPhi: 36, loiNhuan: 19, donHang: 241 },
-  { thang: "T4",  doanhThu: 68, chiPhi: 44, loiNhuan: 24, donHang: 298 },
-  { thang: "T5",  doanhThu: 72, chiPhi: 47, loiNhuan: 25, donHang: 315 },
-  { thang: "T6",  doanhThu: 65, chiPhi: 43, loiNhuan: 22, donHang: 284 },
-  { thang: "T7",  doanhThu: 58, chiPhi: 39, loiNhuan: 19, donHang: 254 },
-  { thang: "T8",  doanhThu: 62, chiPhi: 41, loiNhuan: 21, donHang: 271 },
-  { thang: "T9",  doanhThu: 75, chiPhi: 49, loiNhuan: 26, donHang: 328 },
-  { thang: "T10", doanhThu: 82, chiPhi: 53, loiNhuan: 29, donHang: 358 },
-  { thang: "T11", doanhThu: 88, chiPhi: 57, loiNhuan: 31, donHang: 385 },
-  { thang: "T12", doanhThu: 70, chiPhi: 46, loiNhuan: 24, donHang: 306 },
-];
+const MONTH_LABELS = ["T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"];
+const PALETTE = ["#fb923c","#3b82f6","#10b981","#8b5cf6","#f59e0b","#ef4444","#06b6d4","#ec4899"];
 
-const monthly2024 = [
-  { thang: "T1",  doanhThu: 36, chiPhi: 25, loiNhuan: 11, donHang: 158 },
-  { thang: "T2",  doanhThu: 33, chiPhi: 23, loiNhuan: 10, donHang: 142 },
-  { thang: "T3",  doanhThu: 48, chiPhi: 33, loiNhuan: 15, donHang: 208 },
-  { thang: "T4",  doanhThu: 58, chiPhi: 38, loiNhuan: 20, donHang: 254 },
-  { thang: "T5",  doanhThu: 62, chiPhi: 41, loiNhuan: 21, donHang: 271 },
-  { thang: "T6",  doanhThu: 55, chiPhi: 37, loiNhuan: 18, donHang: 241 },
-  { thang: "T7",  doanhThu: 50, chiPhi: 34, loiNhuan: 16, donHang: 218 },
-  { thang: "T8",  doanhThu: 54, chiPhi: 36, loiNhuan: 18, donHang: 236 },
-  { thang: "T9",  doanhThu: 65, chiPhi: 43, loiNhuan: 22, donHang: 285 },
-  { thang: "T10", doanhThu: 70, chiPhi: 46, loiNhuan: 24, donHang: 306 },
-  { thang: "T11", doanhThu: 74, chiPhi: 49, loiNhuan: 25, donHang: 324 },
-  { thang: "T12", doanhThu: 60, chiPhi: 40, loiNhuan: 20, donHang: 262 },
-];
+const fmtRevenue = (v) => {
+  if (v == null) return '—';
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)} tỷ đ`;
+  if (v >= 1_000_000)    return `${Math.round(v / 1_000_000)} triệu đ`;
+  return `${Math.round(v).toLocaleString('vi-VN')} đ`;
+};
 
-const compareData = monthly2025.map((d, i) => ({
-  thang: d.thang,
-  'Năm 2025': d.doanhThu,
-  'Năm 2024': monthly2024[i].doanhThu,
-}));
-
-const categoryData = [
-  { name: "Vợt cầu lông",  value: 42, color: "#fb923c", doanhThu: 360, daBan: 518 },
-  { name: "Cầu lông",      value: 22, color: "#3b82f6", doanhThu: 189, daBan: 3780 },
-  { name: "Giày cầu lông", value: 18, color: "#10b981", doanhThu: 155, daBan: 287 },
-  { name: "Túi & Balo",    value:  8, color: "#8b5cf6", doanhThu:  69, daBan: 198 },
-  { name: "Phụ kiện",      value:  7, color: "#f59e0b", doanhThu:  60, daBan: 1420 },
-  { name: "Quần áo",       value:  3, color: "#ef4444", doanhThu:  25, daBan: 142 },
-];
-
-const CAT_KEYS = ["Vợt", "Cầu", "Giày", "Túi", "Phụ kiện", "Quần áo"];
-const CAT_COLORS = ["#fb923c", "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444"];
-
-const categoryMonthly = monthly2025.map((d) => ({
-  thang: d.thang,
-  "Vợt":       Math.round(d.doanhThu * 0.42),
-  "Cầu":       Math.round(d.doanhThu * 0.22),
-  "Giày":      Math.round(d.doanhThu * 0.18),
-  "Túi":       Math.round(d.doanhThu * 0.08),
-  "Phụ kiện":  Math.round(d.doanhThu * 0.07),
-  "Quần áo":   Math.round(d.doanhThu * 0.03),
-}));
-
-const brandData = [
-  { ten: "Yonex",    doanhThu: 323, donHang: 984 },
-  { ten: "Victor",   doanhThu: 213, donHang: 648 },
-  { ten: "Li-Ning",  doanhThu: 153, donHang: 412 },
-  { ten: "Kawasaki", doanhThu:  85, donHang: 278 },
-  { ten: "RSL",      doanhThu:  56, donHang: 1240 },
-  { ten: "Forza",    doanhThu:  28, donHang: 185 },
-];
-const BRAND_COLORS = ["#fb923c", "#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444"];
-
-const topProductsData = [
-  { rank: 1, ten: "Vợt Yonex Astrox 88D",         danhMuc: "Vợt cầu lông",  thuongHieu: "Yonex",   daBan: 234,  doanhThu: "1.170.000.000", trend: "up",   change: "+18%" },
-  { rank: 2, ten: "Vợt Victor Thruster K 12M",     danhMuc: "Vợt cầu lông",  thuongHieu: "Victor",  daBan: 186,  doanhThu: "892.800.000",   trend: "up",   change: "+12%" },
-  { rank: 3, ten: "Cầu RSL Gold (hộp 12 quả)",     danhMuc: "Cầu lông",      thuongHieu: "RSL",     daBan: 1520, doanhThu: "760.000.000",   trend: "up",   change: "+24%" },
-  { rank: 4, ten: "Giày Yonex SHB 65Z3",           danhMuc: "Giày cầu lông", thuongHieu: "Yonex",   daBan: 142,  doanhThu: "567.000.000",   trend: "down", change: "-5%"  },
-  { rank: 5, ten: "Vợt Li-Ning Aeronaut 9000",      danhMuc: "Vợt cầu lông",  thuongHieu: "Li-Ning", daBan: 98,   doanhThu: "490.000.000",   trend: "up",   change: "+8%"  },
-  { rank: 6, ten: "Cầu Victor Gold (hộp 12 quả)",  danhMuc: "Cầu lông",      thuongHieu: "Victor",  daBan: 987,  doanhThu: "493.500.000",   trend: "up",   change: "+15%" },
-  { rank: 7, ten: "Grip Yonex AC102 (bộ 3)",       danhMuc: "Phụ kiện",      thuongHieu: "Yonex",   daBan: 892,  doanhThu: "133.800.000",   trend: "up",   change: "+31%" },
-  { rank: 8, ten: "Túi Yonex BA92026EX 6-vợt",     danhMuc: "Túi & Balo",    thuongHieu: "Yonex",   daBan: 124,  doanhThu: "372.000.000",   trend: "down", change: "-3%"  },
-];
-
-const orderStatusData = [
-  { name: "Hoàn tất",    value: 68, color: "#10b981" },
-  { name: "Đang xử lý",  value: 14, color: "#3b82f6" },
-  { name: "Đang giao",   value: 10, color: "#8b5cf6" },
-  { name: "Đã hủy",      value:  8, color: "#ef4444" },
-];
-
-const orderTrendData = monthly2025.map((d) => ({
-  thang:          d.thang,
-  "Hoàn tất":    Math.round(d.donHang * 0.68),
-  "Đang xử lý":  Math.round(d.donHang * 0.14),
-  "Đang giao":   Math.round(d.donHang * 0.10),
-  "Đã hủy":      Math.round(d.donHang * 0.08),
-}));
-
-// ─── Helpers ─────────────────────────────────────────────────────────
-const fmtM = (v) => `${v}M`;
 const makeTooltipStyle = (isDark) => ({
   backgroundColor: isDark ? "rgba(30,41,59,0.97)" : "rgba(255,255,255,0.97)",
   border: "none",
@@ -127,27 +41,41 @@ function Card({ children, className = "" }) {
 function RevenueTab({ period }) {
   const { revenueByMonth } = useStatistic();
   const { isDark } = useTheme();
+  const [monthly2024, setMonthly2024] = useState([]);
+
+  useEffect(() => {
+    statisticApi.getRevenueByMonth({ year: 2024 })
+      .then(r => setMonthly2024(r.data?.data ?? []))
+      .catch(() => {});
+  }, []);
 
   const data = useMemo(() => {
-    const sample = period === '2025' ? monthly2025 : monthly2024;
-    if (revenueByMonth && period === '2025') {
-      return sample.map((d, i) => {
-        const real = revenueByMonth.find((r) => r.month === i + 1);
-        if (!real) return d;
-        return {
-          ...d,
-          doanhThu: real.totalRevenue / 1_000_000,
-          donHang:  real.totalOrders,
-        };
-      });
-    }
-    return sample;
-  }, [period, revenueByMonth]);
+    const src = period === '2025' ? (revenueByMonth ?? []) : monthly2024;
+    return MONTH_LABELS.map((label, idx) => {
+      const found = src.find(r => r.month === idx + 1);
+      return {
+        thang:    label,
+        doanhThu: found ? +(found.totalRevenue / 1_000_000).toFixed(2) : 0,
+        donHang:  found ? found.totalOrders : 0,
+      };
+    });
+  }, [period, revenueByMonth, monthly2024]);
+
+  const compareData = useMemo(() => {
+    const src25 = revenueByMonth ?? [];
+    return MONTH_LABELS.map((label, idx) => {
+      const r25 = src25.find(r => r.month === idx + 1);
+      const r24 = monthly2024.find(r => r.month === idx + 1);
+      return {
+        thang:      label,
+        'Năm 2025': r25 ? +(r25.totalRevenue / 1_000_000).toFixed(2) : 0,
+        'Năm 2024': r24 ? +(r24.totalRevenue / 1_000_000).toFixed(2) : 0,
+      };
+    });
+  }, [revenueByMonth, monthly2024]);
 
   const totalDT = data.reduce((s, d) => s + d.doanhThu, 0);
-  const totalCP = data.reduce((s, d) => s + d.chiPhi,   0);
-  const totalLN = data.reduce((s, d) => s + d.loiNhuan, 0);
-  const totalDH = data.reduce((s, d) => s + d.donHang,  0);
+  const totalDH = data.reduce((s, d) => s + d.donHang, 0);
 
   return (
     <div className="space-y-6">
@@ -164,33 +92,23 @@ function RevenueTab({ period }) {
                     <stop offset="5%"  stopColor="#fb923c" stopOpacity={0.35} />
                     <stop offset="95%" stopColor="#fb923c" stopOpacity={0} />
                   </linearGradient>
-                  <linearGradient id="gCP" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#94a3b8" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gLN" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#10b981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  <linearGradient id="gDH" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
-                <YAxis tickFormatter={fmtM} {...axisProps} />
+                <YAxis tickFormatter={v => `${v}M`} {...axisProps} />
                 <Tooltip
                   contentStyle={makeTooltipStyle(isDark)}
                   formatter={(v, n) => [
-                    `${v} triệu đ`,
-                    n === 'doanhThu' ? 'Doanh thu' : n === 'chiPhi' ? 'Chi phí' : 'Lợi nhuận',
+                    n === 'doanhThu' ? `${v} triệu đ` : `${v} đơn`,
+                    n === 'doanhThu' ? 'Doanh thu' : 'Đơn hàng',
                   ]}
                 />
-                <Legend
-                  formatter={(v) =>
-                    v === 'doanhThu' ? 'Doanh thu' : v === 'chiPhi' ? 'Chi phí' : 'Lợi nhuận'
-                  }
-                />
+                <Legend formatter={(v) => v === 'doanhThu' ? 'Doanh thu (triệu đ)' : 'Đơn hàng'} />
                 <Area type="monotone" dataKey="doanhThu" stroke="#fb923c" strokeWidth={2.5} fill="url(#gDT)" />
-                <Area type="monotone" dataKey="chiPhi"   stroke="#94a3b8" strokeWidth={2}   fill="url(#gCP)" />
-                <Area type="monotone" dataKey="loiNhuan" stroke="#10b981" strokeWidth={2.5} fill="url(#gLN)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -205,7 +123,7 @@ function RevenueTab({ period }) {
               <BarChart data={compareData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
-                <YAxis tickFormatter={fmtM} {...axisProps} />
+                <YAxis tickFormatter={v => `${v}M`} {...axisProps} />
                 <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} triệu đ`, n]} />
                 <Legend />
                 <Bar dataKey="Năm 2024" fill="#94a3b8" radius={[3, 3, 0, 0]} maxBarSize={22} />
@@ -225,7 +143,7 @@ function RevenueTab({ period }) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
-                {["Tháng", "Doanh thu", "Chi phí", "Lợi nhuận", "Đơn hàng", "TB/đơn"].map((h) => (
+                {["Tháng", "Doanh thu", "Đơn hàng", "TB/đơn"].map((h) => (
                   <th key={h} className={`p-4 font-semibold text-slate-600 dark:text-slate-400 ${h === "Tháng" ? "text-left" : "text-right"}`}>{h}</th>
                 ))}
               </tr>
@@ -234,20 +152,20 @@ function RevenueTab({ period }) {
               {data.map((d, i) => (
                 <tr key={i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="p-4 font-medium text-slate-800 dark:text-white">Tháng {i + 1}</td>
-                  <td className="p-4 text-right font-semibold text-orange-500">{(d.doanhThu * 1_000_000).toLocaleString('vi-VN')} đ</td>
-                  <td className="p-4 text-right text-slate-500 dark:text-slate-400">{(d.chiPhi   * 1_000_000).toLocaleString('vi-VN')} đ</td>
-                  <td className="p-4 text-right font-semibold text-emerald-600">{(d.loiNhuan * 1_000_000).toLocaleString('vi-VN')} đ</td>
+                  <td className="p-4 text-right font-semibold text-orange-500">
+                    {(d.doanhThu * 1_000_000).toLocaleString('vi-VN')} đ
+                  </td>
                   <td className="p-4 text-right text-slate-700 dark:text-slate-300">{d.donHang.toLocaleString()}</td>
                   <td className="p-4 text-right text-slate-500 dark:text-slate-400">
-                    {Math.round((d.doanhThu * 1_000_000) / d.donHang).toLocaleString('vi-VN')} đ
+                    {d.donHang > 0
+                      ? Math.round((d.doanhThu * 1_000_000) / d.donHang).toLocaleString('vi-VN') + ' đ'
+                      : '—'}
                   </td>
                 </tr>
               ))}
               <tr className="bg-orange-50/50 dark:bg-orange-900/10 font-bold border-t-2 border-orange-100 dark:border-orange-900/30">
                 <td className="p-4 text-slate-800 dark:text-white">Tổng cộng</td>
                 <td className="p-4 text-right text-orange-500">{(totalDT * 1_000_000).toLocaleString('vi-VN')} đ</td>
-                <td className="p-4 text-right text-slate-500 dark:text-slate-400">{(totalCP * 1_000_000).toLocaleString('vi-VN')} đ</td>
-                <td className="p-4 text-right text-emerald-600">{(totalLN * 1_000_000).toLocaleString('vi-VN')} đ</td>
                 <td className="p-4 text-right text-slate-800 dark:text-white">{totalDH.toLocaleString()}</td>
                 <td className="p-4 text-right text-slate-500 dark:text-slate-400">—</td>
               </tr>
@@ -261,24 +179,60 @@ function RevenueTab({ period }) {
 
 // ─── Category Tab ─────────────────────────────────────────────────────
 function CategoryTab() {
+  const { revenueByCategory, revenueCategoryByMonth } = useStatistic();
   const { isDark } = useTheme();
+
+  const catList = revenueByCategory?.data ?? [];
+  const catMonthList = revenueCategoryByMonth?.data ?? [];
+
+  const catData = useMemo(() => catList.map((c, i) => ({
+    name:      c.categoryName,
+    value:     +(c.revenueShare ?? 0).toFixed(1),
+    doanhThu:  c.totalRevenue,
+    daBan:     c.totalItems,
+    donHang:   c.totalOrders,
+    color:     PALETTE[i % PALETTE.length],
+  })), [catList]);
+
+  const catKeys   = catData.map(c => c.name);
+  const catColors = catData.map(c => c.color);
+
+  // Pivot flat rows into { thang, [catName]: millionVND }
+  const stackedData = useMemo(() => {
+    const months = {};
+    catMonthList.forEach(r => {
+      const key = r.month;
+      if (!months[key]) months[key] = { thang: MONTH_LABELS[r.month - 1] };
+      months[key][r.categoryName] = +(r.totalRevenue / 1_000_000).toFixed(2);
+    });
+    return MONTH_LABELS.map((_, idx) => months[idx + 1] ?? { thang: MONTH_LABELS[idx] });
+  }, [catMonthList]);
+
+  if (!catData.length) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-slate-400">Không có dữ liệu danh mục</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Stacked bar */}
         <Card className="xl:col-span-2 p-6">
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Doanh thu theo danh mục & tháng</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Năm 2025 · triệu đồng</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">triệu đồng</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryMonthly} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={stackedData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
                 <XAxis dataKey="thang" {...axisProps} />
-                <YAxis tickFormatter={fmtM} {...axisProps} />
+                <YAxis tickFormatter={v => `${v}M`} {...axisProps} />
                 <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} triệu đ`, n]} />
                 <Legend />
-                {CAT_KEYS.map((k, i) => (
-                  <Bar key={k} dataKey={k} stackId="a" fill={CAT_COLORS[i]} />
+                {catKeys.map((k, i) => (
+                  <Bar key={k} dataKey={k} stackId="a" fill={catColors[i]} />
                 ))}
               </BarChart>
             </ResponsiveContainer>
@@ -288,27 +242,27 @@ function CategoryTab() {
         {/* Donut */}
         <Card className="p-6">
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Phân bổ danh mục</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Theo doanh thu năm 2025</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Theo doanh thu</p>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
-                  {categoryData.map((_, i) => <Cell key={i} fill={CAT_COLORS[i]} />)}
+                <Pie data={catData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
+                  {catData.map((_, i) => <Cell key={i} fill={catColors[i]} />)}
                 </Pie>
                 <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v}%`, n]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="space-y-2 mt-2">
-            {categoryData.map((item, i) => (
+            {catData.map((item, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i] }} />
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: catColors[i] }} />
                   <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-slate-400">{item.doanhThu}M</span>
-                  <span className="text-xs font-bold text-slate-800 dark:text-white w-8 text-right">{item.value}%</span>
+                  <span className="text-xs text-slate-400">{Math.round(item.doanhThu / 1_000_000)}M</span>
+                  <span className="text-xs font-bold text-slate-800 dark:text-white w-10 text-right">{item.value}%</span>
                 </div>
               </div>
             ))}
@@ -327,30 +281,30 @@ function CategoryTab() {
               <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
                 <th className="text-left p-4 font-semibold text-slate-600 dark:text-slate-400">Danh mục</th>
                 <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Doanh thu</th>
-                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Đã bán</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Đơn hàng</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Sản phẩm bán</th>
                 <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Tỷ lệ</th>
                 <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 hidden md:table-cell">Phân bổ</th>
               </tr>
             </thead>
             <tbody>
-              {categoryData.map((cat, i) => (
+              {catData.map((cat, i) => (
                 <tr key={i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CAT_COLORS[i] }} />
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: catColors[i] }} />
                       <span className="font-medium text-slate-800 dark:text-white">{cat.name}</span>
                     </div>
                   </td>
                   <td className="p-4 text-right font-semibold text-orange-500">
-                    {(cat.doanhThu * 1_000_000).toLocaleString('vi-VN')} đ
+                    {cat.doanhThu.toLocaleString('vi-VN')} đ
                   </td>
-                  <td className="p-4 text-right text-slate-600 dark:text-slate-400">
-                    {cat.daBan.toLocaleString()} sp
-                  </td>
+                  <td className="p-4 text-right text-slate-600 dark:text-slate-400">{cat.donHang.toLocaleString()}</td>
+                  <td className="p-4 text-right text-slate-600 dark:text-slate-400">{cat.daBan.toLocaleString()} sp</td>
                   <td className="p-4 text-right font-bold text-slate-800 dark:text-white">{cat.value}%</td>
                   <td className="p-4 hidden md:table-cell">
                     <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cat.value}%`, backgroundColor: CAT_COLORS[i] }} />
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cat.value}%`, backgroundColor: catColors[i] }} />
                     </div>
                   </td>
                 </tr>
@@ -365,22 +319,42 @@ function CategoryTab() {
 
 // ─── Brand Tab ────────────────────────────────────────────────────────
 function BrandTab() {
+  const { revenueByBrand } = useStatistic();
   const { isDark } = useTheme();
-  const maxDT = Math.max(...brandData.map((b) => b.doanhThu));
+
+  const brandList = revenueByBrand?.data ?? [];
+
+  const brandData = useMemo(() => brandList.map((b, i) => ({
+    ten:      b.brandName,
+    doanhThu: +(b.totalRevenue / 1_000_000).toFixed(2),
+    donHang:  b.totalOrders,
+    color:    PALETTE[i % PALETTE.length],
+  })), [brandList]);
+
+  const maxDT = brandData.length ? Math.max(...brandData.map(b => b.doanhThu)) : 1;
+
+  if (!brandData.length) {
+    return (
+      <Card className="p-12 text-center">
+        <p className="text-slate-400">Không có dữ liệu thương hiệu</p>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Doanh thu theo thương hiệu</h4>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Năm 2025 · triệu đồng</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">triệu đồng</p>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={brandData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} horizontal={false} />
-              <XAxis type="number" tickFormatter={fmtM} {...axisProps} />
+              <XAxis type="number" tickFormatter={v => `${v}M`} {...axisProps} />
               <YAxis type="category" dataKey="ten" {...axisProps} width={72} />
               <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [`${v} triệu đ`, 'Doanh thu']} />
               <Bar dataKey="doanhThu" radius={[0, 4, 4, 0]} maxBarSize={32}>
-                {brandData.map((_, i) => <Cell key={i} fill={BRAND_COLORS[i]} />)}
+                {brandData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -396,7 +370,7 @@ function BrandTab() {
             <div key={i} className="flex items-center gap-4">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black shrink-0 shadow"
-                style={{ backgroundColor: BRAND_COLORS[i] }}
+                style={{ backgroundColor: PALETTE[i % PALETTE.length] }}
               >
                 {brand.ten[0]}
               </div>
@@ -408,7 +382,7 @@ function BrandTab() {
                 <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
-                    style={{ width: `${(brand.doanhThu / maxDT) * 100}%`, backgroundColor: BRAND_COLORS[i] }}
+                    style={{ width: `${maxDT > 0 ? (brand.doanhThu / maxDT) * 100 : 0}%`, backgroundColor: PALETTE[i % PALETTE.length] }}
                   />
                 </div>
               </div>
@@ -424,10 +398,12 @@ function BrandTab() {
 }
 
 // ─── Products Tab ─────────────────────────────────────────────────────
+const topProductsFallback = [];
+
 function ProductsTab() {
-  const [filterCat,      setFilterCat]      = useState('all');
-  const [filterTrend,    setFilterTrend]    = useState('all');
-  const [products,       setProducts]       = useState(topProductsData);
+  const [filterCat,       setFilterCat]       = useState('all');
+  const [filterTrend,     setFilterTrend]     = useState('all');
+  const [products,        setProducts]        = useState(topProductsFallback);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
@@ -449,7 +425,7 @@ function ProductsTab() {
           })));
         }
       })
-      .catch(() => { /* giữ dữ liệu tĩnh */ })
+      .catch(() => {})
       .finally(() => setLoadingProducts(false));
   }, []);
 
@@ -506,7 +482,7 @@ function ProductsTab() {
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-12 text-center text-slate-400 dark:text-slate-600">
-                  Không có dữ liệu phù hợp
+                  {loadingProducts ? 'Đang tải...' : 'Không có dữ liệu phù hợp'}
                 </td>
               </tr>
             ) : (
@@ -545,67 +521,114 @@ function ProductsTab() {
 }
 
 // ─── Orders Tab ───────────────────────────────────────────────────────
+const STATUS_GROUPS = [
+  { label: "Hoàn tất",   ids: [6, 7],        color: "#10b981" },
+  { label: "Đang xử lý", ids: [1, 2, 3],     color: "#3b82f6" },
+  { label: "Đang giao",  ids: [5],            color: "#8b5cf6" },
+  { label: "Đã hủy",     ids: [8],            color: "#ef4444" },
+  { label: "Khác",       ids: [4, 9, 10, 11], color: "#94a3b8" },
+];
+
 function OrdersTab() {
   const { isDark } = useTheme();
+  const [orderStatus, setOrderStatus] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    statisticApi.getOrderStatus()
+      .then(r => setOrderStatus(r.data?.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalOrders = orderStatus.reduce((s, r) => s + r.totalOrders, 0);
+
+  const completedOrders = orderStatus
+    .filter(r => [6, 7].includes(r.statusId))
+    .reduce((s, r) => s + r.totalOrders, 0);
+
+  const cancelledOrders = orderStatus.find(r => r.statusId === 8)?.totalOrders ?? 0;
+  const shippingOrders  = orderStatus.find(r => r.statusId === 5)?.totalOrders ?? 0;
+
+  const completedRate = totalOrders > 0 ? Math.round(completedOrders / totalOrders * 100) : 0;
+  const cancelledRate = totalOrders > 0 ? Math.round(cancelledOrders / totalOrders * 100) : 0;
+
+  const donutData = STATUS_GROUPS.map(g => ({
+    name:  g.label,
+    value: orderStatus.filter(r => g.ids.includes(r.statusId)).reduce((s, r) => s + r.totalOrders, 0),
+    color: g.color,
+  })).filter(d => d.value > 0);
+
+  const barData = orderStatus
+    .filter(r => r.totalOrders > 0)
+    .map(r => ({ name: r.statusName, orders: r.totalOrders }));
+
+  if (loading) {
+    return <Card className="p-12 text-center"><p className="text-slate-400">Đang tải...</p></Card>;
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Stacked bar order trend */}
+        {/* Horizontal bar - status breakdown */}
         <Card className="xl:col-span-2 p-6">
-          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Xu hướng đơn hàng theo tháng</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Năm 2025 · phân theo trạng thái</p>
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Số lượng đơn hàng theo trạng thái</h4>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Tổng {totalOrders.toLocaleString()} đơn</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={orderTrendData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
-                <XAxis dataKey="thang" {...axisProps} />
-                <YAxis {...axisProps} />
-                <Tooltip contentStyle={makeTooltipStyle(isDark)} />
-                <Legend />
-                <Bar dataKey="Hoàn tất"    stackId="a" fill="#10b981" />
-                <Bar dataKey="Đang xử lý"  stackId="a" fill="#3b82f6" />
-                <Bar dataKey="Đang giao"   stackId="a" fill="#8b5cf6" />
-                <Bar dataKey="Đã hủy"      stackId="a" fill="#ef4444" radius={[3, 3, 0, 0]} />
+              <BarChart data={barData} layout="vertical" margin={{ top: 5, right: 30, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} horizontal={false} />
+                <XAxis type="number" {...axisProps} />
+                <YAxis type="category" dataKey="name" {...axisProps} width={140} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [`${v} đơn`, 'Số lượng']} />
+                <Bar dataKey="orders" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                  {barData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
-        {/* Donut status */}
+        {/* Donut */}
         <Card className="p-6">
           <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Phân bổ trạng thái</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Tổng cộng 2.847 đơn</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Tổng {totalOrders.toLocaleString()} đơn</p>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
-                  {orderStatusData.map((_, i) => <Cell key={i} fill={orderStatusData[i].color} />)}
+                <Pie data={donutData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
+                  {donutData.map((d, i) => <Cell key={i} fill={d.color} />)}
                 </Pie>
-                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [`${v}%`]} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v, n) => [`${v} đơn`, n]} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="space-y-2 mt-2">
-            {orderStatusData.map((item, i) => (
+            {donutData.map((item, i) => (
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-xs text-slate-600 dark:text-slate-400">{item.name}</span>
                 </div>
-                <span className="text-xs font-bold text-slate-800 dark:text-white">{item.value}%</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-white">
+                  {item.value}
+                  <span className="text-slate-400 font-normal ml-1">
+                    ({totalOrders > 0 ? Math.round(item.value / totalOrders * 100) : 0}%)
+                  </span>
+                </span>
               </div>
             ))}
           </div>
         </Card>
       </div>
 
-      {/* Order KPI cards */}
+      {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Tổng đơn hàng",  value: "2.847",    sub: "Năm 2025",               color: "text-blue-500" },
-          { label: "Tỉ lệ hoàn tất", value: "68%",      sub: "+5% so với 2024",         color: "text-emerald-500" },
-          { label: "Tỉ lệ hủy đơn",  value: "8%",       sub: "−2% so với 2024",         color: "text-rose-500" },
-          { label: "TB thời gian XL", value: "2,4 ngày", sub: "Xác nhận → Giao hàng",   color: "text-purple-500" },
+          { label: "Tổng đơn hàng",  value: totalOrders.toLocaleString(),  sub: "Tất cả trạng thái",          color: "text-blue-500" },
+          { label: "Tỉ lệ hoàn tất", value: `${completedRate}%`,           sub: `${completedOrders} đơn hoàn tất`, color: "text-emerald-500" },
+          { label: "Tỉ lệ hủy đơn",  value: `${cancelledRate}%`,           sub: `${cancelledOrders} đơn đã hủy`,  color: "text-rose-500" },
+          { label: "Đơn đang giao",   value: shippingOrders.toLocaleString(), sub: "Trạng thái đang giao hàng", color: "text-purple-500" },
         ].map((kpi, i) => (
           <Card key={i} className="p-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{kpi.label}</p>
@@ -627,16 +650,43 @@ const TABS = [
   { id: 'orders',   label: 'Đơn hàng',     icon: ShoppingCart },
 ];
 
-const SUMMARY = [
-  { title: "Tổng doanh thu",  value: "856 triệu đ", change: "+18,1%", trend: "up", color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-900/20",   icon: Wallet },
-  { title: "Tổng đơn hàng",  value: "2.847",        change: "+15,3%", trend: "up", color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-900/20",       icon: ShoppingCart },
-  { title: "Khách hàng",     value: "1.247",         change: "+8,2%",  trend: "up", color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20", icon: Users },
-  { title: "TB giá trị/đơn", value: "300.800 đ",     change: "+2,4%",  trend: "up", color: "text-purple-500",  bg: "bg-purple-50 dark:bg-purple-900/20",   icon: Tag },
-];
-
 export default function Statistics() {
   const [activeTab, setActiveTab] = useState('revenue');
   const [period,    setPeriod]    = useState('2025');
+  const { overview } = useStatistic();
+
+  const ovData = overview?.data;
+
+  const summaryCards = useMemo(() => [
+    {
+      title: "Tổng doanh thu",
+      value: ovData ? fmtRevenue(ovData.totalRevenue) : '—',
+      color: "text-orange-500",
+      bg:    "bg-orange-50 dark:bg-orange-900/20",
+      icon:  Wallet,
+    },
+    {
+      title: "Tổng đơn hàng",
+      value: ovData ? ovData.totalOrders.toLocaleString() : '—',
+      color: "text-blue-500",
+      bg:    "bg-blue-50 dark:bg-blue-900/20",
+      icon:  ShoppingCart,
+    },
+    {
+      title: "Khách hàng",
+      value: ovData ? ovData.totalCustomers.toLocaleString() : '—',
+      color: "text-emerald-500",
+      bg:    "bg-emerald-50 dark:bg-emerald-900/20",
+      icon:  Users,
+    },
+    {
+      title: "TB giá trị/đơn",
+      value: ovData ? fmtRevenue(ovData.averageOrderValue) : '—',
+      color: "text-purple-500",
+      bg:    "bg-purple-50 dark:bg-purple-900/20",
+      icon:  Tag,
+    },
+  ], [ovData]);
 
   const renderTab = () => {
     switch (activeTab) {
@@ -655,7 +705,7 @@ export default function Statistics() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-800 dark:text-white">Thống kê & Báo cáo</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Dữ liệu mô phỏng · Cập nhật 12/05/2025</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Dữ liệu thực · Năm {period}</p>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -675,7 +725,7 @@ export default function Statistics() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {SUMMARY.map((s, i) => (
+        {summaryCards.map((s, i) => (
           <div key={i} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 border border-slate-200/50 dark:border-slate-700/50">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{s.title}</p>
@@ -684,13 +734,6 @@ export default function Statistics() {
               </div>
             </div>
             <p className="text-lg md:text-xl font-black text-slate-800 dark:text-white leading-tight">{s.value}</p>
-            <div className="flex items-center gap-1 mt-2">
-              {s.trend === 'up'
-                ? <TrendingUp   className="w-3.5 h-3.5 text-emerald-500" />
-                : <TrendingDown className="w-3.5 h-3.5 text-rose-500" />}
-              <span className="text-xs font-semibold text-emerald-500">{s.change}</span>
-              <span className="text-xs text-slate-400">vs năm trước</span>
-            </div>
           </div>
         ))}
       </div>

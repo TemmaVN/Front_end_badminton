@@ -46,9 +46,6 @@ const ProductList = () => {
         keyword: '',
         categoryId: '',
         brandId: '',
-        key: '',
-        categorySlug: '',
-        brandSlug: '',
         minPrice: '',
         maxPrice: '',
         page: 1,
@@ -89,7 +86,7 @@ const ProductList = () => {
     };
 
     const resetFilters = () =>
-        setFilters({ keyword: '', categoryId: '', brandId: '', key: '', categorySlug: '', brandSlug: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
+        setFilters({ keyword: '', categoryId: '', brandId: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -369,8 +366,8 @@ const ProductList = () => {
                         <div className="relative lg:col-span-2">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                             <input
-                                name="key"
-                                value={filters.key}
+                                name="keyword"
+                                value={filters.keyword}
                                 onChange={handleFilterChange}
                                 placeholder="Tìm tên sản phẩm..."
                                 className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default dark:focus:border-orange-400 focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none transition-all"
@@ -378,26 +375,26 @@ const ProductList = () => {
                         </div>
 
                         <select
-                            name="brandSlug"
-                            value={filters.brandSlug}
+                            name="brandId"
+                            value={filters.brandId}
                             onChange={handleFilterChange}
                             className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all"
                         >
                             <option value="">Tất cả thương hiệu</option>
                             {brands.map((b) => (
-                                <option key={b.brandId} value={b.slug}>{b.brandName}</option>
+                                <option key={b.brandId} value={b.brandId}>{b.brandName}</option>
                             ))}
                         </select>
 
                         <select
-                            name="categorySlug"
-                            value={filters.categorySlug}
+                            name="categoryId"
+                            value={filters.categoryId}
                             onChange={handleFilterChange}
                             className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all"
                         >
                             <option value="">Tất cả danh mục</option>
                             {categories.map((cat) => (
-                                <option key={cat.categoryId} value={cat.slug}>{cat.categoryName}</option>
+                                <option key={cat.categoryId} value={cat.categoryId}>{cat.categoryName}</option>
                             ))}
                         </select>
 

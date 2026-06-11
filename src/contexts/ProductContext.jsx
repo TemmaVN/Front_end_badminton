@@ -77,7 +77,11 @@ export const ProductProvider = ({ children }) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await productApi.getForAdmin(params);
+            // Strip empty/null values so backend receives only meaningful filters
+            const clean = Object.fromEntries(
+                Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+            );
+            const response = await productApi.getForAdmin(clean);
             const data = response.data;
             setProducts(data.items ?? []);
             setPaginationFromResponse({
@@ -148,23 +152,6 @@ export const ProductProvider = ({ children }) => {
             return false;
         } finally {
             setLoading(false);
-        }
-    }, []);
-
-    // ─── Thêm detail (biến thể / serial) vào sản phẩm đã có (Admin) ─────────
-    /**
-     * payload: { productDetailRequests: [...] }
-     * return: { message, productId } | null
-     */
-    const addProductDetails = useCallback(async (productId, payload) => {
-        setError(null);
-        try {
-            const response = await productApi.addDetails(productId, payload);
-            return response.data;
-        } catch (err) {
-            const msg = err.response?.data?.message ?? err.message;
-            setError(typeof msg === 'object' ? JSON.stringify(msg) : msg);
-            return null;
         }
     }, []);
 
