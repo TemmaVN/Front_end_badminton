@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, Users, Phone, Mail, MapPin, Calendar,
-  Eye, X, User, Home, ShoppingBag, Shield, AlertCircle,
-  Plus, Loader2, Lock, Unlock,
+  Eye, X, User, Home, ShoppingBag, AlertCircle,
+  Plus, Loader2, Lock, Unlock, Package,
 } from 'lucide-react';
 import { userApi } from '../../api';
 
@@ -59,10 +59,43 @@ function InfoRow({ icon: IconComp, label, value, mono = false }) {
   );
 }
 
+const fmtCurrency = (n) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n ?? 0);
+
+const ORDER_STATUS_COLOR = {
+  'Chờ xác nhận': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  'Đã xác nhận':  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  'Đang xử lý':   'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  'Đang giao hàng': 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+  'Đã giao hàng': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+  'Hoàn tất':     'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  'Đã hủy':       'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
 // ─── Detail Side Panel ────────────────────────────────────────────────
 function CustomerDetailPanel({ customer, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [tab, setTab] = useState('info');
+
+  useEffect(() => {
+    if (!customer) return;
+    const uid = customer.userId ?? customer.id;
+    setDetailLoading(true);
+    Promise.all([
+      userApi.getAdminDetail(uid).catch(() => null),
+      userApi.getAdminOrderHistory(uid).catch(() => null),
+    ]).then(([detailRes, ordersRes]) => {
+      if (detailRes?.data) setDetail(detailRes.data);
+      const list = Array.isArray(ordersRes?.data) ? ordersRes.data : [];
+      setOrders(list);
+    }).finally(() => setDetailLoading(false));
+  }, [customer]);
+
   if (!customer) return null;
-  const complete = profileComplete(customer);
+  const c = detail ?? customer;
+  const complete = profileComplete(c);
 
   return (
     <>
@@ -86,83 +119,116 @@ function CustomerDetailPanel({ customer, onClose }) {
           {/* Avatar + name */}
           <div className="flex items-center gap-4">
             <div
-              className={`w-16 h-16 rounded-2xl bg-linear-to-br ${avatarColor(customer.fullName)}
+              className={`w-16 h-16 rounded-2xl bg-linear-to-br ${avatarColor(c.fullName)}
               flex items-center justify-center text-white text-xl font-black shadow-lg shrink-0`}
             >
-              {initials(customer.fullName)}
+              {initials(c.fullName)}
             </div>
             <div className="min-w-0">
               <h4 className="text-xl font-black text-slate-800 dark:text-white truncate">
-                {customer.fullName || '—'}
+                {c.fullName || '—'}
               </h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{customer.email}</p>
-              <div className="mt-1.5">
-                <span
-                  className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold
-                  ${complete
+              <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{c.email}</p>
+              <div className="mt-1.5 flex gap-1.5 flex-wrap">
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  complete
                     ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                     : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                  }`}
-                >
+                }`}>
                   {complete ? 'Đầy đủ thông tin' : 'Thiếu thông tin'}
                 </span>
+                {orders.length > 0 && (
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    {orders.length} đơn hàng
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="shrink-0 flex border-b border-slate-200/50 dark:border-slate-700/50">
+          {[
+            { key: 'info',   label: 'Thông tin', icon: User },
+            { key: 'orders', label: `Đơn hàng (${orders.length})`, icon: ShoppingBag },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                tab === t.key
+                  ? 'border-orange-500 text-orange-500'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <t.icon className="w-4 h-4" />
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-7">
-          {/* Contact info */}
-          <section>
-            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-              Thông tin liên hệ
-            </p>
-            <div className="space-y-3">
-              <InfoRow icon={Mail}     label="Email"       value={customer.email} />
-              <InfoRow icon={Phone}    label="Số điện thoại" value={customer.phoneNumber} mono />
-              <InfoRow icon={Calendar} label="Ngày sinh"   value={fmtDate(customer.dateOfBirth)} />
+        <div className="flex-1 overflow-y-auto p-6">
+          {detailLoading ? (
+            <div className="flex items-center justify-center py-12 text-slate-400">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" /> Đang tải...
             </div>
-          </section>
-
-          {/* Address */}
-          <section>
-            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-              Địa chỉ
-            </p>
-            <div className="space-y-3">
-              <InfoRow icon={MapPin} label="Tỉnh / Thành phố" value={customer.city} />
-              <InfoRow icon={MapPin} label="Quận / Huyện"     value={customer.district} />
-              <InfoRow icon={Home}   label="Địa chỉ chi tiết" value={customer.detailedAddress} />
+          ) : tab === 'info' ? (
+            <div className="space-y-7">
+              <section>
+                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+                  Thông tin liên hệ
+                </p>
+                <div className="space-y-3">
+                  <InfoRow icon={Mail}     label="Email"         value={c.email} />
+                  <InfoRow icon={Phone}    label="Số điện thoại" value={c.phoneNumber} mono />
+                  <InfoRow icon={Calendar} label="Ngày sinh"     value={fmtDate(c.dateOfBirth)} />
+                </div>
+              </section>
+              <section>
+                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+                  Địa chỉ
+                </p>
+                <div className="space-y-3">
+                  <InfoRow icon={MapPin} label="Tỉnh / Thành phố" value={c.city} />
+                  <InfoRow icon={MapPin} label="Quận / Huyện"     value={c.district} />
+                  <InfoRow icon={Home}   label="Địa chỉ chi tiết" value={c.detailedAddress} />
+                </div>
+              </section>
+              {!complete && (
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-700/30">
+                  <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    Khách hàng chưa cập nhật đầy đủ thông tin cá nhân.
+                  </p>
+                </div>
+              )}
             </div>
-          </section>
-
-          {/* Missing info warning */}
-          {!complete && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-700/30">
-              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700 dark:text-amber-400">
-                Khách hàng chưa cập nhật đầy đủ thông tin cá nhân.
-              </p>
+          ) : (
+            <div className="space-y-3">
+              {orders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                  <Package className="w-10 h-10 mb-3 opacity-30" />
+                  <p className="text-sm">Chưa có đơn hàng nào</p>
+                </div>
+              ) : orders.map(order => (
+                <div key={order.orderId}
+                  className="p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">#{order.orderId}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${ORDER_STATUS_COLOR[order.status] ?? 'bg-slate-100 text-slate-600'}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <span>{fmtDate(order.orderDate)}</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtCurrency(order.finalAmount)}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-
-          {/* Quick actions */}
-          <section>
-            <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-              Thao tác nhanh
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
-                <ShoppingBag className="w-5 h-5" />
-                <span className="text-xs font-semibold">Đơn hàng</span>
-              </button>
-              <button className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors">
-                <Shield className="w-5 h-5" />
-                <span className="text-xs font-semibold">Bảo hành</span>
-              </button>
-            </div>
-          </section>
         </div>
       </div>
     </>

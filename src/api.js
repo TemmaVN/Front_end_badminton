@@ -267,10 +267,8 @@ export const reviewApi = {
         api.delete(`/Review/${reviewId}`),
 
     // Admin (auth + Admin role)
-    getForAdmin: (page = 1, pageSize = 10, isVisible = undefined) =>
-        api.get('/Review/admin', {
-            params: { page, pageSize, ...(isVisible !== undefined && { isVisible }) },
-        }),
+    getForAdmin: (params = {}) =>
+        api.get('/Review/admin', { params }),
     setVisibility: (reviewId, isVisible) =>
         api.put(`/Review/admin/${reviewId}/visibility`, { isVisible }),
 }

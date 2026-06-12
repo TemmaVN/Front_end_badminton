@@ -52,6 +52,9 @@ const ProductList = () => {
         pageSize: 10,
     });
 
+    // Separate input state for price — debounced 600ms before hitting API
+    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+
     const defaultForm = {
         productName: '',
         brandId: '',
@@ -80,13 +83,37 @@ const ProductList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
 
+    // Debounce price inputs → sync into filters after 600ms
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setFilters(prev => ({
+                ...prev,
+                minPrice: priceRange.min,
+                maxPrice: priceRange.max,
+                page: 1,
+            }));
+        }, 600);
+        return () => clearTimeout(t);
+    }, [priceRange.min, priceRange.max]);
+
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
     };
 
-    const resetFilters = () =>
+    const PRICE_PRESETS = [
+        { label: '< 500K',  min: '',        max: '500000'  },
+        { label: '500K–2M', min: '500000',  max: '2000000' },
+        { label: '2M–5M',   min: '2000000', max: '5000000' },
+        { label: '> 5M',    min: '5000000', max: ''        },
+    ];
+
+    const applyPricePreset = (min, max) => setPriceRange({ min, max });
+
+    const resetFilters = () => {
+        setPriceRange({ min: '', max: '' });
         setFilters({ keyword: '', categoryId: '', brandId: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
+    };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -362,7 +389,8 @@ const ProductList = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
+                    {/* Row 1: keyword · brand · category · reset */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                         <div className="relative lg:col-span-2">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                             <input
@@ -398,31 +426,77 @@ const ProductList = () => {
                             ))}
                         </select>
 
-                        <div className="flex gap-2">
-                            <input
-                                name="minPrice"
-                                type="number"
-                                value={filters.minPrice}
-                                onChange={handleFilterChange}
-                                placeholder="Giá từ..."
-                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
-                            />
-                            <input
-                                name="maxPrice"
-                                type="number"
-                                value={filters.maxPrice}
-                                onChange={handleFilterChange}
-                                placeholder="đến..."
-                                className="w-full py-2 px-3 bg-slate-100 border border-transparent focus:border-orange-default focus:bg-white rounded-xl text-sm outline-none transition-all"
-                            />
-                        </div>
-
                         <button
                             onClick={resetFilters}
                             className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium transition-all"
                         >
                             <RotateCcw size={14} /> Làm mới
                         </button>
+                    </div>
+
+                    {/* Row 2: price range filter */}
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                            Lọc theo giá:
+                        </span>
+
+                        {/* Min price */}
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">từ</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={priceRange.min}
+                                onChange={e => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                                placeholder="0 ₫"
+                                className="pl-8 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+
+                        <span className="text-slate-400 text-sm shrink-0">—</span>
+
+                        {/* Max price */}
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">đến</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={priceRange.max}
+                                onChange={e => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                                placeholder="∞ ₫"
+                                className="pl-10 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
+                            />
+                        </div>
+
+                        {/* Preset chips */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            {PRICE_PRESETS.map(p => {
+                                const active = priceRange.min === p.min && priceRange.max === p.max;
+                                return (
+                                    <button
+                                        key={p.label}
+                                        onClick={() => applyPricePreset(p.min, p.max)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                            active
+                                                ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
+                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400'
+                                        }`}
+                                    >
+                                        {p.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Active indicator */}
+                        {(filters.minPrice || filters.maxPrice) && (
+                            <button
+                                onClick={() => setPriceRange({ min: '', max: '' })}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/30 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all"
+                            >
+                                <X size={12} /> Xóa lọc giá
+                            </button>
+                        )}
                     </div>
 
                 {/* ── Table ── */}

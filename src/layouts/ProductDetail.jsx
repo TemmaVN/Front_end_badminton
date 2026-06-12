@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useProduct } from "../contexts/ProductContext";
 import { useCart } from "../contexts/CartContext";
+import { reviewApi } from '../api';
 
 const getVariantLabel = (productName = "") => {
   const name = productName.toLowerCase().trim();
@@ -44,10 +45,18 @@ const [product, setProduct] = useState(null);
 const [selectedImageOrder, setSelectedImageOrder] = useState(1);
 const navigate = useNavigate();
 
+const [reviews, setReviews] = useState([]);
+const [reviewsLoading, setReviewsLoading] = useState(false);
+const [reviewPage, setReviewPage] = useState(1);
+const [reviewTotalPages, setReviewTotalPages] = useState(1);
+const [avgRating, setAvgRating] = useState(0);
+const [reviewTotal, setReviewTotal] = useState(0);
+const REVIEW_PAGE_SIZE = 5;
+
 const tabs = [
   { id: 'description', label: 'Mô tả sản phẩm' },
   { id: 'specs', label: 'Thông số kỹ thuật' },
-  { id: 'reviews', label: 'Đánh giá 0 ⭐' },
+  { id: 'reviews', label: `Đánh giá${reviewTotal > 0 ? ` (${reviewTotal}) ${avgRating.toFixed(1)}⭐` : ''}` },
 ];
 
 
@@ -74,6 +83,22 @@ useEffect(() => {
   loadProduct();
 // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [productSlug]);
+
+useEffect(() => {
+  if (!product?.productId || activeTab !== 'reviews') return;
+  setReviewsLoading(true);
+  reviewApi.getByProduct(product.productId, reviewPage, REVIEW_PAGE_SIZE)
+    .then(r => {
+      const d = r.data;
+      setReviews(d.items ?? []);
+      setAvgRating(d.averageRating ?? 0);
+      setReviewTotal(d.totalCount ?? 0);
+      setReviewTotalPages(d.totalPages ?? 1);
+    })
+    .catch(() => {})
+    .finally(() => setReviewsLoading(false));
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [product?.productId, activeTab, reviewPage]);
 
 // ✅ Khởi tạo variant mặc định khi product load xong
 useEffect(() => {
@@ -386,8 +411,62 @@ const handleOrder = () => {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="py-20 text-center text-gray-400 dark:text-slate-500 animate-fadeIn">
-                Chưa có đánh giá nào cho sản phẩm này.
+              <div className="animate-fadeIn space-y-4">
+                {reviewsLoading ? (
+                  <div className="py-20 text-center text-gray-400 dark:text-slate-500">Đang tải đánh giá...</div>
+                ) : reviews.length === 0 ? (
+                  <div className="py-20 text-center text-gray-400 dark:text-slate-500">Chưa có đánh giá nào cho sản phẩm này.</div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 pb-3 border-b dark:border-slate-700">
+                      <span className="text-3xl font-black text-slate-800 dark:text-white">{avgRating.toFixed(1)}</span>
+                      <div>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <span key={s} className={`text-lg ${s <= Math.round(avgRating) ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600'}`}>★</span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{reviewTotal} đánh giá</p>
+                      </div>
+                    </div>
+                    {reviews.map(rv => (
+                      <div key={rv.reviewId} className="border-b dark:border-slate-700 py-4 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-sm text-slate-800 dark:text-white">{rv.userName}</span>
+                          <span className="text-xs text-gray-400 dark:text-slate-500">
+                            {new Date(rv.reviewDate).toLocaleDateString('vi-VN')}
+                          </span>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[1,2,3,4,5].map(s => (
+                            <span key={s} className={`text-sm ${s <= rv.rating ? 'text-amber-400' : 'text-gray-300 dark:text-slate-600'}`}>★</span>
+                          ))}
+                        </div>
+                        {rv.comment && <p className="text-sm text-slate-700 dark:text-slate-300">{rv.comment}</p>}
+                        {rv.images?.length > 0 && (
+                          <div className="flex gap-2 flex-wrap pt-1">
+                            {rv.images.map((img, i) => (
+                              <img key={i} src={img} alt="" className="h-16 w-16 object-cover rounded-lg border dark:border-slate-700" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {reviewTotalPages > 1 && (
+                      <div className="flex gap-2 justify-center pt-2">
+                        <button disabled={reviewPage === 1} onClick={() => setReviewPage(p => p - 1)}
+                          className="px-3 py-1 text-sm rounded-lg border dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800">
+                          ‹
+                        </button>
+                        <span className="px-3 py-1 text-sm text-slate-600 dark:text-slate-400">{reviewPage} / {reviewTotalPages}</span>
+                        <button disabled={reviewPage === reviewTotalPages} onClick={() => setReviewPage(p => p + 1)}
+                          className="px-3 py-1 text-sm rounded-lg border dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800">
+                          ›
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

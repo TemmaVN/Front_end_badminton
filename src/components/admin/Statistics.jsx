@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   TrendingUp, TrendingDown, Package, ShoppingCart, Users,
-  Wallet, Award, Layers, Download, Tag,
+  Wallet, Award, Layers, Download, Tag, CreditCard, Crown,
 } from 'lucide-react';
 import { useStatistic } from "../../contexts/StatisticContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -641,6 +641,267 @@ function OrdersTab() {
   );
 }
 
+// ─── Payment Method Tab ───────────────────────────────────────────────
+function PaymentTab() {
+  const { isDark } = useTheme();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    statisticApi.getRevenueByPaymentMethod()
+      .then(r => setData(r.data?.data ?? r.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = data.reduce((s, d) => s + (d.totalRevenue ?? 0), 0);
+
+  const chartData = data.map((d, i) => ({
+    name:   d.paymentMethod ?? d.paymentMethodName ?? 'N/A',
+    value:  d.totalRevenue ?? 0,
+    orders: d.totalOrders ?? 0,
+    color:  PALETTE[i % PALETTE.length],
+    pct:    total > 0 ? +((( d.totalRevenue ?? 0) / total) * 100).toFixed(1) : 0,
+  }));
+
+  if (loading) return <Card className="p-12 text-center"><p className="text-slate-400">Đang tải...</p></Card>;
+  if (!data.length) return <Card className="p-12 text-center"><p className="text-slate-400">Không có dữ liệu</p></Card>;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <Card className="xl:col-span-2 p-6">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Doanh thu theo phương thức thanh toán</h4>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">đồng</p>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.4} vertical={false} />
+                <XAxis dataKey="name" {...axisProps} />
+                <YAxis tickFormatter={v => `${Math.round(v / 1_000_000)}M`} {...axisProps} />
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [v.toLocaleString('vi-VN') + ' đ', 'Doanh thu']} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                  {chartData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1">Phân bổ</h4>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Theo doanh thu</p>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={chartData} cx="50%" cy="50%" innerRadius={52} outerRadius={78} paddingAngle={3} dataKey="value">
+                  {chartData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={makeTooltipStyle(isDark)} formatter={(v) => [v.toLocaleString('vi-VN') + ' đ', 'Doanh thu']} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-2 mt-2">
+            {chartData.map((item, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.name}</span>
+                </div>
+                <span className="text-xs font-bold text-slate-800 dark:text-white">{item.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white">Chi tiết</h4>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+                <th className="text-left p-4 font-semibold text-slate-600 dark:text-slate-400">Phương thức</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Doanh thu</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Đơn hàng</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Tỷ lệ</th>
+                <th className="p-4 font-semibold text-slate-600 dark:text-slate-400 hidden md:table-cell">Phân bổ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.map((row, i) => (
+                <tr key={i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: row.color }} />
+                      <span className="font-medium text-slate-800 dark:text-white">{row.name}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-right font-semibold text-orange-500">{row.value.toLocaleString('vi-VN')} đ</td>
+                  <td className="p-4 text-right text-slate-600 dark:text-slate-400">{row.orders.toLocaleString()}</td>
+                  <td className="p-4 text-right font-bold text-slate-800 dark:text-white">{row.pct}%</td>
+                  <td className="p-4 hidden md:table-cell">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${row.pct}%`, backgroundColor: row.color }} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Voucher Effectiveness Tab ────────────────────────────────────────
+function VouchersTab() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    statisticApi.getVoucherEffectiveness()
+      .then(r => setData(r.data?.data ?? r.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <Card className="p-12 text-center"><p className="text-slate-400">Đang tải...</p></Card>;
+  if (!data.length) return <Card className="p-12 text-center"><p className="text-slate-400">Không có dữ liệu</p></Card>;
+
+  const totalDiscount = data.reduce((s, d) => s + (d.totalDiscount ?? d.totalDiscountAmount ?? 0), 0);
+  const totalUsed     = data.reduce((s, d) => s + (d.timesUsed ?? d.totalUsed ?? 0), 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {[
+          { label: 'Tổng voucher',   value: data.length,                    color: 'text-blue-500'    },
+          { label: 'Tổng lượt dùng', value: totalUsed.toLocaleString(),     color: 'text-emerald-500' },
+          { label: 'Tổng giảm giá',  value: fmtRevenue(totalDiscount),      color: 'text-orange-500'  },
+        ].map((kpi, i) => (
+          <Card key={i} className="p-5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{kpi.label}</p>
+            <p className={`text-2xl font-black ${kpi.color}`}>{kpi.value}</p>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white">Hiệu quả voucher</h4>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+                <th className="text-left p-4 font-semibold text-slate-600 dark:text-slate-400">Mã voucher</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Lượt dùng</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Tổng giảm</th>
+                <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">TB/lượt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, i) => {
+                const used     = row.timesUsed ?? row.totalUsed ?? 0;
+                const discount = row.totalDiscount ?? row.totalDiscountAmount ?? 0;
+                return (
+                  <tr key={i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-mono font-bold">
+                          {row.voucherCode ?? row.code ?? '—'}
+                        </span>
+                        {row.voucherName && (
+                          <span className="text-slate-500 dark:text-slate-400 text-xs truncate">{row.voucherName}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right text-slate-700 dark:text-slate-300">{used.toLocaleString()}</td>
+                    <td className="p-4 text-right font-semibold text-orange-500">{discount.toLocaleString('vi-VN')} đ</td>
+                    <td className="p-4 text-right text-slate-500 dark:text-slate-400">
+                      {used > 0 ? Math.round(discount / used).toLocaleString('vi-VN') + ' đ' : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Top Customers Tab ────────────────────────────────────────────────
+function CustomersTab() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    statisticApi.getTopCustomers({ top: 20 })
+      .then(r => setData(r.data?.data ?? r.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <Card className="p-12 text-center"><p className="text-slate-400">Đang tải...</p></Card>;
+  if (!data.length) return <Card className="p-12 text-center"><p className="text-slate-400">Không có dữ liệu</p></Card>;
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+        <h4 className="text-base font-bold text-slate-800 dark:text-white">Khách hàng tiêu dùng nhiều nhất</h4>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Top {data.length} khách hàng</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/50">
+              <th className="text-center p-4 font-semibold text-slate-600 dark:text-slate-400 w-12">#</th>
+              <th className="text-left p-4 font-semibold text-slate-600 dark:text-slate-400">Khách hàng</th>
+              <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Số đơn</th>
+              <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">Tổng chi tiêu</th>
+              <th className="text-right p-4 font-semibold text-slate-600 dark:text-slate-400">TB/đơn</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => {
+              const spent  = row.totalSpent ?? row.totalRevenue ?? 0;
+              const orders = row.totalOrders ?? row.orderCount ?? 0;
+              const name   = row.fullName ?? row.customerName ?? '—';
+              const email  = row.email ?? '';
+              return (
+                <tr key={i} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="p-4 text-center">
+                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
+                      i < 3 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
+                    }`}>
+                      {i + 1}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <p className="font-medium text-slate-800 dark:text-white">{name}</p>
+                    {email && <p className="text-xs text-slate-400">{email}</p>}
+                  </td>
+                  <td className="p-4 text-right text-slate-700 dark:text-slate-300">{orders.toLocaleString()}</td>
+                  <td className="p-4 text-right font-semibold text-orange-500">{spent.toLocaleString('vi-VN')} đ</td>
+                  <td className="p-4 text-right text-slate-500 dark:text-slate-400">
+                    {orders > 0 ? Math.round(spent / orders).toLocaleString('vi-VN') + ' đ' : '—'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────
 const TABS = [
   { id: 'revenue',  label: 'Doanh thu',    icon: Wallet },
@@ -648,6 +909,9 @@ const TABS = [
   { id: 'brand',    label: 'Thương hiệu',  icon: Award },
   { id: 'products', label: 'Sản phẩm',     icon: Package },
   { id: 'orders',   label: 'Đơn hàng',     icon: ShoppingCart },
+  { id: 'payment',  label: 'Thanh toán',   icon: CreditCard },
+  { id: 'vouchers', label: 'Voucher',       icon: Tag },
+  { id: 'customers',label: 'Khách hàng',   icon: Crown },
 ];
 
 export default function Statistics() {
@@ -690,12 +954,15 @@ export default function Statistics() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'revenue':  return <RevenueTab period={period} />;
-      case 'category': return <CategoryTab />;
-      case 'brand':    return <BrandTab />;
-      case 'products': return <ProductsTab />;
-      case 'orders':   return <OrdersTab />;
-      default:         return null;
+      case 'revenue':   return <RevenueTab period={period} />;
+      case 'category':  return <CategoryTab />;
+      case 'brand':     return <BrandTab />;
+      case 'products':  return <ProductsTab />;
+      case 'orders':    return <OrdersTab />;
+      case 'payment':   return <PaymentTab />;
+      case 'vouchers':  return <VouchersTab />;
+      case 'customers': return <CustomersTab />;
+      default:          return null;
     }
   };
 
