@@ -1,29 +1,55 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useInventory } from "../../contexts/InventoryContext";
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SERIAL_STATUS_CFG = {
-  InStock:   { color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/15", border: "border-emerald-200 dark:border-emerald-500/30", dot: "bg-emerald-500", label: "Còn hàng" },
-  Sold:      { color: "text-blue-600 dark:text-blue-400",       bg: "bg-blue-50 dark:bg-blue-500/15",       border: "border-blue-200 dark:border-blue-500/30",       dot: "bg-blue-400",   label: "Đã bán" },
-  Defective: { color: "text-red-500 dark:text-red-400",         bg: "bg-red-50 dark:bg-red-500/15",         border: "border-red-200 dark:border-red-500/30",         dot: "bg-red-400",    label: "Lỗi" },
+  InStock: {
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-500/15",
+    border: "border-emerald-200 dark:border-emerald-500/30",
+    dot: "bg-emerald-500",
+    label: "Còn hàng",
+  },
+  Sold: {
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-500/15",
+    border: "border-blue-200 dark:border-blue-500/30",
+    dot: "bg-blue-400",
+    label: "Đã bán",
+  },
+  Defective: {
+    color: "text-red-500 dark:text-red-400",
+    bg: "bg-red-50 dark:bg-red-500/15",
+    border: "border-red-200 dark:border-red-500/30",
+    dot: "bg-red-400",
+    label: "Lỗi",
+  },
 };
 
 const SERIAL_TABS = [
-  { label: "Còn hàng",  value: "InStock"   },
-  { label: "Đã bán",    value: "Sold"      },
-  { label: "Lỗi",       value: "Defective" },
+  { label: "Còn hàng", value: "InStock" },
+  { label: "Đã bán", value: "Sold" },
+  { label: "Lỗi", value: "Defective" },
 ];
 
 const formatCurrency = (n) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n ?? 0);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    n ?? 0,
+  );
 
 // ─── MINI COMPONENTS ─────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const cfg = SERIAL_STATUS_CFG[status] || {
-    color: "text-gray-500", bg: "bg-gray-50", border: "border-gray-200", dot: "bg-gray-400", label: status,
+    color: "text-gray-500",
+    bg: "bg-gray-50",
+    border: "border-gray-200",
+    dot: "bg-gray-400",
+    label: status,
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
     </span>
@@ -33,9 +59,13 @@ const StatusBadge = ({ status }) => {
 const Toast = ({ msg }) => {
   if (!msg) return null;
   return (
-    <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-slide-up ${
-      msg.error ? "bg-red-50 border border-red-200 text-red-700" : "bg-emerald-50 border border-emerald-200 text-emerald-700"
-    }`}>
+    <div
+      className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-slide-up ${
+        msg.error
+          ? "bg-red-50 border border-red-200 text-red-700"
+          : "bg-emerald-50 border border-emerald-200 text-emerald-700"
+      }`}
+    >
       {msg.error ? "✖" : "✅"} {msg.text}
     </div>
   );
@@ -44,7 +74,9 @@ const Toast = ({ msg }) => {
 const SkeletonRow = ({ cols = 5 }) => (
   <tr className="animate-pulse">
     {Array.from({ length: cols }).map((_, i) => (
-      <td key={i} className="px-4 py-3"><div className="h-4 bg-gray-100 dark:bg-slate-700 rounded w-full" /></td>
+      <td key={i} className="px-4 py-3">
+        <div className="h-4 bg-gray-100 dark:bg-slate-700 rounded w-full" />
+      </td>
     ))}
   </tr>
 );
@@ -55,7 +87,9 @@ const LowStockTab = () => {
   const [threshold, setThreshold] = useState(5);
   const [inputVal, setInputVal] = useState("5");
 
-  useEffect(() => { fetchLowStock(threshold); }, [threshold]);
+  useEffect(() => {
+    fetchLowStock(threshold);
+  }, [threshold]);
 
   const applyThreshold = () => {
     const val = parseInt(inputVal, 10);
@@ -67,7 +101,9 @@ const LowStockTab = () => {
       {/* Filter row */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2">
-          <span className="text-sm text-gray-500 dark:text-slate-400">Ngưỡng tồn kho ≤</span>
+          <span className="text-sm text-gray-500 dark:text-slate-400">
+            Ngưỡng tồn kho ≤
+          </span>
           <input
             type="number"
             min={0}
@@ -83,7 +119,9 @@ const LowStockTab = () => {
           Lọc
         </button>
         <span className="text-sm text-gray-400 dark:text-slate-500">
-          {loading ? "Đang tải..." : `${lowStockItems.length} biến thể cần nhập hàng`}
+          {loading
+            ? "Đang tải..."
+            : `${lowStockItems.length} biến thể cần nhập hàng`}
         </span>
       </div>
 
@@ -92,32 +130,66 @@ const LowStockTab = () => {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Sản phẩm</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Biến thể</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Tồn kho</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">Giá</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Mức độ</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Sản phẩm
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                Biến thể
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Tồn kho
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                Giá
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Mức độ
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
+              Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonRow key={i} cols={5} />
+              ))
             ) : lowStockItems.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-gray-400 dark:text-slate-500"
+                >
                   <p className="text-3xl mb-2">✅</p>
-                  <p className="text-sm font-medium">Không có biến thể nào dưới ngưỡng tồn kho</p>
+                  <p className="text-sm font-medium">
+                    Không có biến thể nào dưới ngưỡng tồn kho
+                  </p>
                 </td>
               </tr>
             ) : (
               lowStockItems.map((item, idx) => {
                 const stock = item.stockQuantity ?? item.StockQuantity ?? 0;
                 const urgency =
-                  stock === 0 ? { label: "Hết hàng", color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-500/10" }
-                  : stock <= 2 ? { label: "Nguy hiểm", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/10" }
-                  : { label: "Thấp", color: "text-yellow-600 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-500/10" };
+                  stock === 0
+                    ? {
+                        label: "Hết hàng",
+                        color: "text-red-600 dark:text-red-400",
+                        bg: "bg-red-50 dark:bg-red-500/10",
+                      }
+                    : stock <= 2
+                      ? {
+                          label: "Nguy hiểm",
+                          color: "text-orange-600 dark:text-orange-400",
+                          bg: "bg-orange-50 dark:bg-orange-500/10",
+                        }
+                      : {
+                          label: "Thấp",
+                          color: "text-yellow-600 dark:text-yellow-400",
+                          bg: "bg-yellow-50 dark:bg-yellow-500/10",
+                        };
                 return (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr
+                    key={idx}
+                    className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800 dark:text-white truncate max-w-48">
                         {item.productName ?? item.ProductName ?? "—"}
@@ -132,13 +204,17 @@ const LowStockTab = () => {
                       </p>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="text-lg font-bold text-gray-800 dark:text-white">{stock}</span>
+                      <span className="text-lg font-bold text-gray-800 dark:text-white">
+                        {stock}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell text-gray-600 dark:text-slate-300">
                       {formatCurrency(item.price ?? item.Price)}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${urgency.bg} ${urgency.color}`}>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${urgency.bg} ${urgency.color}`}
+                      >
                         {urgency.label}
                       </span>
                     </td>
@@ -149,18 +225,30 @@ const LowStockTab = () => {
           </tbody>
         </table>
       </div>
+
     </div>
   );
 };
 
 // ─── SERIALS TAB ──────────────────────────────────────────────────────────────
 const SerialsTab = () => {
-  const { serials, loading, fetchSerialsByStatus, markDefective, markInStock } = useInventory();
+  const {
+    serials,
+    serialPagination,
+    loading,
+    fetchSerialsByStatus,
+    markDefective,
+    markInStock,
+  } = useInventory();
   const [activeStatus, setActiveStatus] = useState("Defective");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [toast, setToast] = useState(null);
   const [actingId, setActingId] = useState(null);
 
-  useEffect(() => { fetchSerialsByStatus(activeStatus); }, [activeStatus]);
+  useEffect(() => {
+    fetchSerialsByStatus(activeStatus, page, pageSize);
+  }, [activeStatus, page]);
 
   const showToast = (text, error = false) => {
     setToast({ text, error });
@@ -170,14 +258,20 @@ const SerialsTab = () => {
   const handleMarkDefective = async (serialId) => {
     setActingId(serialId);
     const res = await markDefective(serialId);
-    showToast(res.success ? "Đã đánh dấu serial là lỗi." : res.message, !res.success);
+    showToast(
+      res.success ? "Đã đánh dấu serial là lỗi." : res.message,
+      !res.success,
+    );
     setActingId(null);
   };
 
   const handleMarkInStock = async (serialId) => {
     setActingId(serialId);
     const res = await markInStock(serialId);
-    showToast(res.success ? "Đã chuyển serial về tồn kho." : res.message, !res.success);
+    showToast(
+      res.success ? "Đã chuyển serial về tồn kho." : res.message,
+      !res.success,
+    );
     setActingId(null);
   };
 
@@ -190,7 +284,10 @@ const SerialsTab = () => {
         {SERIAL_TABS.map((t) => (
           <button
             key={t.value}
-            onClick={() => setActiveStatus(t.value)}
+            onClick={() => {
+              setActiveStatus(t.value);
+              setPage(1);
+            }}
             className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
               activeStatus === t.value
                 ? "bg-orange-500 border-orange-500 text-white shadow-sm"
@@ -207,18 +304,31 @@ const SerialsTab = () => {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Serial</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">Sản phẩm</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Trạng thái</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Thao tác</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Serial
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
+                Sản phẩm
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
+                Thao tác
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
             {loading ? (
-              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={4} />)
+              Array.from({ length: 5 }).map((_, i) => (
+                <SkeletonRow key={i} cols={4} />
+              ))
             ) : serials.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-12 text-center text-gray-400 dark:text-slate-500">
+                <td
+                  colSpan={4}
+                  className="px-4 py-12 text-center text-gray-400 dark:text-slate-500"
+                >
                   <p className="text-3xl mb-2">📭</p>
                   <p className="text-sm font-medium">Không có serial nào</p>
                 </td>
@@ -229,7 +339,10 @@ const SerialsTab = () => {
                 const status = s.status ?? s.Status ?? activeStatus;
                 const isActing = actingId === id;
                 return (
-                  <tr key={id} className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr
+                    key={id}
+                    className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs font-semibold text-gray-800 dark:text-slate-200 tracking-wider">
                         {s.serialNumber ?? s.SerialNumber ?? "—"}
@@ -237,7 +350,7 @@ const SerialsTab = () => {
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <p className="font-medium text-gray-700 dark:text-slate-300 truncate max-w-40">
-                        {s.productName ?? s.ProductName ?? "—"}
+                        {s.productName ?? s.ProductName ?? `Chi tiet #${s.detailId ?? s.DetailId ?? "�"}`}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                         {s.variantInfo ?? s.VariantInfo ?? ""}
@@ -267,7 +380,9 @@ const SerialsTab = () => {
                           </button>
                         )}
                         {status === "Sold" && (
-                          <span className="text-xs text-gray-400 dark:text-slate-500 italic">Đã xuất</span>
+                          <span className="text-xs text-gray-400 dark:text-slate-500 italic">
+                            Đã xuất
+                          </span>
                         )}
                       </div>
                     </td>
@@ -278,6 +393,30 @@ const SerialsTab = () => {
           </tbody>
         </table>
       </div>
+
+      <div className="flex items-center justify-between gap-3 flex-wrap text-sm text-gray-500 dark:text-slate-400">
+        <span>
+          Trang <span className="font-semibold text-gray-700 dark:text-slate-200">{serialPagination.page}</span> /{" "}
+          <span className="font-semibold text-gray-700 dark:text-slate-200">{serialPagination.totalPageCount}</span>
+          {" "}� {serialPagination.totalCount} ket qua
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={loading || serialPagination.page <= 1}
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-orange-300"
+          >
+            Truoc
+          </button>
+          <button
+            onClick={() => setPage((p) => Math.min(serialPagination.totalPageCount || 1, p + 1))}
+            disabled={loading || serialPagination.page >= (serialPagination.totalPageCount || 1)}
+            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-orange-300"
+          >
+            Sau
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -285,7 +424,7 @@ const SerialsTab = () => {
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const TABS = [
   { id: "low-stock", label: "📦 Hàng tồn thấp" },
-  { id: "serials",   label: "🔢 Theo dõi Serial" },
+  { id: "serials", label: "🔢 Theo dõi Serial" },
 ];
 
 const InventoryManagement = () => {
@@ -303,8 +442,12 @@ const InventoryManagement = () => {
 
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Quản lý kho hàng</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Theo dõi tồn kho và trạng thái serial</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+          Quản lý kho hàng
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+          Theo dõi tồn kho và trạng thái serial
+        </p>
       </div>
 
       {/* Tabs */}
@@ -326,7 +469,7 @@ const InventoryManagement = () => {
 
       {/* Tab content */}
       {tab === "low-stock" && <LowStockTab />}
-      {tab === "serials"   && <SerialsTab />}
+      {tab === "serials" && <SerialsTab />}
     </div>
   );
 };
