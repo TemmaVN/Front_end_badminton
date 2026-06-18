@@ -44,6 +44,7 @@ import { ReviewProvider } from "./contexts/ReviewContext";
 import { AdminManagementProvider } from "./contexts/AdminManagementContext";
 import { InventoryProvider } from "./contexts/InventoryContext";
 import InventoryManagement from "./components/admin/InventoryManagement";
+import PermissonsAndRoles from "./components/admin/PermissionsAndRoles"
 import AuditManagement from "./components/admin/AuditManagement";
 import ReviewManagement from "./components/admin/ReviewManagement";
 import ReturnRequestManagement from "./components/admin/ReturnRequestManagement";
@@ -178,6 +179,7 @@ function AppRoutes() {
         <Route path="statistics" element={<Statistics />} />
         <Route path="vouchers" element={<VoucherManagement />} />
         <Route path="inventory" element={<InventoryManagement />} />
+        <Route path="roles" element={<PermissonsAndRoles />} />
         <Route path="audit" element={<AuditManagement />} />
         <Route path="reviews" element={<ReviewManagement />} />
         <Route path="returns" element={<ReturnRequestManagement />} />

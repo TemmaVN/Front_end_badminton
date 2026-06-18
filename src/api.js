@@ -154,8 +154,7 @@ export const metaDataApi = {
 
 // Category API
 export const categoryApi = {
-    getAll: () => api.get('/Category'), 
-    getById: (id) => api.get(`/Category/${id}`),
+    getAll: () => api.get('/Category'),
     create: (categoryName) => api.post('/Category', `"${categoryName}"`, {
         headers: { 'Content-Type': 'application/json' }
     }),
@@ -257,8 +256,6 @@ export const reviewApi = {
         api.get('/Review/my-reviews', { params: { page, pageSize } }),
     getMyReviewableItems: (page = 1, pageSize = 10) =>
         api.get('/Review/my-reviewable-items', { params: { page, pageSize } }),
-    getByOrder: (orderId) =>
-        api.get(`/Order/${orderId}/reviews`),
     create: (data) =>
         api.post('/Review', data),
     update: (reviewId, data) =>

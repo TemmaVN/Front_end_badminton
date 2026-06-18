@@ -83,7 +83,7 @@ const ProductList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
 
-    // Debounce price inputs → sync into filters after 600ms
+    // Debounce price inputs 600ms before triggering API call
     useEffect(() => {
         const t = setTimeout(() => {
             setFilters(prev => ({
@@ -342,6 +342,7 @@ const ProductList = () => {
 
     const formatPrice = (price) =>
         price ? price.toLocaleString('vi-VN') + ' ₫' : '—';
+
     
     return (
         <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
@@ -489,7 +490,7 @@ const ProductList = () => {
                         </div>
 
                         {/* Active indicator */}
-                        {(filters.minPrice || filters.maxPrice) && (
+                        {(priceRange.min || priceRange.max) && (
                             <button
                                 onClick={() => setPriceRange({ min: '', max: '' })}
                                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/30 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all"

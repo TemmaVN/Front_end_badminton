@@ -32,7 +32,7 @@ const OrderList = () => {
   const [filters, setFilters] = useState({
     status: "", keyword: "",
     fromDate: "", toDate: "",
-    minAmount: "", maxAmount: "",
+    minPrice: "", maxPrice: "",
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -41,9 +41,9 @@ const OrderList = () => {
   const [searchPagination, setSearchPagination] = useState({ totalPages: 1 });
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Switch to adminSearch when any date/price filter is set
+  // Use adminSearch for keyword or any advanced filter
   const isAdvancedMode = !!(
-    filters.fromDate || filters.toDate || filters.minAmount || filters.maxAmount
+    filters.keyword || filters.fromDate || filters.toDate || filters.minPrice || filters.maxPrice
   );
 
   const doSearch = useCallback(() => {
@@ -52,8 +52,8 @@ const OrderList = () => {
     if (filters.keyword)   params.keyword   = filters.keyword;
     if (filters.fromDate)  params.fromDate  = filters.fromDate;
     if (filters.toDate)    params.toDate    = filters.toDate;
-    if (filters.minAmount) params.minAmount = Number(filters.minAmount);
-    if (filters.maxAmount) params.maxAmount = Number(filters.maxAmount);
+    if (filters.minPrice) params.minPrice = Number(filters.minPrice);
+    if (filters.maxPrice) params.maxPrice = Number(filters.maxPrice);
     setSearchLoading(true);
     orderApi.adminSearch(params)
       .then(r => {
@@ -81,14 +81,7 @@ const OrderList = () => {
   const loading    = isAdvancedMode ? searchLoading  : contextLoading;
   const pagination = isAdvancedMode ? searchPagination : ctxPagination;
 
-  // Client-side keyword filter only in simple mode (within current page)
-  const displayedOrders = (!isAdvancedMode && filters.keyword.trim())
-    ? orders.filter(o =>
-        o.receiverName?.toLowerCase().includes(filters.keyword.toLowerCase()) ||
-        o.phoneNumber?.includes(filters.keyword) ||
-        String(o.orderId).includes(filters.keyword)
-      )
-    : orders;
+  const displayedOrders = orders;
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +101,7 @@ const OrderList = () => {
   }
 
   const resetFilters = () => {
-    setFilters({ status: "", keyword: "", fromDate: "", toDate: "", minAmount: "", maxAmount: "" });
+    setFilters({ status: "", keyword: "", fromDate: "", toDate: "", minPrice: "", maxPrice: "" });
     setPage(1);
     setShowAdvanced(false);
   };
@@ -127,7 +120,7 @@ const OrderList = () => {
     }
   };
 
-  const hasActiveAdvanced = !!(filters.fromDate || filters.toDate || filters.minAmount || filters.maxAmount);
+  const hasActiveAdvanced = !!(filters.keyword || filters.fromDate || filters.toDate || filters.minPrice || filters.maxPrice);
 
   return (
     <div className="p-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
@@ -209,8 +202,8 @@ const OrderList = () => {
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Giá tối thiểu (đ)</label>
                 <input
                   type="number"
-                  name="minAmount"
-                  value={filters.minAmount}
+                  name="minPrice"
+                  value={filters.minPrice}
                   onChange={handleFilterChange}
                   placeholder="0"
                   min="0"
@@ -221,8 +214,8 @@ const OrderList = () => {
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 block">Giá tối đa (đ)</label>
                 <input
                   type="number"
-                  name="maxAmount"
-                  value={filters.maxAmount}
+                  name="maxPrice"
+                  value={filters.maxPrice}
                   onChange={handleFilterChange}
                   placeholder="Không giới hạn"
                   min="0"

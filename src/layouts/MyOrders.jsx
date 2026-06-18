@@ -493,14 +493,17 @@ const OrderDetailPanel = ({ order, onClose, onCancel, cancelling, onWarranty, on
 
   const loadReviews = useCallback(() => {
     if (!canReview) return;
-    reviewApi.getByOrder(order.orderId)
+    const orderDetailIds = new Set(order.orderDetails?.map(d => d.orderDetailId) ?? []);
+    reviewApi.getMyReviews(1, 100)
       .then((res) => {
         const map = {};
-        (res.data.items ?? []).forEach((r) => { map[r.orderDetailId] = r; });
+        (res.data.items ?? [])
+          .filter(r => orderDetailIds.has(r.orderDetailId))
+          .forEach((r) => { map[r.orderDetailId] = r; });
         setOrderReviews(map);
       })
       .catch(() => {});
-  }, [order.orderId, canReview]);
+  }, [order.orderId, order.orderDetails, canReview]);
 
   useEffect(() => { loadReviews(); }, [loadReviews]);
 

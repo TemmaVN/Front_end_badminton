@@ -178,12 +178,20 @@ function RevenueTab({ period }) {
 }
 
 // ─── Category Tab ─────────────────────────────────────────────────────
-function CategoryTab() {
-  const { revenueByCategory, revenueCategoryByMonth } = useStatistic();
+function CategoryTab({ period }) {
   const { isDark } = useTheme();
+  const [catList, setCatList] = useState([]);
+  const [catMonthList, setCatMonthList] = useState([]);
 
-  const catList = revenueByCategory?.data ?? [];
-  const catMonthList = revenueCategoryByMonth?.data ?? [];
+  useEffect(() => {
+    const year = Number(period);
+    statisticApi.getRevenueByCategoy({ year })
+      .then(r => setCatList(r.data?.data ?? r.data ?? []))
+      .catch(() => {});
+    statisticApi.getRevenueCategoryByMonth({ year })
+      .then(r => setCatMonthList(r.data?.data ?? r.data ?? []))
+      .catch(() => {});
+  }, [period]);
 
   const catData = useMemo(() => catList.map((c, i) => ({
     name:      c.categoryName,
@@ -208,7 +216,7 @@ function CategoryTab() {
     return MONTH_LABELS.map((_, idx) => months[idx + 1] ?? { thang: MONTH_LABELS[idx] });
   }, [catMonthList]);
 
-  if (!catData.length) {
+  if (!catList.length) {
     return (
       <Card className="p-12 text-center">
         <p className="text-slate-400">Không có dữ liệu danh mục</p>
@@ -318,11 +326,15 @@ function CategoryTab() {
 }
 
 // ─── Brand Tab ────────────────────────────────────────────────────────
-function BrandTab() {
-  const { revenueByBrand } = useStatistic();
+function BrandTab({ period }) {
   const { isDark } = useTheme();
+  const [brandList, setBrandList] = useState([]);
 
-  const brandList = revenueByBrand?.data ?? [];
+  useEffect(() => {
+    statisticApi.getRevenueByBrand({ year: Number(period) })
+      .then(r => setBrandList(r.data?.data ?? r.data ?? []))
+      .catch(() => {});
+  }, [period]);
 
   const brandData = useMemo(() => brandList.map((b, i) => ({
     ten:      b.brandName,
@@ -916,7 +928,7 @@ const TABS = [
 
 export default function Statistics() {
   const [activeTab, setActiveTab] = useState('revenue');
-  const [period,    setPeriod]    = useState('2025');
+  const [period,    setPeriod]    = useState('2024');
   const { overview } = useStatistic();
 
   const ovData = overview?.data;
@@ -955,8 +967,8 @@ export default function Statistics() {
   const renderTab = () => {
     switch (activeTab) {
       case 'revenue':   return <RevenueTab period={period} />;
-      case 'category':  return <CategoryTab />;
-      case 'brand':     return <BrandTab />;
+      case 'category':  return <CategoryTab period={period} />;
+      case 'brand':     return <BrandTab period={period} />;
       case 'products':  return <ProductsTab />;
       case 'orders':    return <OrdersTab />;
       case 'payment':   return <PaymentTab />;

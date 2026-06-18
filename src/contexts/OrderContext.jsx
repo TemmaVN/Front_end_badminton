@@ -77,7 +77,7 @@ export const OrderProvider = ({ children }) => {
   // ── Admin: update order status ────────────────────────────────────────
   const updateOrderStatus = async (orderId, newStatusId) => {
     try {
-      await orderApi.updateStatus(orderId, newStatusId);
+      await orderApi.updateStatus(orderId, { newOrderStatusId: newStatusId });
       return { success: true };
     } catch (err) {
       return { success: false, message: err.response?.data?.message ?? err.message };

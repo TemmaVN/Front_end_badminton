@@ -78,11 +78,12 @@ export const ReviewProvider = ({ children }) => {
     }
   };
 
-  // ── Customer: reviews for a specific order ────────────────────────────
-  const fetchOrderReviews = async (orderId) => {
+  // ── Customer: reviews for a specific order (filter by orderDetailIds) ─
+  const fetchOrderReviews = async (orderDetailIds = []) => {
     try {
-      const res = await reviewApi.getByOrder(orderId);
-      return res.data.items ?? [];
+      const res = await reviewApi.getMyReviews(1, 100);
+      const ids = new Set(orderDetailIds);
+      return (res.data.items ?? []).filter(r => ids.has(r.orderDetailId));
     } catch (err) {
       console.error("fetchOrderReviews failed:", err);
       return [];
@@ -127,7 +128,9 @@ export const ReviewProvider = ({ children }) => {
   const fetchAdminReviews = async (page = 1, pageSize = 10, isVisible = undefined) => {
     setLoading(true);
     try {
-      const res = await reviewApi.getForAdmin(page, pageSize, isVisible);
+      const params = { page, pageSize };
+      if (isVisible !== undefined) params.isVisible = isVisible;
+      const res = await reviewApi.getForAdmin(params);
       setAdminReviews(res.data.items ?? []);
       setPagination({
         totalCount: res.data.totalCount ?? 0,

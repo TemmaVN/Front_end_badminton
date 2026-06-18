@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, Users, Phone, Mail, MapPin, Calendar,
   Eye, X, User, Home, ShoppingBag, AlertCircle,
-  Plus, Loader2, Lock, Unlock, Package,
+  Plus, Loader2, Lock, Unlock, Package, Shield,
 } from 'lucide-react';
 import { userApi } from '../../api';
 
@@ -235,17 +235,153 @@ function CustomerDetailPanel({ customer, onClose }) {
   );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────
+const getRoleNames = (user) => {
+  // Handle: roles: ['Admin'], roles: [{name:'Admin'}], role: 'Admin', userRoles: [{role:{name:'Admin'}}]
+  const normalise = (r) => {
+    if (!r) return '';
+    if (typeof r === 'string') return r;
+    return (r.name ?? r.roleName ?? r.value ?? r.role?.name ?? r.role?.roleName ?? '');
+  };
+  if (Array.isArray(user.roles))     return user.roles.map(normalise).filter(Boolean);
+  if (user.roles)                    return [normalise(user.roles)].filter(Boolean);
+  if (Array.isArray(user.userRoles)) return user.userRoles.map(normalise).filter(Boolean);
+  if (user.role)                     return [normalise(user.role)].filter(Boolean);
+  return [];
+};
+
+const hasRole = (user, role) =>
+  getRoleNames(user).some(r => r.toLowerCase() === role.toLowerCase());
+
+// ─── Admin User Table ─────────────────────────────────────────────────
+function AdminTable({ admins, loading, onToggleActive, onSelect }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-orange-default border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-400">Đang tải danh sách...</p>
+        </div>
+      </div>
+    );
+  }
+  if (!admins.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <Shield className="w-12 h-12 text-slate-300 dark:text-slate-700" />
+        <p className="text-slate-500 dark:text-slate-400 font-medium">Không có quản trị viên nào</p>
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-slate-200/50 dark:border-slate-700/50 bg-slate-50/60 dark:bg-slate-800/60">
+            <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Quản trị viên
+            </th>
+            <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">
+              Số điện thoại
+            </th>
+            <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">
+              Ngày sinh
+            </th>
+            <th className="text-center px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Vai trò
+            </th>
+            <th className="text-center px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Trạng thái
+            </th>
+            <th className="text-center px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              Chi tiết
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {admins.map((admin, i) => {
+            const uid = admin.userId ?? admin.id ?? i;
+            return (
+              <tr
+                key={uid}
+                onClick={() => onSelect(admin)}
+                className="border-b border-slate-100 dark:border-slate-800/80 hover:bg-orange-50/40 dark:hover:bg-slate-800/60 transition-colors cursor-pointer group"
+              >
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl bg-linear-to-br ${avatarColor(admin.fullName)} flex items-center justify-center text-white text-sm font-black shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200`}>
+                      {initials(admin.fullName)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-800 dark:text-white truncate max-w-40">
+                        {admin.fullName || <span className="italic text-slate-400">Chưa có tên</span>}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-40">{admin.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-4 hidden sm:table-cell">
+                  {admin.phoneNumber ? (
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="font-mono text-slate-700 dark:text-slate-300 text-xs">{admin.phoneNumber}</span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-400 italic text-xs">Chưa cập nhật</span>
+                  )}
+                </td>
+                <td className="px-5 py-4 hidden md:table-cell">
+                  <span className="text-slate-600 dark:text-slate-400 text-xs">{fmtDate(admin.dateOfBirth)}</span>
+                </td>
+                <td className="px-5 py-4 text-center">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    <Shield className="w-3 h-3" />
+                    Admin
+                  </span>
+                </td>
+                <td className="px-5 py-4 text-center">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleActive(e, admin); }}
+                    title={admin.isActive ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                      admin.isActive
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                        : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                    }`}
+                  >
+                    {admin.isActive ? <><Lock className="w-3.5 h-3.5" /> Khóa</> : <><Unlock className="w-3.5 h-3.5" /> Mở khóa</>}
+                  </button>
+                </td>
+                <td className="px-5 py-4 text-center">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onSelect(admin); }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-orange-100 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Xem
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────
 const PAGE_SIZE = 12;
 
 const UserList = () => {
-  const [customers, setCustomers]   = useState([]);
+  const [allUsers,  setAllUsers]    = useState([]);
   const [loading,   setLoading]     = useState(true);
   const [error,     setError]       = useState('');
   const [searchVal, setSearchVal]   = useState('');
   const [keyword,   setKeyword]     = useState('');
   const [selected,  setSelected]    = useState(null);
   const [page,      setPage]        = useState(1);
+  const [roleTab,   setRoleTab]     = useState('customer'); // 'customer' | 'admin'
 
   const EMPTY_USER = { email: '', password: '', fullName: '', phoneNumber: '', dateOfBirth: '', roles: ['Customer'] };
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -266,7 +402,7 @@ const UserList = () => {
           const list = Array.isArray(res.data)
             ? res.data
             : res.data?.data ?? [];
-          setCustomers(list);
+          setAllUsers(list);
           setPage(1);
         }
       } catch {
@@ -314,7 +450,7 @@ const UserList = () => {
     const newActive = !customer.isActive;
     try {
       await userApi.setActive(uid, newActive);
-      setCustomers(prev => prev.map(c =>
+      setAllUsers(prev => prev.map(c =>
         (c.userId ?? c.id) === uid ? { ...c, isActive: newActive } : c
       ));
     } catch {
@@ -322,20 +458,31 @@ const UserList = () => {
     }
   };
 
-  // Derived
-  const total       = customers.length;
-  const withPhone   = customers.filter((c) => c.phoneNumber).length;
-  const withAddress = customers.filter((c) => c.city).length;
-  const complete    = customers.filter(profileComplete).length;
-  const totalPages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const paginated   = customers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Derived — split by role
+  const admins    = allUsers.filter(u => hasRole(u, 'Admin'));
+  const customers = allUsers.filter(u => !hasRole(u, 'Admin'));
+  const activeList = roleTab === 'admin' ? admins : customers;
 
-  const stats = [
-    { label: "Tổng khách hàng",   value: total,           color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-900/20",      icon: Users },
-    { label: "Có số điện thoại",  value: withPhone,       color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20",icon: Phone },
-    { label: "Có địa chỉ",        value: withAddress,     color: "text-purple-500",  bg: "bg-purple-50 dark:bg-purple-900/20",  icon: MapPin },
-    { label: "Đầy đủ thông tin",  value: complete,        color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-900/20",  icon: User },
-  ];
+  const total       = activeList.length;
+  const withPhone   = activeList.filter((c) => c.phoneNumber).length;
+  const withAddress = activeList.filter((c) => c.city).length;
+  const complete    = customers.filter(profileComplete).length; // only meaningful for customers
+  const totalPages  = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const paginated   = activeList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const stats = roleTab === 'admin'
+    ? [
+        { label: "Tổng quản trị viên", value: admins.length,    color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-900/20",  icon: Shield },
+        { label: "Có số điện thoại",   value: withPhone,        color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20",icon: Phone },
+        { label: "Đang hoạt động",     value: admins.filter(a => a.isActive).length, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", icon: Users },
+        { label: "Tổng khách hàng",    value: customers.length, color: "text-purple-500",  bg: "bg-purple-50 dark:bg-purple-900/20",  icon: User },
+      ]
+    : [
+        { label: "Tổng khách hàng",   value: customers.length, color: "text-blue-500",    bg: "bg-blue-50 dark:bg-blue-900/20",      icon: Users },
+        { label: "Có số điện thoại",  value: withPhone,        color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/20",icon: Phone },
+        { label: "Có địa chỉ",        value: withAddress,      color: "text-purple-500",  bg: "bg-purple-50 dark:bg-purple-900/20",  icon: MapPin },
+        { label: "Đầy đủ thông tin",  value: complete,         color: "text-orange-500",  bg: "bg-orange-50 dark:bg-orange-900/20",  icon: User },
+      ];
 
   // Pagination page numbers (show up to 5 pages around current)
   const pageNums = (() => {
@@ -349,11 +496,40 @@ const UserList = () => {
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-black text-slate-800 dark:text-white">Quản lý khách hàng</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          {loading ? 'Đang tải...' : `${total} khách hàng trong hệ thống`}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-800 dark:text-white">Quản lý người dùng</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            {loading ? 'Đang tải...' : `${allUsers.length} tài khoản trong hệ thống`}
+          </p>
+        </div>
+        {/* Role tabs */}
+        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          {[
+            { id: 'customer', label: 'Khách hàng', icon: Users,  count: customers.length },
+            { id: 'admin',    label: 'Quản trị viên', icon: Shield, count: admins.length },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { setRoleTab(tab.id); setPage(1); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                roleTab === tab.id
+                  ? 'bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                roleTab === tab.id
+                  ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+              }`}>
+                {loading ? '—' : tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -386,7 +562,7 @@ const UserList = () => {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Tìm theo tên, email, số điện thoại..."
+                placeholder={roleTab === 'admin' ? "Tìm quản trị viên theo tên, email..." : "Tìm theo tên, email, số điện thoại..."}
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border
@@ -423,7 +599,7 @@ const UserList = () => {
           </form>
           {keyword && (
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              Kết quả cho: <span className="font-semibold text-orange-500">"{keyword}"</span> — {total} khách hàng
+              Kết quả cho: <span className="font-semibold text-orange-500">"{keyword}"</span> — {total} {roleTab === 'admin' ? 'quản trị viên' : 'khách hàng'}
             </p>
           )}
         </div>
@@ -447,14 +623,24 @@ const UserList = () => {
               Thử lại
             </button>
           </div>
-        ) : customers.length === 0 ? (
+        ) : activeList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <Users className="w-12 h-12 text-slate-300 dark:text-slate-700" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">Không tìm thấy khách hàng</p>
-            {keyword && (
-              <p className="text-sm text-slate-400">Thử tìm kiếm với từ khóa khác</p>
-            )}
+            {roleTab === 'admin'
+              ? <Shield className="w-12 h-12 text-slate-300 dark:text-slate-700" />
+              : <Users className="w-12 h-12 text-slate-300 dark:text-slate-700" />
+            }
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
+              {roleTab === 'admin' ? 'Không tìm thấy quản trị viên' : 'Không tìm thấy khách hàng'}
+            </p>
+            {keyword && <p className="text-sm text-slate-400">Thử tìm kiếm với từ khóa khác</p>}
           </div>
+        ) : roleTab === 'admin' ? (
+          <AdminTable
+            admins={paginated}
+            loading={false}
+            onToggleActive={handleToggleActive}
+            onSelect={setSelected}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -471,6 +657,9 @@ const UserList = () => {
                   </th>
                   <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden md:table-cell">
                     Ngày sinh
+                  </th>
+                  <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide hidden sm:table-cell">
+                    Vai trò
                   </th>
                   <th className="text-left px-5 py-3.5 font-semibold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                     Hồ sơ
@@ -550,6 +739,24 @@ const UserList = () => {
                         </span>
                       </td>
 
+                      {/* Role badge */}
+                      <td className="px-5 py-4 hidden sm:table-cell">
+                        {(() => {
+                          const roleNames = getRoleNames(customer);
+                          if (roleNames.length === 0) return <span className="text-slate-400 italic text-xs">—</span>;
+                          return roleNames.map((r, idx) => (
+                            <span key={idx} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold mr-1 ${
+                              r.toLowerCase() === 'admin'
+                                ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            }`}>
+                              {r.toLowerCase() === 'admin' ? <Shield className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                              {r}
+                            </span>
+                          ));
+                        })()}
+                      </td>
+
                       {/* Profile completeness */}
                       <td className="px-5 py-4">
                         <span
@@ -611,7 +818,7 @@ const UserList = () => {
               <span className="font-semibold text-slate-700 dark:text-slate-300">
                 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)}
               </span>{' '}
-              / {total} khách hàng
+              / {total} {roleTab === 'admin' ? 'quản trị viên' : 'khách hàng'}
             </p>
             <div className="flex items-center gap-1">
               <button

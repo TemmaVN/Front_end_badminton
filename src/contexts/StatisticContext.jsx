@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { statisticApi } from "../api";
 
 const StatisticContext = createContext(null);
@@ -21,7 +21,6 @@ export const StatisticProvider = ({ children }) => {
     const [revenueByMonth, setRevenueByMonth] = useState(null);
     const [revenueCategoryByMonth, setRevenueCategoryByMonth] = useState(null);
     const [fullReport, setFullReport] = useState(null);
-
     const fetchOverview = useCallback(async () => {
         try {
             setLoading(true);
@@ -65,7 +64,7 @@ export const StatisticProvider = ({ children }) => {
         try {
             setLoading(true);
             setError(null);
-            const res = await statisticApi.getRevenueByMonth({year:2025 });
+            const res = await statisticApi.getRevenueByMonth({ year: 2025 });
             setRevenueByMonth(res.data.data);
         } catch (err) {
             setError(err.response?.data?.message || "Không thể tải dữ liệu");
@@ -74,11 +73,11 @@ export const StatisticProvider = ({ children }) => {
         }
     }, []);
 
-    const fetchRevenueCategoryByMonth = useCallback(async () => {
+    const fetchRevenueCategoryByMonth = useCallback(async (year = new Date().getFullYear()) => {
         try {
             setLoading(true);
             setError(null);
-            const res = await statisticApi.getRevenueCategoryByMonth();
+            const res = await statisticApi.getRevenueCategoryByMonth({ year });
             setRevenueCategoryByMonth(res.data);
         } catch (err) {
             setError(err.response?.data?.message || "Không thể tải dữ liệu");
@@ -100,14 +99,61 @@ export const StatisticProvider = ({ children }) => {
         }
     }, []);
 
-    useEffect(() => {
-        fetchOverview();
-        fetchRevenueByCategory();
-        fetchRevenueByBrand();
-        fetchRevenueByMonth();
-        fetchRevenueCategoryByMonth();
-        fetchFullReport();
-    }, [fetchOverview, fetchRevenueByCategory, fetchRevenueByBrand, fetchRevenueByMonth, fetchRevenueCategoryByMonth, fetchFullReport]);
+    const [orderStatusStats, setOrderStatusStats] = useState(null);
+    const fetchOrderStatusStats = useCallback(async (params = {}) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const res = await statisticApi.getOrderStatus(params);
+            setOrderStatusStats(res.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Không thể tải dữ liệu");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const [revenueByPaymentMethod, setRevenueByPaymentMethod] = useState(null);
+    const fetchRevenueByPaymentMethod = useCallback(async (params = {}) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const res = await statisticApi.getRevenueByPaymentMethod(params);
+            setRevenueByPaymentMethod(res.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Không thể tải dữ liệu");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const [voucherEffectiveness, setVoucherEffectiveness] = useState(null);
+    const fetchVoucherEffectiveness = useCallback(async (params = {}) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const res = await statisticApi.getVoucherEffectiveness(params);
+            setVoucherEffectiveness(res.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Không thể tải dữ liệu");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const [topCustomers, setTopCustomers] = useState(null);
+    const fetchTopCustomers = useCallback(async (params = {}) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const res = await statisticApi.getTopCustomers(params);
+            setTopCustomers(res.data);
+        } catch (err) {
+            setError(err.response?.data?.message || "Không thể tải dữ liệu");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     return (
         <StatisticContext.Provider
@@ -118,6 +164,10 @@ export const StatisticProvider = ({ children }) => {
                 revenueByMonth,
                 revenueCategoryByMonth,
                 fullReport,
+                orderStatusStats,
+                revenueByPaymentMethod,
+                voucherEffectiveness,
+                topCustomers,
                 loading,
                 error,
                 fetchOverview,
@@ -126,6 +176,10 @@ export const StatisticProvider = ({ children }) => {
                 fetchRevenueByMonth,
                 fetchRevenueCategoryByMonth,
                 fetchFullReport,
+                fetchOrderStatusStats,
+                fetchRevenueByPaymentMethod,
+                fetchVoucherEffectiveness,
+                fetchTopCustomers,
             }}
         >
             {children}
