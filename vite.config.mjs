@@ -21,6 +21,12 @@ export default defineConfig({
                         res.end(JSON.stringify({ message: 'Backend not available. Make sure backend is running on port 5106' }));
                     });
                 }
+            },
+            // Proxy ảnh upload — Vite không có wwwroot/, forward về backend
+            '/uploads': {
+                target: 'http://localhost:5106',
+                changeOrigin: true,
+                secure: false,
             }
         }
     }

@@ -43,7 +43,8 @@ const DetailModal = ({ request, onClose, onUpdate }) => {
   const [action, setAction]         = useState(null); // 'approve' | 'reject' | 'refund' | 'proof'
   const [adminNote, setAdminNote]   = useState('');
   const [refundAmount, setRefundAmount] = useState(request.orderFinalAmount ?? '');
-  const [proofUrl, setProofUrl]     = useState('');
+  const [proofFile, setProofFile]   = useState(null);
+  const [proofPreview, setProofPreview] = useState('');
   const [proofNote, setProofNote]   = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState(null);
@@ -69,8 +70,8 @@ const DetailModal = ({ request, onClose, onUpdate }) => {
           refundAmount: refundAmount ? Number(refundAmount) : null,
         });
       } else if (action === 'proof') {
-        if (!proofUrl.trim()) { setError('Vui lòng nhập đường dẫn ảnh.'); setSubmitting(false); return; }
-        await returnApi.addDeliveryProof(request.orderId, { imageUrl: proofUrl.trim(), note: proofNote.trim() || null });
+        if (!proofFile) { setError('Vui lòng chọn ảnh minh chứng.'); setSubmitting(false); return; }
+        await returnApi.addDeliveryProof(request.orderId, proofFile, proofNote.trim() || null);
       }
       onUpdate();
       onClose();
@@ -234,11 +235,57 @@ const DetailModal = ({ request, onClose, onUpdate }) => {
           {action === 'proof' && (
             <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-3">
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">📷 Thêm ảnh minh chứng giao hàng</p>
+              {/* Vùng kéo thả */}
               <div>
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Đường dẫn ảnh <span className="text-red-500">*</span></label>
-                <input type="text" value={proofUrl} onChange={(e) => setProofUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Chọn ảnh <span className="text-red-500">*</span></label>
+                <div
+                  className={`mt-1 border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition-colors
+                    ${proofFile
+                      ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/10'
+                      : 'border-slate-300 dark:border-slate-600 hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'}`}
+                  onClick={() => document.getElementById('return-proof-input').click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const f = e.dataTransfer.files[0];
+                    if (f?.type.startsWith('image/')) {
+                      if (proofPreview) URL.revokeObjectURL(proofPreview);
+                      setProofFile(f);
+                      setProofPreview(URL.createObjectURL(f));
+                    }
+                  }}
+                >
+                  <input
+                    id="return-proof-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files[0];
+                      if (!f) return;
+                      if (proofPreview) URL.revokeObjectURL(proofPreview);
+                      setProofFile(f);
+                      setProofPreview(URL.createObjectURL(f));
+                    }}
+                  />
+                  {proofPreview ? (
+                    <div className="flex items-center gap-3">
+                      <img src={proofPreview} alt="preview" className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
+                      <div className="text-left flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{proofFile?.name}</p>
+                        <p className="text-xs text-slate-400">{proofFile ? (proofFile.size / 1024).toFixed(0) + ' KB' : ''}</p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); URL.revokeObjectURL(proofPreview); setProofFile(null); setProofPreview(''); }}
+                        className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0 text-lg leading-none"
+                      >×</button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 py-2">
+                      Kéo ảnh vào đây hoặc <span className="text-orange-500 font-medium">chọn file</span>
+                    </p>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-500 dark:text-slate-400">Ghi chú (tuỳ chọn)</label>
@@ -248,7 +295,7 @@ const DetailModal = ({ request, onClose, onUpdate }) => {
               </div>
               {error && <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">{error}</p>}
               <div className="flex gap-2">
-                <button onClick={() => { setAction(null); setError(null); }}
+                <button onClick={() => { setAction(null); setError(null); setProofFile(null); if (proofPreview) { URL.revokeObjectURL(proofPreview); setProofPreview(''); } }}
                   className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                   Huỷ
                 </button>

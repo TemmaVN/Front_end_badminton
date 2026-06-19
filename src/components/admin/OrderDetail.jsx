@@ -35,32 +35,20 @@ const NEXT_ACTIONS = {
 
 const DELIVERY_STATUS_ID = 6;
 
-const isBase64Url = (s) => s.trimStart().startsWith("data:");
-
 const DeliveryProofModal = ({ onConfirm, onCancel, isUpdating }) => {
-  const [imageUrl, setImageUrl]     = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [note, setNote]             = useState("");
+  const [file, setFile]       = useState(null);
+  const [preview, setPreview] = useState("");
+  const [note, setNote]       = useState("");
 
-  const isBase64 = isBase64Url(imageUrl);
-  const valid    = imageUrl.trim().length > 0 && !isBase64;
-
-  const handleUrlChange = (e) => {
-    const val = e.target.value;
-    // Reject base64 immediately — truncate to avoid storing huge strings
-    if (isBase64Url(val)) {
-      setImageUrl(val.slice(0, 30));
-      return;
-    }
-    setImageUrl(val);
+  const handleFile = (f) => {
+    if (!f || !f.type.startsWith("image/")) return;
+    if (preview) URL.revokeObjectURL(preview);
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
   };
 
-  useEffect(() => {
-    const next = isBase64Url(imageUrl) ? "" : imageUrl.trim();
-    const delay = next ? 600 : 0;
-    const t = setTimeout(() => setPreviewUrl(next), delay);
-    return () => clearTimeout(t);
-  }, [imageUrl]);
+  // Giải phóng ObjectURL khi modal đóng
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, []);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -69,36 +57,55 @@ const DeliveryProofModal = ({ onConfirm, onCancel, isUpdating }) => {
           Xác nhận đã giao hàng
         </h3>
         <p className="text-sm text-gray-500 dark:text-slate-400 mb-5">
-          Vui lòng cung cấp hình ảnh bằng chứng giao hàng trước khi xác nhận.
+          Vui lòng tải lên hình ảnh bằng chứng giao hàng trước khi xác nhận.
         </p>
 
         <div className="space-y-4">
+          {/* Vùng kéo thả / chọn file */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
-              URL hình ảnh bằng chứng <span className="text-red-500">*</span>
+              Ảnh bằng chứng <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              placeholder="https://..."
-              value={imageUrl}
-              onChange={handleUrlChange}
-              className={`w-full px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-800 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent ${isBase64 ? "border-red-400 focus:ring-red-400" : "border-gray-200 dark:border-slate-700 focus:ring-green-500"}`}
-            />
-            {isBase64 && (
-              <p className="mt-1.5 text-xs text-red-500">
-                Không hỗ trợ ảnh base64. Vui lòng tải ảnh lên hosting (imgur, cloudinary...) rồi dán link <strong>https://</strong>.
-              </p>
-            )}
-            {previewUrl && (
-              <img
-                src={previewUrl}
-                alt="preview"
-                className="mt-2 w-full max-h-48 object-contain rounded-lg border border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800"
-                onError={(e) => { e.target.style.display = "none"; }}
+            <div
+              className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors
+                ${file
+                  ? "border-green-400 bg-green-50 dark:bg-green-900/10"
+                  : "border-gray-300 dark:border-slate-600 hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-900/10"}`}
+              onClick={() => document.getElementById("delivery-proof-input").click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
+            >
+              <input
+                id="delivery-proof-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files[0])}
               />
-            )}
+              {preview ? (
+                <div className="flex items-center gap-3">
+                  <img src={preview} alt="preview" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-200 truncate">{file?.name}</p>
+                    <p className="text-xs text-gray-400">{file ? (file.size / 1024).toFixed(0) + " KB" : ""}</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); URL.revokeObjectURL(preview); setFile(null); setPreview(""); }}
+                    className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="py-3">
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Kéo ảnh vào đây hoặc <span className="text-green-600 font-medium">chọn file</span></p>
+                  <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WEBP...</p>
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Ghi chú */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5">
               Ghi chú giao hàng <span className="text-gray-400 font-normal">(tùy chọn)</span>
@@ -122,8 +129,8 @@ const DeliveryProofModal = ({ onConfirm, onCancel, isUpdating }) => {
             Hủy
           </button>
           <button
-            onClick={() => onConfirm(imageUrl.trim(), note.trim())}
-            disabled={!valid || isUpdating}
+            onClick={() => onConfirm(file, note.trim())}
+            disabled={!file || isUpdating}
             className="flex-1 py-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
@@ -559,9 +566,18 @@ const OrderDetail = ({ order, onClose, onUpdate }) => {
         <DeliveryProofModal
           isUpdating={isUpdating}
           onCancel={() => setShowDeliveryProof(false)}
-          onConfirm={(imageUrl, note) => {
+          onConfirm={async (file, note) => {
             setShowDeliveryProof(false);
-            handleUpdateStatus(DELIVERY_STATUS_ID, imageUrl, note);
+            setIsUpdating(true);
+            try {
+              // Upload file trước, lấy URL về rồi mới cập nhật status đơn
+              const res = await returnApi.addDeliveryProof(localOrder.orderId, file, note);
+              const savedUrl = res.data?.data?.imageUrl ?? res.data?.imageUrl ?? "";
+              handleUpdateStatus(DELIVERY_STATUS_ID, savedUrl, note);
+            } catch (err) {
+              alert(err.response?.data?.message ?? "Tải ảnh minh chứng thất bại.");
+              setIsUpdating(false);
+            }
           }}
         />
       )}

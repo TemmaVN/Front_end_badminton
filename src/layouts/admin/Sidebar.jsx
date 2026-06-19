@@ -42,8 +42,8 @@ const menuItems = [
     path: "sales-overview",
     submenu: [
       { id: "don-hang",   label: "Đơn hàng",       path: "orders"    },
-      { id: "bao-hanh",   label: "Bảo hành",        path: "warranty", icon: ShieldCheck },
-      { id: "thanh-toan", label: "Thanh toán",       path: "payment"  },
+      // { id: "bao-hanh",   label: "Bảo hành",        path: "warranty", icon: ShieldCheck },
+      // { id: "thanh-toan", label: "Thanh toán",       path: "payment"  },
       { id: "voucher",    label: "Voucher",          path: "vouchers" },
       { id: "kho-hang",   label: "Quản lý kho",      path: "inventory", icon: Warehouse },
       { id: "danh-gia",   label: "Đánh giá",          path: "reviews",   icon: Star },
@@ -69,7 +69,7 @@ const menuItems = [
     label: "Hệ thống",
     submenu: [
       { id: "quan-tri-vien", label: "Quản trị viên",     path: "admin-info" },
-      { id: "vai-tro",       label: "Vai trò & Quyền hạn", path: "roles"    },
+      // { id: "vai-tro",       label: "Vai trò & Quyền hạn", path: "roles"    },
       { id: "nhat-ky",       label: "Nhật ký & Cảnh báo",  path: "audit", icon: ClipboardList },
     ],
   },

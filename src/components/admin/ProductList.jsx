@@ -35,7 +35,8 @@ const ProductList = () => {
     const [imageModalProduct, setImageModalProduct] = useState(null);
     const [images, setImages] = useState([]);
     const [imageLoading, setImageLoading] = useState(false);
-    const [newImageUrl, setNewImageUrl] = useState('');
+    const [newImageFile, setNewImageFile] = useState(null);      // File object
+    const [newImagePreview, setNewImagePreview] = useState(''); // ObjectURL để preview
     const [newImageIsMain, setNewImageIsMain] = useState(false);
     const [addingImage, setAddingImage] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
@@ -199,7 +200,8 @@ const ProductList = () => {
     const openImageModal = async (e, product) => {
         e.stopPropagation();
         setImageModalProduct(product);
-        setNewImageUrl('');
+        setNewImageFile(null);
+        setNewImagePreview('');
         setNewImageIsMain(false);
         setOrderChanged(false);
         setImageLoading(true);
@@ -220,14 +222,23 @@ const ProductList = () => {
         setPreviewImage(null);
     };
 
+    const handleNewImageFile = (file) => {
+        if (!file || !file.type.startsWith('image/')) return;
+        if (newImagePreview) URL.revokeObjectURL(newImagePreview);
+        setNewImageFile(file);
+        setNewImagePreview(URL.createObjectURL(file));
+    };
+
     const handleAddImage = async () => {
-        if (!newImageUrl.trim()) return;
+        if (!newImageFile) return;
         setAddingImage(true);
         try {
-            await productApi.addImage(imageModalProduct.productId, { imageUrl: newImageUrl.trim(), isMain: newImageIsMain });
+            await productApi.addImage(imageModalProduct.productId, newImageFile, newImageIsMain);
             const res = await productApi.getImages(imageModalProduct.productId);
             setImages((res.data?.data ?? res.data ?? []).sort((a, b) => a.displayOrder - b.displayOrder));
-            setNewImageUrl('');
+            URL.revokeObjectURL(newImagePreview);
+            setNewImageFile(null);
+            setNewImagePreview('');
             setNewImageIsMain(false);
             searchProductsAdmin(filters);
         } catch (err) {
@@ -856,33 +867,63 @@ const ProductList = () => {
                         </button>
                     </div>
 
-                    {/* Thêm ảnh mới */}
+                    {/* Thêm ảnh mới — kéo thả hoặc click chọn file */}
                     <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">Thêm ảnh mới</p>
-                        <div className="flex gap-2">
+                        <div
+                            className={`relative border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors
+                                ${newImageFile
+                                    ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/10'
+                                    : 'border-slate-300 dark:border-slate-600 hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-900/10'}`}
+                            onClick={() => document.getElementById('img-upload-input').click()}
+                            onDragOver={e => e.preventDefault()}
+                            onDrop={e => { e.preventDefault(); handleNewImageFile(e.dataTransfer.files[0]); }}
+                        >
                             <input
-                                value={newImageUrl}
-                                onChange={e => setNewImageUrl(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleAddImage()}
-                                placeholder="Dán URL ảnh vào đây..."
-                                className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-default placeholder:text-slate-400"
+                                id="img-upload-input"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => handleNewImageFile(e.target.files[0])}
                             />
-                            <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none whitespace-nowrap">
+                            {newImagePreview ? (
+                                <div className="flex items-center gap-3">
+                                    <img src={newImagePreview} alt="preview" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                    <div className="text-left flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{newImageFile?.name}</p>
+                                        <p className="text-xs text-slate-400">{newImageFile ? (newImageFile.size / 1024).toFixed(0) + ' KB' : ''}</p>
+                                    </div>
+                                    <button
+                                        onClick={e => { e.stopPropagation(); URL.revokeObjectURL(newImagePreview); setNewImageFile(null); setNewImagePreview(''); }}
+                                        className="text-slate-400 hover:text-red-500 p-1 flex-shrink-0"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="py-2">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Kéo ảnh vào đây hoặc <span className="text-orange-500 font-medium">chọn file</span></p>
+                                    <p className="text-xs text-slate-400 mt-0.5">JPG, PNG, WEBP...</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                            <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none">
                                 <input
                                     type="checkbox"
                                     checked={newImageIsMain}
                                     onChange={e => setNewImageIsMain(e.target.checked)}
                                     className="accent-orange-500 w-4 h-4"
                                 />
-                                Ảnh chính
+                                Đặt làm ảnh chính
                             </label>
                             <button
                                 onClick={handleAddImage}
-                                disabled={addingImage || !newImageUrl.trim()}
+                                disabled={addingImage || !newImageFile}
                                 className="flex items-center gap-1.5 px-4 py-2 bg-orange-default text-white rounded-xl text-sm font-semibold hover:bg-orange-dark disabled:opacity-50 transition-colors"
                             >
                                 {addingImage ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-                                Thêm
+                                Thêm ảnh
                             </button>
                         </div>
                     </div>

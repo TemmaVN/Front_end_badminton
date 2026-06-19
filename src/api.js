@@ -2,15 +2,11 @@ import axios from 'axios';
 
 const API_BASE_URL = '/api';
 
-// Create axios instance
 const api = axios.create({
     baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
 });
 
-// Add token to requests
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -21,6 +17,25 @@ api.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
+
+// Dùng fetch thay axios cho upload file — axios instance có default header
+// 'Content-Type: application/json' mà axios 1.x không override được khi gửi FormData,
+// dẫn đến 415. fetch() để browser tự set 'multipart/form-data; boundary=...'
+const uploadFormData = async (url, formData) => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        const err = new Error(data?.message ?? data?.Message ?? res.statusText);
+        err.response = { status: res.status, data };
+        throw err;
+    }
+    return { data };
+};
 
 api.interceptors.response.use(
     (response) => response,
@@ -121,8 +136,12 @@ export const productApi = {
     getImages: (productId) =>
         api.get(`/Product/${productId}/management-images`),
 
-    addImage: (productId, data) =>
-        api.post(`/Product/${productId}/management-images`, data),
+    addImage: (productId, file, isMain) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('isMain', String(isMain));
+        return uploadFormData(`/Product/${productId}/management-images`, fd);
+    },
 
     setMainImage: (productId, imageId) =>
         api.put(`/Product/${productId}/management-images/set-main/${imageId}`),
@@ -134,15 +153,13 @@ export const productApi = {
         api.delete(`/Product/management-images/${imageId}`),
 
     importFromFile: (formData) =>
-        api.post(`/Product/admin/import-excel`, formData),
+        uploadFormData(`/Product/admin/import-excel`, formData),
 
     exportFromFile: () =>
         api.get(`/Product/admin/export-excel`, {responseType: "blob"}),
 
     importVariantsExcel: (productId, formData) =>
-        api.post(`/Product/${productId}/management-details/import-excel`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }),
+        uploadFormData(`/Product/${productId}/management-details/import-excel`, formData),
 
     exportVariantsExcel: (productId) =>
         api.get(`/Product/${productId}/management-details/export-excel`, { responseType: 'blob' }),
@@ -210,9 +227,7 @@ export const orderApi = {
 };
 
 export const warrantyApi = {
-    create: (formData) => api.post('/Warranty', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    create: (formData) => uploadFormData('/Warranty', formData),
     getMyWarranties: () => api.get('/Warranty/my-claims'),
     getAll: (params = {}) => api.get('/Warranty', { params }),
     updateStatus: (warrantyId, status, adminNote) =>
@@ -306,7 +321,12 @@ export const returnApi = {
   getMyRequestDetail: (returnRequestId) => api.get(`/Return/my-requests/${returnRequestId}`),
 
   // Admin
-  addDeliveryProof: (orderId, data) => api.post(`/Return/admin/orders/${orderId}/delivery-proofs`, data),
+  addDeliveryProof: (orderId, file, note) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (note) fd.append('note', note);
+    return uploadFormData(`/Return/admin/orders/${orderId}/delivery-proofs`, fd);
+  },
   adminGetAll: (params = {}) => api.get('/Return/admin/requests', { params }),
   adminGetDetail: (returnRequestId) => api.get(`/Return/admin/requests/${returnRequestId}`),
   adminApprove: (returnRequestId, data) => api.put(`/Return/admin/requests/${returnRequestId}/approve`, data),
