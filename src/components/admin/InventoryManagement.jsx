@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useInventory } from "../../contexts/InventoryContext";
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 10;
+
 const SERIAL_STATUS_CFG = {
   InStock: {
     color: "text-emerald-600 dark:text-emerald-400",
@@ -32,20 +33,61 @@ const SERIAL_TABS = [
   { label: "Lỗi", value: "Defective" },
 ];
 
+const TABS = [
+  { id: "low-stock", label: "Hàng tồn thấp" },
+  { id: "serials", label: "Theo dõi Serial" },
+];
+
+const emptyPagination = {
+  currentPage: 1,
+  pageSize: PAGE_SIZE,
+  totalCount: 0,
+  totalPages: 1,
+};
+
 const formatCurrency = (n) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     n ?? 0,
   );
 
-// ─── MINI COMPONENTS ─────────────────────────────────────────────────────────
+const getPageNumbers = (totalPages, currentPage) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  return Array.from({ length: totalPages }, (_, index) => index + 1).filter(
+    (pageNum) => Math.abs(pageNum - currentPage) <= 2,
+  );
+};
+
+const buildClientPagination = (items, currentPage, pageSize = PAGE_SIZE) => {
+  const totalCount = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages);
+  const start = (safePage - 1) * pageSize;
+
+  return {
+    pagination: { currentPage: safePage, pageSize, totalCount, totalPages },
+    pageItems: items.slice(start, start + pageSize),
+  };
+};
+
+const normalizePagination = (pagination) => ({
+  currentPage: pagination?.currentPage ?? pagination?.page ?? 1,
+  pageSize: pagination?.pageSize ?? PAGE_SIZE,
+  totalCount: pagination?.totalCount ?? 0,
+  totalPages: pagination?.totalPages ?? pagination?.totalPageCount ?? 1,
+});
+
 const StatusBadge = ({ status }) => {
   const cfg = SERIAL_STATUS_CFG[status] || {
-    color: "text-gray-500",
-    bg: "bg-gray-50",
-    border: "border-gray-200",
+    color: "text-gray-500 dark:text-slate-400",
+    bg: "bg-gray-50 dark:bg-slate-800",
+    border: "border-gray-200 dark:border-slate-700",
     dot: "bg-gray-400",
-    label: status,
+    label: status || "Không rõ",
   };
+
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.color} ${cfg.border}`}
@@ -58,6 +100,7 @@ const StatusBadge = ({ status }) => {
 
 const Toast = ({ msg }) => {
   if (!msg) return null;
+
   return (
     <div
       className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-slide-up ${
@@ -66,7 +109,7 @@ const Toast = ({ msg }) => {
           : "bg-emerald-50 border border-emerald-200 text-emerald-700"
       }`}
     >
-      {msg.error ? "✖" : "✅"} {msg.text}
+      {msg.error ? "!" : "OK"} {msg.text}
     </div>
   );
 };
@@ -81,28 +124,105 @@ const SkeletonRow = ({ cols = 5 }) => (
   </tr>
 );
 
-// ─── LOW STOCK TAB ────────────────────────────────────────────────────────────
+const PaginationFooter = ({ pagination, label, page, onPageChange, loading }) => {
+  const totalPages = pagination.totalPages || 1;
+  const currentPage = pagination.currentPage || page || 1;
+
+  return (
+    <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="text-sm text-slate-500 dark:text-slate-400">
+        {pagination.totalCount ?? 0} {label}
+        {totalPages > 1 && (
+          <>
+            {" "}- Trang{" "}
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {currentPage}
+            </span>
+            /
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              {totalPages}
+            </span>
+          </>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={loading || currentPage <= 1}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-300"
+          >
+            Trước
+          </button>
+
+          {getPageNumbers(totalPages, currentPage).map((pageNum) => (
+            <button
+              key={pageNum}
+              onClick={() => onPageChange(pageNum)}
+              disabled={loading}
+              className={`w-8 h-8 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 ${
+                currentPage === pageNum
+                  ? "bg-linear-to-r from-orange-default to-orange-dark text-white shadow-lg shadow-orange-default/25"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={loading || currentPage >= totalPages}
+            className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-300"
+          >
+            Sau
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const LowStockTab = () => {
   const { lowStockItems, loading, fetchLowStock } = useInventory();
   const [threshold, setThreshold] = useState(5);
   const [inputVal, setInputVal] = useState("5");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchLowStock(threshold);
   }, [threshold]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [threshold, lowStockItems.length]);
+
+  const { pagination, pageItems } = useMemo(
+    () => buildClientPagination(lowStockItems, page),
+    [lowStockItems, page],
+  );
+
   const applyThreshold = () => {
     const val = parseInt(inputVal, 10);
-    if (!isNaN(val) && val >= 0) setThreshold(val);
+    if (!Number.isNaN(val) && val >= 0) {
+      setThreshold(val);
+      setPage(1);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPage(newPage);
+    }
   };
 
   return (
     <div className="space-y-4">
-      {/* Filter row */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2">
           <span className="text-sm text-gray-500 dark:text-slate-400">
-            Ngưỡng tồn kho ≤
+            Ngưỡng tồn kho {"<="}
           </span>
           <input
             type="number"
@@ -119,13 +239,10 @@ const LowStockTab = () => {
           Lọc
         </button>
         <span className="text-sm text-gray-400 dark:text-slate-500">
-          {loading
-            ? "Đang tải..."
-            : `${lowStockItems.length} biến thể cần nhập hàng`}
+          {loading ? "Đang tải..." : `${lowStockItems.length} biến thể cần nhập hàng`}
         </span>
       </div>
 
-      {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -152,21 +269,21 @@ const LowStockTab = () => {
               Array.from({ length: 5 }).map((_, i) => (
                 <SkeletonRow key={i} cols={5} />
               ))
-            ) : lowStockItems.length === 0 ? (
+            ) : pageItems.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
                   className="px-4 py-12 text-center text-gray-400 dark:text-slate-500"
                 >
-                  <p className="text-3xl mb-2">✅</p>
+                  <p className="text-3xl mb-2">OK</p>
                   <p className="text-sm font-medium">
                     Không có biến thể nào dưới ngưỡng tồn kho
                   </p>
                 </td>
               </tr>
             ) : (
-              lowStockItems.map((item, idx) => {
-                const stock = item.stockQuantity ?? item.StockQuantity ?? 0;
+              pageItems.map((item, idx) => {
+                const stock = item.stockQuantity ?? 0;
                 const urgency =
                   stock === 0
                     ? {
@@ -185,22 +302,23 @@ const LowStockTab = () => {
                           color: "text-yellow-600 dark:text-yellow-400",
                           bg: "bg-yellow-50 dark:bg-yellow-500/10",
                         };
+
                 return (
                   <tr
-                    key={idx}
+                    key={item.detailId ?? idx}
                     className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800 dark:text-white truncate max-w-48">
-                        {item.productName ?? item.ProductName ?? "—"}
+                        {item.productName || "-"}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                        ID: {item.detailId ?? item.DetailId ?? "—"}
+                        ID: {item.detailId ?? "-"}
                       </p>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <p className="text-xs text-gray-500 dark:text-slate-400">
-                        {item.variantInfo ?? item.VariantInfo ?? "—"}
+                        {item.variantInfo || "-"}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -209,7 +327,7 @@ const LowStockTab = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell text-gray-600 dark:text-slate-300">
-                      {formatCurrency(item.price ?? item.Price)}
+                      {formatCurrency(item.price)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
@@ -224,13 +342,19 @@ const LowStockTab = () => {
             )}
           </tbody>
         </table>
-      </div>
 
+        <PaginationFooter
+          pagination={pagination}
+          label="bien the"
+          page={page}
+          onPageChange={handlePageChange}
+          loading={loading}
+        />
+      </div>
     </div>
   );
 };
 
-// ─── SERIALS TAB ──────────────────────────────────────────────────────────────
 const SerialsTab = () => {
   const {
     serials,
@@ -242,12 +366,13 @@ const SerialsTab = () => {
   } = useInventory();
   const [activeStatus, setActiveStatus] = useState("Defective");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
   const [toast, setToast] = useState(null);
   const [actingId, setActingId] = useState(null);
 
+  const pagination = normalizePagination(serialPagination ?? emptyPagination);
+
   useEffect(() => {
-    fetchSerialsByStatus(activeStatus, page, pageSize);
+    fetchSerialsByStatus(activeStatus, page, PAGE_SIZE);
   }, [activeStatus, page]);
 
   const showToast = (text, error = false) => {
@@ -255,23 +380,28 @@ const SerialsTab = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const handleStatusChange = (status) => {
+    setActiveStatus(status);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setPage(newPage);
+    }
+  };
+
   const handleMarkDefective = async (serialId) => {
     setActingId(serialId);
     const res = await markDefective(serialId);
-    showToast(
-      res.success ? "Đã đánh dấu serial là lỗi." : res.message,
-      !res.success,
-    );
+    showToast(res.success ? "Đã đánh dấu serial là lỗi." : res.message, !res.success);
     setActingId(null);
   };
 
   const handleMarkInStock = async (serialId) => {
     setActingId(serialId);
     const res = await markInStock(serialId);
-    showToast(
-      res.success ? "Đã chuyển serial về tồn kho." : res.message,
-      !res.success,
-    );
+    showToast(res.success ? "Đã chuyển serial về tồn kho." : res.message, !res.success);
     setActingId(null);
   };
 
@@ -279,15 +409,11 @@ const SerialsTab = () => {
     <div className="space-y-4">
       <Toast msg={toast} />
 
-      {/* Status filter tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {SERIAL_TABS.map((t) => (
           <button
             key={t.value}
-            onClick={() => {
-              setActiveStatus(t.value);
-              setPage(1);
-            }}
+            onClick={() => handleStatusChange(t.value)}
             className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
               activeStatus === t.value
                 ? "bg-orange-500 border-orange-500 text-white shadow-sm"
@@ -299,7 +425,6 @@ const SerialsTab = () => {
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
@@ -329,7 +454,7 @@ const SerialsTab = () => {
                   colSpan={4}
                   className="px-4 py-12 text-center text-gray-400 dark:text-slate-500"
                 >
-                  <p className="text-3xl mb-2">📭</p>
+                  <p className="text-3xl mb-2">-</p>
                   <p className="text-sm font-medium">Không có serial nào</p>
                 </td>
               </tr>
@@ -338,6 +463,7 @@ const SerialsTab = () => {
                 const id = s.serialId ?? s.SerialId ?? idx;
                 const status = s.status ?? s.Status ?? activeStatus;
                 const isActing = actingId === id;
+
                 return (
                   <tr
                     key={id}
@@ -345,15 +471,15 @@ const SerialsTab = () => {
                   >
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs font-semibold text-gray-800 dark:text-slate-200 tracking-wider">
-                        {s.serialNumber ?? s.SerialNumber ?? "—"}
+                        {s.serialNumber || "-"}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <p className="font-medium text-gray-700 dark:text-slate-300 truncate max-w-40">
-                        {s.productName ?? s.ProductName ?? `Chi tiet #${s.detailId ?? s.DetailId ?? "�"}`}
+                        {s.productName || `Chi tiết #${s.detailId ?? "-"}`}
                       </p>
                       <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                        {s.variantInfo ?? s.VariantInfo ?? ""}
+                        {s.variantInfo || ""}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -392,40 +518,18 @@ const SerialsTab = () => {
             )}
           </tbody>
         </table>
-      </div>
 
-      <div className="flex items-center justify-between gap-3 flex-wrap text-sm text-gray-500 dark:text-slate-400">
-        <span>
-          Trang <span className="font-semibold text-gray-700 dark:text-slate-200">{serialPagination.page}</span> /{" "}
-          <span className="font-semibold text-gray-700 dark:text-slate-200">{serialPagination.totalPageCount}</span>
-          {" "}� {serialPagination.totalCount} ket qua
-        </span>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={loading || serialPagination.page <= 1}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-orange-300"
-          >
-            Truoc
-          </button>
-          <button
-            onClick={() => setPage((p) => Math.min(serialPagination.totalPageCount || 1, p + 1))}
-            disabled={loading || serialPagination.page >= (serialPagination.totalPageCount || 1)}
-            className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:border-orange-300"
-          >
-            Sau
-          </button>
-        </div>
+        <PaginationFooter
+          pagination={pagination}
+          label="serial"
+          page={page}
+          onPageChange={handlePageChange}
+          loading={loading}
+        />
       </div>
     </div>
   );
 };
-
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-const TABS = [
-  { id: "low-stock", label: "📦 Hàng tồn thấp" },
-  { id: "serials", label: "🔢 Theo dõi Serial" },
-];
 
 const InventoryManagement = () => {
   const [tab, setTab] = useState("low-stock");
@@ -440,7 +544,6 @@ const InventoryManagement = () => {
         .animate-slide-up { animation: slide-up 0.25s ease both; }
       `}</style>
 
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
           Quản lý kho hàng
@@ -450,7 +553,6 @@ const InventoryManagement = () => {
         </p>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-slate-700">
         {TABS.map((t) => (
           <button
@@ -467,7 +569,6 @@ const InventoryManagement = () => {
         ))}
       </div>
 
-      {/* Tab content */}
       {tab === "low-stock" && <LowStockTab />}
       {tab === "serials" && <SerialsTab />}
     </div>

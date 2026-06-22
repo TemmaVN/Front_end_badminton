@@ -41,13 +41,28 @@ const menuItems = [
     label: "Bán hàng",
     path: "sales-overview",
     submenu: [
-      { id: "don-hang",   label: "Đơn hàng",       path: "orders"    },
-      { id: "bao-hanh",   label: "Bảo hành",        path: "warranty", icon: ShieldCheck },
-      { id: "thanh-toan", label: "Thanh toán",       path: "payment"  },
-      { id: "voucher",    label: "Voucher",          path: "vouchers" },
-      { id: "kho-hang",   label: "Quản lý kho",      path: "inventory", icon: Warehouse },
-      { id: "danh-gia",   label: "Đánh giá",          path: "reviews",   icon: Star },
-      { id: "tra-hang",   label: "Trả hàng/Hoàn tiền", path: "returns",   icon: RotateCcw },
+      { id: "don-hang", label: "Đơn hàng", path: "orders" },
+      // {
+      //   id: "bao-hanh",
+      //   label: "Bảo hành",
+      //   path: "warranty",
+      //   icon: ShieldCheck,
+      // },
+      // { id: "thanh-toan", label: "Thanh toán", path: "payment" },
+      { id: "voucher", label: "Voucher", path: "vouchers" },
+      {
+        id: "kho-hang",
+        label: "Quản lý kho",
+        path: "inventory",
+        icon: Warehouse,
+      },
+      { id: "danh-gia", label: "Đánh giá", path: "reviews", icon: Star },
+      {
+        id: "tra-hang",
+        label: "Trả hàng/Hoàn tiền",
+        path: "returns",
+        icon: RotateCcw,
+      },
     ],
   },
   {
@@ -68,16 +83,21 @@ const menuItems = [
     icon: Settings,
     label: "Hệ thống",
     submenu: [
-      { id: "quan-tri-vien", label: "Quản trị viên",     path: "admin-info" },
-      { id: "vai-tro",       label: "Vai trò & Quyền hạn", path: "roles"    },
-      { id: "nhat-ky",       label: "Nhật ký & Cảnh báo",  path: "audit", icon: ClipboardList },
+      { id: "quan-tri-vien", label: "Quản trị viên", path: "admin-info" },
+      // { id: "vai-tro",       label: "Vai trò & Quyền hạn", path: "roles"    },
+      // {
+      //   id: "nhat-ky",
+      //   label: "Nhật ký & Cảnh báo",
+      //   path: "audit",
+      //   icon: ClipboardList,
+      // },
     ],
   },
 ];
 
 const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const fullName = user?.fullName ?? '';
+  const user = JSON.parse(localStorage.getItem("user"));
+  const fullName = user?.fullName ?? "";
   const [expandedItems, setExpandedItems] = useState(new Set());
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,8 +137,12 @@ const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
             </div>
             {!collapsed && (
               <div>
-                <h1 className="text-xl font-bold text-slate-800 dark:text-white">{fullName}</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Bảng điều khiển</p>
+                <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+                  {fullName}
+                </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Bảng điều khiển
+                </p>
               </div>
             )}
           </div>
@@ -143,7 +167,8 @@ const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
               className={`w-full flex items-center justify-between p-3
                 rounded-xl transition-all duration-200 ${
                   currentPath === item.path ||
-                  (item.submenu && item.submenu.some((sub) => sub.path === currentPath))
+                  (item.submenu &&
+                    item.submenu.some((sub) => sub.path === currentPath))
                     ? "bg-linear-to-r from-orange-default to-orange-dark text-white shadow-lg shadow-orange-default/25"
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                 }`}
@@ -158,17 +183,23 @@ const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
                   <>
                     <span className="font-medium ml-2">{item.label}</span>
                     {item.badge && (
-                      <span className="px-2 py-1 text-xs bg-red-500 text-white rounded-full">{item.badge}</span>
+                      <span className="px-2 py-1 text-xs bg-red-500 text-white rounded-full">
+                        {item.badge}
+                      </span>
                     )}
                     {item.count && (
-                      <span className="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-700 rounded-full">{item.count}</span>
+                      <span className="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-700 rounded-full">
+                        {item.count}
+                      </span>
                     )}
                   </>
                 )}
               </div>
 
               {!collapsed && item.submenu && (
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expandedItems.has(item.id) ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${expandedItems.has(item.id) ? "rotate-180" : ""}`}
+                />
               )}
             </button>
 
@@ -183,9 +214,13 @@ const Sidebar = ({ sideBarCollapsed, isMobile = false, onClose }) => {
                         ? "text-orange-500 font-bold bg-orange-50 dark:bg-orange-500/10"
                         : "text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                     }`}
-                    onClick={() => { if (subItem.path) handleNavigate(subItem.path); }}
+                    onClick={() => {
+                      if (subItem.path) handleNavigate(subItem.path);
+                    }}
                   >
-                    {subItem.icon && <subItem.icon className="w-3.5 h-3.5 shrink-0" />}
+                    {subItem.icon && (
+                      <subItem.icon className="w-3.5 h-3.5 shrink-0" />
+                    )}
                     {subItem.label}
                   </button>
                 ))}

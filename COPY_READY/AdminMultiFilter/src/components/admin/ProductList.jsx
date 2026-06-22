@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
   Edit2,
   Trash2,
@@ -27,14 +27,34 @@ import { brandApi, productApi } from "../../api";
 import { useNavigate } from "react-router-dom";
 import { BiExport } from "react-icons/bi";
 
+const PRICE_RANGE_OPTIONS = [
+  { id: "under-500k", label: "DÆ°á»›i 500K", min: 0, max: 500000 },
+  { id: "500k-1m", label: "500K - 1 triá»‡u", min: 500000, max: 1000000 },
+  { id: "1m-2m", label: "1 - 2 triá»‡u", min: 1000000, max: 2000000 },
+  { id: "2m-5m", label: "2 - 5 triá»‡u", min: 2000000, max: 5000000 },
+  { id: "over-5m", label: "TrÃªn 5 triá»‡u", min: 5000000, max: null },
+];
+
+const slugify = (value = "") =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/Ä‘/g, "d")
+    .replace(/Ä/g, "D")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const rangeKey = (range) => `${range.min ?? ""}-${range.max ?? ""}`;
+
+const toggleValue = (list, value) =>
+  list.includes(value)
+    ? list.filter((item) => item !== value)
+    : [...list, value];
+
 const ProductList = () => {
   const navigate = useNavigate();
   const {
-    products,
-    loading,
-    error,
-    pagination,
-    searchProductsAdmin,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -44,6 +64,14 @@ const ProductList = () => {
   } = useProduct();
 
   const { categories } = useCategory();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    totalCount: 0,
+    totalPages: 0,
+    currentPage: 1,
+  });
   const [brands, setBrands] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -54,7 +82,7 @@ const ProductList = () => {
   const mainImageInputRef = useRef(null);
   const galleryImageInputRef = useRef(null);
 
-  // ── Image management ─────────────────────────────────────────────────────────
+  // â”€â”€ Image management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [imageModalProduct, setImageModalProduct] = useState(null);
   const [images, setImages] = useState([]);
   const [imageLoading, setImageLoading] = useState(false);
@@ -70,17 +98,14 @@ const ProductList = () => {
 
   const [filters, setFilters] = useState({
     keyword: "",
-    categoryId: "",
-    brandId: "",
-    minPrice: "",
-    maxPrice: "",
+    categorySlugs: [],
+    brandSlugs: [],
+    priceRanges: [],
     page: 1,
     pageSize: 10,
   });
 
-  // Separate input state for price — debounced 600ms before hitting API
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
-
+  // Separate input state for price â€” debounced 600ms before hitting API
   const defaultForm = {
     productName: "",
     brandId: "",
@@ -123,7 +148,7 @@ const ProductList = () => {
   const validateImageFile = (file) => {
     if (!file) return false;
     if (!file.type?.startsWith("image/")) {
-      alert("Vui lòng chọn đúng file ảnh.");
+      alert("Vui lÃ²ng chá»n Ä‘Ãºng file áº£nh.");
       return false;
     }
     return true;
@@ -141,58 +166,86 @@ const ProductList = () => {
     fetchBrands();
   }, []);
 
+  const refreshProducts = async (nextFilters = filters) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await productApi.filter({
+        keyword: nextFilters.keyword?.trim() || null,
+        categorySlugs: nextFilters.categorySlugs,
+        brandSlugs: nextFilters.brandSlugs,
+        priceRanges: nextFilters.priceRanges,
+        page: nextFilters.page,
+        pageSize: nextFilters.pageSize,
+      });
+      const data = res.data;
+      setProducts(data.items ?? []);
+      setPagination({
+        totalCount: data.totalCount ?? 0,
+        totalPages: data.totalPages ?? 0,
+        currentPage: data.page ?? nextFilters.page,
+      });
+    } catch (err) {
+      setProducts([]);
+      setError(err.response?.data?.message ?? err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    searchProductsAdmin(filters);
+    refreshProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  // Debounce price inputs → sync into filters after 600ms
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setFilters((prev) => ({
-        ...prev,
-        minPrice: priceRange.min,
-        maxPrice: priceRange.max,
-        page: 1,
-      }));
-    }, 600);
-    return () => clearTimeout(t);
-  }, [priceRange.min, priceRange.max]);
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
+  const handleKeywordChange = (e) => {
+    setFilters((prev) => ({ ...prev, keyword: e.target.value, page: 1 }));
   };
 
-  const PRICE_PRESETS = [
-    { label: "< 500K", min: "", max: "500000" },
-    { label: "500K–2M", min: "500000", max: "2000000" },
-    { label: "2M–5M", min: "2000000", max: "5000000" },
-    { label: "> 5M", min: "5000000", max: "" },
-  ];
+  const handleToggleCategory = (slug) => {
+    setFilters((prev) => ({
+      ...prev,
+      categorySlugs: toggleValue(prev.categorySlugs, slug),
+      page: 1,
+    }));
+  };
 
-  const applyPricePreset = (min, max) => setPriceRange({ min, max });
+  const handleToggleBrand = (slug) => {
+    setFilters((prev) => ({
+      ...prev,
+      brandSlugs: toggleValue(prev.brandSlugs, slug),
+      page: 1,
+    }));
+  };
+
+  const handleTogglePriceRange = (range) => {
+    setFilters((prev) => {
+      const exists = prev.priceRanges.some((item) => rangeKey(item) === rangeKey(range));
+      const priceRanges = exists
+        ? prev.priceRanges.filter((item) => rangeKey(item) !== rangeKey(range))
+        : [...prev.priceRanges, { min: range.min, max: range.max }].slice(0, 2);
+
+      return { ...prev, priceRanges, page: 1 };
+    });
+  };
 
   const resetFilters = () => {
-    setPriceRange({ min: "", max: "" });
     setFilters({
       keyword: "",
-      categoryId: "",
-      brandId: "",
-      minPrice: "",
-      maxPrice: "",
+      categorySlugs: [],
+      brandSlugs: [],
+      priceRanges: [],
       page: 1,
       pageSize: 10,
     });
   };
-
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
       setFilters((prev) => ({ ...prev, page: newPage }));
     }
   };
 
-  // ── Modal open/close ─────────────────────────────────────────────────────────
+  // â”€â”€ Modal open/close â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openCreate = () => {
     setEditingProduct(null);
     setFormData(defaultForm);
@@ -239,7 +292,7 @@ const ProductList = () => {
       const res = await productApi.uploadImage(file);
       const uploadedUrl = getUploadedImageUrl(res);
       if (!uploadedUrl) {
-        throw new Error("Backend không trả về đường dẫn ảnh.");
+        throw new Error("Backend khÃ´ng tráº£ vá» Ä‘Æ°á»ng dáº«n áº£nh.");
       }
       setFormData((prev) => ({ ...prev, mainImageUrl: uploadedUrl }));
       setMainImageFileName(file.name);
@@ -248,7 +301,7 @@ const ProductList = () => {
         err.response?.data?.message ??
           err.response?.data?.Message ??
           err.message ??
-          "Tải ảnh thất bại",
+          "Táº£i áº£nh tháº¥t báº¡i",
       );
     } finally {
       setMainImageUploading(false);
@@ -259,23 +312,23 @@ const ProductList = () => {
     e.preventDefault();
 
     if (mainImageUploading) {
-      alert("Ảnh chính đang được tải lên, vui lòng chờ hoàn tất.");
+      alert("áº¢nh chÃ­nh Ä‘ang Ä‘Æ°á»£c táº£i lÃªn, vui lÃ²ng chá» hoÃ n táº¥t.");
       return;
     }
     if (!formData.productName.trim()) return;
     if (!formData.categoryId || !formData.brandId) {
-      alert("Vui lòng chọn danh mục và thương hiệu!");
+      alert("Vui lÃ²ng chá»n danh má»¥c vÃ  thÆ°Æ¡ng hiá»‡u!");
       return;
     }
     if (!formData.basePrice || Number(formData.basePrice) <= 0) {
-      alert("Giá gốc phải lớn hơn 0!");
+      alert("GiÃ¡ gá»‘c pháº£i lá»›n hÆ¡n 0!");
       return;
     }
     if (
       formData.discountPrice &&
       Number(formData.discountPrice) >= Number(formData.basePrice)
     ) {
-      alert("Giá khuyến mãi phải nhỏ hơn giá gốc!");
+      alert("GiÃ¡ khuyáº¿n mÃ£i pháº£i nhá» hÆ¡n giÃ¡ gá»‘c!");
       return;
     }
 
@@ -299,14 +352,14 @@ const ProductList = () => {
 
       if (result !== null) {
         closeModal();
-        searchProductsAdmin(filters);
+        refreshProducts();
       }
     } finally {
       setSubmitLoading(false);
     }
   };
 
-  // ── Image modal functions ────────────────────────────────────────────────────
+  // â”€â”€ Image modal functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const openImageModal = async (e, product) => {
     e.stopPropagation();
     if (newImagePreviewUrl) URL.revokeObjectURL(newImagePreviewUrl);
@@ -357,7 +410,7 @@ const ProductList = () => {
       const uploadRes = await productApi.uploadImage(newImageFile);
       const uploadedUrl = getUploadedImageUrl(uploadRes);
       if (!uploadedUrl) {
-        throw new Error("Backend không trả về đường dẫn ảnh.");
+        throw new Error("Backend khÃ´ng tráº£ vá» Ä‘Æ°á»ng dáº«n áº£nh.");
       }
       await productApi.addImage(imageModalProduct.productId, {
         imageUrl: uploadedUrl,
@@ -373,13 +426,13 @@ const ProductList = () => {
       setNewImageFile(null);
       setNewImagePreviewUrl("");
       setNewImageIsMain(false);
-      searchProductsAdmin(filters);
+      refreshProducts();
     } catch (err) {
       alert(
         err.response?.data?.message ??
           err.response?.data?.Message ??
           err.message ??
-          "Thêm ảnh thất bại",
+          "ThÃªm áº£nh tháº¥t báº¡i",
       );
     } finally {
       setAddingImage(false);
@@ -395,23 +448,23 @@ const ProductList = () => {
           (a, b) => a.displayOrder - b.displayOrder,
         ),
       );
-      searchProductsAdmin(filters);
+      refreshProducts();
     } catch (err) {
-      alert(err.response?.data?.message ?? "Thao tác thất bại");
+      alert(err.response?.data?.message ?? "Thao tÃ¡c tháº¥t báº¡i");
     }
   };
 
   const handleDeleteImage = async (imageId, isMain) => {
     if (isMain) {
-      alert("Không thể xóa ảnh đại diện. Hãy đặt ảnh khác làm đại diện trước.");
+      alert("KhÃ´ng thá»ƒ xÃ³a áº£nh Ä‘áº¡i diá»‡n. HÃ£y Ä‘áº·t áº£nh khÃ¡c lÃ m Ä‘áº¡i diá»‡n trÆ°á»›c.");
       return;
     }
-    if (!window.confirm("Xóa ảnh này?")) return;
+    if (!window.confirm("XÃ³a áº£nh nÃ y?")) return;
     try {
       await productApi.deleteImage(imageId);
       setImages((prev) => prev.filter((i) => i.imageId !== imageId));
     } catch (err) {
-      alert(err.response?.data?.message ?? "Xóa ảnh thất bại");
+      alert(err.response?.data?.message ?? "XÃ³a áº£nh tháº¥t báº¡i");
     }
   };
 
@@ -436,9 +489,9 @@ const ProductList = () => {
       }));
       await productApi.reorderImages(imageModalProduct.productId, payload);
       setOrderChanged(false);
-      searchProductsAdmin(filters);
+      refreshProducts();
     } catch (err) {
-      alert(err.response?.data?.message ?? "Lưu thứ tự thất bại");
+      alert(err.response?.data?.message ?? "LÆ°u thá»© tá»± tháº¥t báº¡i");
     } finally {
       setSavingOrder(false);
     }
@@ -448,13 +501,13 @@ const ProductList = () => {
     e.stopPropagation();
     if (
       !window.confirm(
-        `Xóa "${name}"?\n\nThao tác sẽ xóa tất cả biến thể và ảnh liên quan (CASCADE).`,
+        `XÃ³a "${name}"?\n\nThao tÃ¡c sáº½ xÃ³a táº¥t cáº£ biáº¿n thá»ƒ vÃ  áº£nh liÃªn quan (CASCADE).`,
       )
     )
       return;
     const ok = await deleteProduct(id);
     if (!ok) {
-      alert("Không thể xóa. Sản phẩm có thể đã tồn tại trong đơn hàng.");
+      alert("KhÃ´ng thá»ƒ xÃ³a. Sáº£n pháº©m cÃ³ thá»ƒ Ä‘Ã£ tá»“n táº¡i trong Ä‘Æ¡n hÃ ng.");
     }
   };
 
@@ -463,17 +516,17 @@ const ProductList = () => {
     e.target.value = "";
     if (!f) return;
     if (!f.name.toLowerCase().endsWith(".xlsx")) {
-      alert("⚠️ Chỉ chấp nhận file .xlsx");
+      alert("âš ï¸ Chá»‰ cháº¥p nháº­n file .xlsx");
       return;
     }
     setImportLoading(true);
     try {
       const res = await importFromFile(f);
       if (res?.success) {
-        alert(res.message || "Nhập sản phẩm thành công!");
-        searchProductsAdmin(filters);
+        alert(res.message || "Nháº­p sáº£n pháº©m thÃ nh cÃ´ng!");
+        refreshProducts();
       } else {
-        alert("Nhập thất bại: " + (res?.message || "Lỗi không xác định"));
+        alert("Nháº­p tháº¥t báº¡i: " + (res?.message || "Lá»—i khÃ´ng xÃ¡c Ä‘á»‹nh"));
       }
     } finally {
       setImportLoading(false);
@@ -507,21 +560,21 @@ const ProductList = () => {
   };
 
   const formatPrice = (price) =>
-    price ? price.toLocaleString("vi-VN") + " ₫" : "—";
+    price ? price.toLocaleString("vi-VN") + " â‚«" : "â€”";
 
   return (
     <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
       <div className="mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        {/* ── Header & Filters ── */}
+        {/* â”€â”€ Header & Filters â”€â”€ */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-700">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
             <div>
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white">
-                Quản lý kho hàng
+                Quáº£n lÃ½ kho hÃ ng
               </h3>
               {pagination?.totalCount > 0 && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                  {pagination.totalCount} sản phẩm
+                  {pagination.totalCount} sáº£n pháº©m
                 </p>
               )}
             </div>
@@ -543,7 +596,7 @@ const ProductList = () => {
                 ) : (
                   <Import size={16} />
                 )}
-                Nhập từ file
+                Nháº­p tá»« file
               </button>
               <button
                 onClick={handleExportFile}
@@ -555,135 +608,114 @@ const ProductList = () => {
                 ) : (
                   <BiExport size={16} />
                 )}
-                Xuất ra file
+                Xuáº¥t ra file
               </button>
               <button
                 onClick={openCreate}
                 className="flex items-center gap-2 bg-orange-default hover:bg-orange-dark text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
               >
-                <Plus size={16} /> Thêm sản phẩm
+                <Plus size={16} /> ThÃªm sáº£n pháº©m
               </button>
             </div>
           </div>
 
-          {/* Row 1: keyword · brand · category · reset */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="relative lg:col-span-2">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                size={14}
-              />
-              <input
-                name="keyword"
-                value={filters.keyword}
-                onChange={handleFilterChange}
-                placeholder="Tìm tên sản phẩm..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default dark:focus:border-orange-400 focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none transition-all"
-              />
+          {/* Multi-condition filters */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_auto] gap-3">
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={14}
+                />
+                <input
+                  value={filters.keyword}
+                  onChange={handleKeywordChange}
+                  placeholder="Tìm tên sản phẩm..."
+                  className="w-full pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default dark:focus:border-orange-400 focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none transition-all"
+                />
+              </div>
+
+              <button
+                onClick={resetFilters}
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium transition-all"
+              >
+                <RotateCcw size={14} /> Làm mới
+              </button>
             </div>
 
-            <select
-              name="brandId"
-              value={filters.brandId}
-              onChange={handleFilterChange}
-              className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all"
-            >
-              <option value="">Tất cả thương hiệu</option>
-              {brands.map((b) => (
-                <option key={b.brandId} value={b.brandId}>
-                  {b.brandName}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-900">
+                <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+                  Khoảng giá (tối đa 2)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {PRICE_RANGE_OPTIONS.map((range) => {
+                    const active = filters.priceRanges.some((item) => rangeKey(item) === rangeKey(range));
+                    const disabled = !active && filters.priceRanges.length >= 2;
+                    return (
+                      <button
+                        key={range.id}
+                        onClick={() => handleTogglePriceRange(range)}
+                        disabled={disabled}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 ${
+                          active
+                            ? "bg-orange-500 text-white border-orange-500"
+                            : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-orange-300"
+                        }`}
+                      >
+                        {range.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            <select
-              name="categoryId"
-              value={filters.categoryId}
-              onChange={handleFilterChange}
-              className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all"
-            >
-              <option value="">Tất cả danh mục</option>
-              {categories.map((cat) => (
-                <option key={cat.categoryId} value={cat.categoryId}>
-                  {cat.categoryName}
-                </option>
-              ))}
-            </select>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-900">
+                <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+                  Danh mục ({filters.categorySlugs.length})
+                </p>
+                <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                  {categories.map((cat) => {
+                    const slug = cat.slug ?? slugify(cat.categoryName);
+                    return (
+                      <label key={cat.categoryId ?? slug} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.categorySlugs.includes(slug)}
+                          onChange={() => handleToggleCategory(slug)}
+                          className="accent-orange-500"
+                        />
+                        <span className="truncate">{cat.categoryName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
 
-            <button
-              onClick={resetFilters}
-              className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-medium transition-all"
-            >
-              <RotateCcw size={14} /> Làm mới
-            </button>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-white dark:bg-slate-900">
+                <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
+                  Thương hiệu ({filters.brandSlugs.length})
+                </p>
+                <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                  {brands.map((brand) => {
+                    const slug = brand.slug ?? slugify(brand.brandName);
+                    return (
+                      <label key={brand.brandId ?? slug} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filters.brandSlugs.includes(slug)}
+                          onChange={() => handleToggleBrand(slug)}
+                          className="accent-orange-500"
+                        />
+                        <span className="truncate">{brand.brandName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* Row 2: price range filter */}
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            {/* <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
-                            Lọc theo giá:
-                        </span> */}
-
-            {/* Min price */}
-            {/* <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">từ</span>
-                            <input
-                                type="number"
-                                min="0"
-                                value={priceRange.min}
-                                onChange={e => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                                placeholder="0 ₫"
-                                className="pl-8 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
-                            />
-                        </div> */}
-
-            {/* <span className="text-slate-400 text-sm shrink-0">—</span> */}
-
-            {/* Max price */}
-            {/* <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">đến</span>
-                            <input
-                                type="number"
-                                min="0"
-                                value={priceRange.max}
-                                onChange={e => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                                placeholder="∞ ₫"
-                                className="pl-10 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
-                            />
-                        </div> */}
-
-            {/* Preset chips */}
-            {/* <div className="flex items-center gap-1.5 flex-wrap">
-                            {PRICE_PRESETS.map(p => {
-                                const active = priceRange.min === p.min && priceRange.max === p.max;
-                                return (
-                                    <button
-                                        key={p.label}
-                                        onClick={() => applyPricePreset(p.min, p.max)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            active
-                                                ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400'
-                                        }`}
-                                    >
-                                        {p.label}
-                                    </button>
-                                );
-                            })}
-                        </div> */}
-
-            {/* Active indicator */}
-            {/* {(filters.minPrice || filters.maxPrice) && (
-                            <button
-                                onClick={() => setPriceRange({ min: '', max: '' })}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/30 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all"
-                            >
-                                <X size={12} /> Xóa lọc giá
-                            </button>
-                        )} */}
-          </div>
-
-          {/* ── Table ── */}
+          {/* ── Table â”€â”€ */}
           <div className="overflow-x-auto relative" style={{ minHeight: 300 }}>
             {loading && (
               <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center z-10">
@@ -694,15 +726,14 @@ const ProductList = () => {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-5 py-3 w-72">Sản phẩm</th>
-                  <th className="px-4 py-3">Thương hiệu</th>
-                  <th className="px-4 py-3">Danh mục</th>
-                  <th className="px-4 py-3 text-right">Giá gốc</th>
-                  <th className="px-4 py-3 text-right">Giá KM</th>
-                  <th className="px-4 py-3 text-center">Biến thể</th>
-                  <th className="px-4 py-3 text-center">Tồn kho</th>
-                  <th className="px-4 py-3 text-center">Đã bán</th>
-                  <th className="px-4 py-3 text-center">Chênh</th>
+                  <th className="px-5 py-3 w-72">Sáº£n pháº©m</th>
+                  <th className="px-4 py-3">ThÆ°Æ¡ng hiá»‡u</th>
+                  <th className="px-4 py-3">Danh má»¥c</th>
+                  <th className="px-4 py-3 text-right">GiÃ¡ gá»‘c</th>
+                  <th className="px-4 py-3 text-right">GiÃ¡ KM</th>
+                  <th className="px-4 py-3 text-center">Biáº¿n thá»ƒ</th>
+                  <th className="px-4 py-3 text-center">Tá»“n kho</th>
+                  <th className="px-4 py-3 text-center">ÄÃ£ bÃ¡n</th>
                   <th className="px-4 py-3 text-center w-28"></th>
                 </tr>
               </thead>
@@ -714,8 +745,8 @@ const ProductList = () => {
                       className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm"
                     >
                       <div className="flex flex-col items-center gap-2">
-                        <span className="text-3xl">🏸</span>
-                        <span>Không tìm thấy sản phẩm nào</span>
+                        <span className="text-3xl">ðŸ¸</span>
+                        <span>KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m nÃ o</span>
                       </div>
                     </td>
                   </tr>
@@ -730,7 +761,7 @@ const ProductList = () => {
                       }
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors group"
                     >
-                      {/* Sản phẩm */}
+                      {/* Sáº£n pháº©m */}
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           {item.mainImageUrl ? (
@@ -744,7 +775,7 @@ const ProductList = () => {
                             />
                           ) : (
                             <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xl shrink-0 border border-slate-200 dark:border-slate-700">
-                              🏸
+                              ðŸ¸
                             </div>
                           )}
                           <div className="min-w-0">
@@ -758,7 +789,7 @@ const ProductList = () => {
                         </div>
                       </td>
 
-                      {/* Thương hiệu */}
+                      {/* ThÆ°Æ¡ng hiá»‡u */}
                       <td className="px-4 py-3">
                         {item.brandName ? (
                           <span className="inline-block px-2.5 py-0.5 rounded-lg bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 text-xs font-medium border border-orange-200 dark:border-orange-500/30">
@@ -766,12 +797,12 @@ const ProductList = () => {
                           </span>
                         ) : (
                           <span className="text-slate-400 dark:text-slate-500 text-xs">
-                            —
+                            â€”
                           </span>
                         )}
                       </td>
 
-                      {/* Danh mục */}
+                      {/* Danh má»¥c */}
                       <td className="px-4 py-3">
                         {item.categoryName ? (
                           <span className="inline-block px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium border border-blue-100 dark:border-blue-500/30">
@@ -779,19 +810,19 @@ const ProductList = () => {
                           </span>
                         ) : (
                           <span className="text-slate-400 dark:text-slate-500 text-xs">
-                            —
+                            â€”
                           </span>
                         )}
                       </td>
 
-                      {/* Giá gốc */}
+                      {/* GiÃ¡ gá»‘c */}
                       <td className="px-4 py-3 text-right">
                         <span className="text-slate-600 dark:text-slate-300 text-sm">
                           {formatPrice(item.basePrice)}
                         </span>
                       </td>
 
-                      {/* Giá KM */}
+                      {/* GiÃ¡ KM */}
                       <td className="px-4 py-3 text-right">
                         {item.discountPrice || item.discountPercent > 0 ? (
                           <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
@@ -799,41 +830,36 @@ const ProductList = () => {
                           </span>
                         ) : (
                           <span className="text-slate-400 dark:text-slate-500 text-xs">
-                            —
+                            â€”
                           </span>
                         )}
                       </td>
 
-                      {/* Biến thể */}
+                      {/* Biáº¿n thá»ƒ */}
                       <td className="px-4 py-3 text-center">
                         <span className="text-slate-700 dark:text-slate-300 font-medium">
-                          {item.variantsCount ?? item.variantCount ?? "—"}
+                          {item.variantsCount ?? item.variantCount ?? "â€”"}
                         </span>
                       </td>
 
-                      {/* Tồn kho */}
+                      {/* Tá»“n kho */}
                       <td className="px-4 py-3 text-center">
                         <span
                           className={stockColor(
                             item.totalStock ?? item.stockQuantity,
                           )}
                         >
-                          {item.totalStock ?? item.stockQuantity ?? "—"}
+                          {item.totalStock ?? item.stockQuantity ?? "â€”"}
                         </span>
                       </td>
 
-                      {/* Đã bán */}
+                      {/* ÄÃ£ bÃ¡n */}
                       <td className="px-4 py-3 text-center">
                         <span className="text-slate-600 dark:text-slate-300 font-medium">
                           {item.soldQuantity ?? item.totalSold ?? 0}
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-slate-600 dark:text-slate-300 font-medium">
-                          {item.khoangCachGia}
-                        </span>
-                      </td>
                       {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex justify-center items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -852,7 +878,7 @@ const ProductList = () => {
                           <button
                             onClick={(e) => openImageModal(e, item)}
                             className="p-1.5 hover:bg-purple-50 dark:hover:bg-purple-500/10 text-slate-400 hover:text-purple-500 dark:hover:text-purple-400 rounded-lg transition-colors"
-                            title="Quản lý ảnh"
+                            title="Quáº£n lÃ½ áº£nh"
                           >
                             <Images size={15} />
                           </button>
@@ -862,7 +888,7 @@ const ProductList = () => {
                               openEdit(item);
                             }}
                             className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg transition-colors"
-                            title="Sửa"
+                            title="Sá»­a"
                           >
                             <Edit2 size={15} />
                           </button>
@@ -871,7 +897,7 @@ const ProductList = () => {
                               handleDelete(e, item.productId, item.productName)
                             }
                             className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 rounded-lg transition-colors"
-                            title="Xóa"
+                            title="XÃ³a"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -883,14 +909,14 @@ const ProductList = () => {
               </tbody>
             </table>
 
-            {/* ── Pagination ── */}
+            {/* â”€â”€ Pagination â”€â”€ */}
             <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="text-sm text-slate-500 dark:text-slate-400">
-                {pagination?.totalCount ?? 0} sản phẩm
+                {pagination?.totalCount ?? 0} sáº£n pháº©m
                 {pagination?.totalPages > 1 && (
                   <>
                     {" "}
-                    · Trang{" "}
+                    Â· Trang{" "}
                     <span className="font-semibold text-slate-700 dark:text-slate-200">
                       {pagination.currentPage}
                     </span>
@@ -909,7 +935,7 @@ const ProductList = () => {
                     disabled={filters.page === 1}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-slate-600 dark:text-slate-300"
                   >
-                    Trước
+                    TrÆ°á»›c
                   </button>
 
                   {[...Array(pagination.totalPages)].map((_, index) => {
@@ -947,13 +973,13 @@ const ProductList = () => {
           </div>
         </div>
 
-        {/* ── Modal Thêm / Sửa ── */}
+        {/* â”€â”€ Modal ThÃªm / Sá»­a â”€â”€ */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                  {editingProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
+                  {editingProduct ? "Sá»­a sáº£n pháº©m" : "ThÃªm sáº£n pháº©m má»›i"}
                 </h3>
                 <button
                   onClick={closeModal}
@@ -964,8 +990,8 @@ const ProductList = () => {
               </div>
               <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
                 {editingProduct
-                  ? "Cân nhắc trước khi thay đổi thông tin"
-                  : "Điền đầy đủ thông tin sản phẩm"}
+                  ? "CÃ¢n nháº¯c trÆ°á»›c khi thay Ä‘á»•i thÃ´ng tin"
+                  : "Äiá»n Ä‘áº§y Ä‘á»§ thÃ´ng tin sáº£n pháº©m"}
               </p>
 
               {error && (
@@ -978,11 +1004,11 @@ const ProductList = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block mb-1.5 text-sm font-medium text-slate-700">
-                    Tên sản phẩm
+                    TÃªn sáº£n pháº©m
                   </label>
                   <input
                     required
-                    placeholder="Tên sản phẩm *"
+                    placeholder="TÃªn sáº£n pháº©m *"
                     className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-default placeholder:text-slate-400"
                     value={formData.productName}
                     onChange={(e) =>
@@ -994,7 +1020,7 @@ const ProductList = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Danh mục
+                      Danh má»¥c
                     </label>
                     <select
                       required
@@ -1004,7 +1030,7 @@ const ProductList = () => {
                         setFormData({ ...formData, categoryId: e.target.value })
                       }
                     >
-                      <option value="">Chọn danh mục *</option>
+                      <option value="">Chá»n danh má»¥c *</option>
                       {categories.map((cat) => (
                         <option key={cat.categoryId} value={cat.categoryId}>
                           {cat.categoryName}
@@ -1014,7 +1040,7 @@ const ProductList = () => {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Thương hiệu
+                      ThÆ°Æ¡ng hiá»‡u
                     </label>
                     <select
                       required
@@ -1024,7 +1050,7 @@ const ProductList = () => {
                         setFormData({ ...formData, brandId: e.target.value })
                       }
                     >
-                      <option value="">Chọn thương hiệu *</option>
+                      <option value="">Chá»n thÆ°Æ¡ng hiá»‡u *</option>
                       {brands.map((b) => (
                         <option key={b.brandId} value={b.brandId}>
                           {b.brandName}
@@ -1037,13 +1063,13 @@ const ProductList = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Giá gốc
+                      GiÃ¡ gá»‘c
                     </label>
                     <input
                       required
                       type="number"
                       min="0"
-                      placeholder="Giá gốc (VND) *"
+                      placeholder="GiÃ¡ gá»‘c (VND) *"
                       className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl outline-none text-sm focus:ring-orange-default"
                       value={formData.basePrice}
                       onChange={(e) =>
@@ -1053,12 +1079,12 @@ const ProductList = () => {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Giá khuyến mãi
+                      GiÃ¡ khuyáº¿n mÃ£i
                     </label>
                     <input
                       type="number"
                       min="0"
-                      placeholder="Giá khuyến mãi"
+                      placeholder="GiÃ¡ khuyáº¿n mÃ£i"
                       className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl outline-none text-sm focus:ring-orange-default"
                       value={formData.discountPrice}
                       onChange={(e) =>
@@ -1073,7 +1099,7 @@ const ProductList = () => {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Ảnh chính
+                    áº¢nh chÃ­nh
                   </label>
                   <input
                     ref={mainImageInputRef}
@@ -1094,22 +1120,22 @@ const ProductList = () => {
                       ) : (
                         <Upload size={15} />
                       )}
-                      {formData.mainImageUrl ? "Đổi ảnh" : "Chọn ảnh"}
+                      {formData.mainImageUrl ? "Äá»•i áº£nh" : "Chá»n áº£nh"}
                     </button>
                     <span className="min-w-0 flex-1 truncate text-xs text-slate-400 dark:text-slate-500">
                       {mainImageUploading
-                        ? "Đang tải ảnh lên..."
+                        ? "Äang táº£i áº£nh lÃªn..."
                         : mainImageFileName ||
                           (formData.mainImageUrl
-                            ? "Đã có ảnh chính"
-                            : "Chưa chọn ảnh")}
+                            ? "ÄÃ£ cÃ³ áº£nh chÃ­nh"
+                            : "ChÆ°a chá»n áº£nh")}
                     </span>
                   </div>
                   {formData.mainImageUrl && (
                     <div className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-2">
                       <img
                         src={normalizeImageUrl(formData.mainImageUrl)}
-                        alt="Ảnh chính"
+                        alt="áº¢nh chÃ­nh"
                         className="h-16 w-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
@@ -1124,10 +1150,10 @@ const ProductList = () => {
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Mô tả sản phẩm
+                    MÃ´ táº£ sáº£n pháº©m
                   </label>
                   <textarea
-                    placeholder="Mô tả sản phẩm"
+                    placeholder="MÃ´ táº£ sáº£n pháº©m"
                     rows={2}
                     className="w-full p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white rounded-xl outline-none text-sm resize-none focus:ring-orange-default placeholder:text-slate-400"
                     value={formData.description}
@@ -1146,14 +1172,14 @@ const ProductList = () => {
                   ) : (
                     <Save size={16} />
                   )}
-                  {editingProduct ? "Cập nhật sản phẩm" : "Lưu sản phẩm"}
+                  {editingProduct ? "Cáº­p nháº­t sáº£n pháº©m" : "LÆ°u sáº£n pháº©m"}
                 </button>
               </form>
             </div>
           </div>
         )}
 
-        {/* ── Modal Quản lý ảnh ── */}
+        {/* â”€â”€ Modal Quáº£n lÃ½ áº£nh â”€â”€ */}
         {imageModalProduct && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
@@ -1161,7 +1187,7 @@ const ProductList = () => {
               <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 dark:border-slate-700">
                 <div>
                   <h3 className="text-base font-bold text-slate-800 dark:text-white">
-                    Quản lý ảnh
+                    Quáº£n lÃ½ áº£nh
                   </h3>
                   <p className="text-xs text-slate-400 dark:text-slate-500 truncate max-w-xs">
                     {imageModalProduct.productName}
@@ -1175,10 +1201,10 @@ const ProductList = () => {
                 </button>
               </div>
 
-              {/* Thêm ảnh mới */}
+              {/* ThÃªm áº£nh má»›i */}
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
-                  Thêm ảnh mới
+                  ThÃªm áº£nh má»›i
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <input
@@ -1195,7 +1221,7 @@ const ProductList = () => {
                     className="flex flex-1 items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-60 transition-colors"
                   >
                     <Upload size={15} />
-                    {newImageFile ? newImageFile.name : "Chọn ảnh từ máy"}
+                    {newImageFile ? newImageFile.name : "Chá»n áº£nh tá»« mÃ¡y"}
                   </button>
                   <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none whitespace-nowrap">
                     <input
@@ -1204,7 +1230,7 @@ const ProductList = () => {
                       onChange={(e) => setNewImageIsMain(e.target.checked)}
                       className="accent-orange-500 w-4 h-4"
                     />
-                    Ảnh chính
+                    áº¢nh chÃ­nh
                   </label>
                   <button
                     onClick={handleAddImage}
@@ -1216,14 +1242,14 @@ const ProductList = () => {
                     ) : (
                       <Plus size={14} />
                     )}
-                    Thêm
+                    ThÃªm
                   </button>
                 </div>
                 {newImagePreviewUrl && (
                   <div className="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2">
                     <img
                       src={newImagePreviewUrl}
-                      alt="Ảnh sẽ thêm"
+                      alt="áº¢nh sáº½ thÃªm"
                       className="h-16 w-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
                     />
                     <div className="min-w-0 flex-1">
@@ -1231,7 +1257,7 @@ const ProductList = () => {
                         {newImageFile?.name}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
-                        Ảnh sẽ được tải lên khi bấm Thêm.
+                        áº¢nh sáº½ Ä‘Æ°á»£c táº£i lÃªn khi báº¥m ThÃªm.
                       </p>
                     </div>
                     <button
@@ -1243,7 +1269,7 @@ const ProductList = () => {
                         setNewImagePreviewUrl("");
                       }}
                       className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
-                      title="Bỏ chọn"
+                      title="Bá» chá»n"
                     >
                       <X size={15} />
                     </button>
@@ -1251,7 +1277,7 @@ const ProductList = () => {
                 )}
               </div>
 
-              {/* Danh sách ảnh */}
+              {/* Danh sÃ¡ch áº£nh */}
               <div className="flex-1 overflow-y-auto px-6 py-4">
                 {imageLoading ? (
                   <div className="flex justify-center py-10">
@@ -1262,7 +1288,7 @@ const ProductList = () => {
                   </div>
                 ) : images.length === 0 ? (
                   <div className="text-center py-10 text-slate-400 text-sm">
-                    Chưa có ảnh nào.
+                    ChÆ°a cÃ³ áº£nh nÃ o.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1312,7 +1338,7 @@ const ProductList = () => {
                             onClick={() => handleMoveImage(idx, -1)}
                             disabled={idx === 0}
                             className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 disabled:opacity-25 transition-colors"
-                            title="Lên"
+                            title="LÃªn"
                           >
                             <ArrowUp size={14} />
                           </button>
@@ -1320,7 +1346,7 @@ const ProductList = () => {
                             onClick={() => handleMoveImage(idx, 1)}
                             disabled={idx === images.length - 1}
                             className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-400 disabled:opacity-25 transition-colors"
-                            title="Xuống"
+                            title="Xuá»‘ng"
                           >
                             <ArrowDown size={14} />
                           </button>
@@ -1328,7 +1354,7 @@ const ProductList = () => {
                             <button
                               onClick={() => handleSetMain(img.imageId)}
                               className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-slate-400 hover:text-amber-500 rounded-lg transition-colors"
-                              title="Đặt làm ảnh chính"
+                              title="Äáº·t lÃ m áº£nh chÃ­nh"
                             >
                               <Star size={14} />
                             </button>
@@ -1336,7 +1362,7 @@ const ProductList = () => {
                           {img.isMain && (
                             <div
                               className="p-1.5 text-orange-400"
-                              title="Đang là ảnh chính"
+                              title="Äang lÃ  áº£nh chÃ­nh"
                             >
                               <StarOff size={14} />
                             </div>
@@ -1346,7 +1372,7 @@ const ProductList = () => {
                               handleDeleteImage(img.imageId, img.isMain)
                             }
                             className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
-                            title="Xóa"
+                            title="XÃ³a"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -1357,13 +1383,13 @@ const ProductList = () => {
                 )}
               </div>
 
-              {/* Footer — lưu thứ tự */}
+              {/* Footer â€” lÆ°u thá»© tá»± */}
               <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  {images.length} ảnh
+                  {images.length} áº£nh
                   {orderChanged && (
                     <span className="ml-2 text-amber-500 font-semibold">
-                      · Chưa lưu thứ tự
+                      Â· ChÆ°a lÆ°u thá»© tá»±
                     </span>
                   )}
                 </p>
@@ -1377,14 +1403,14 @@ const ProductList = () => {
                   ) : (
                     <Save size={14} />
                   )}
-                  Lưu thứ tự
+                  LÆ°u thá»© tá»±
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── Lightbox xem ảnh ── */}
+        {/* â”€â”€ Lightbox xem áº£nh â”€â”€ */}
         {previewImage &&
           (() => {
             const idx = images.findIndex(
@@ -1395,7 +1421,7 @@ const ProductList = () => {
                 className="fixed inset-0 z-60 flex items-center justify-center bg-black/90"
                 onClick={() => setPreviewImage(null)}
               >
-                {/* Nút đóng */}
+                {/* NÃºt Ä‘Ã³ng */}
                 <button
                   className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
                   onClick={() => setPreviewImage(null)}
@@ -1403,7 +1429,7 @@ const ProductList = () => {
                   <X size={20} />
                 </button>
 
-                {/* Badge thứ tự + MAIN */}
+                {/* Badge thá»© tá»± + MAIN */}
                 <div className="absolute top-4 left-4 flex items-center gap-2">
                   <span className="text-white/70 text-sm font-medium">
                     {idx + 1} / {images.length}
@@ -1415,7 +1441,7 @@ const ProductList = () => {
                   )}
                 </div>
 
-                {/* Mũi tên trái */}
+                {/* MÅ©i tÃªn trÃ¡i */}
                 {images.length > 1 && (
                   <button
                     onClick={(e) => {
@@ -1429,14 +1455,14 @@ const ProductList = () => {
                   </button>
                 )}
 
-                {/* Ảnh */}
+                {/* áº¢nh */}
                 <img
                   src={normalizeImageUrl(previewImage.imageUrl)}
                   alt=""
                   className="max-w-[180vw] max-h-[170vh] object-contain rounded-lg shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 />
-                {/* Mũi tên phải */}
+                {/* MÅ©i tÃªn pháº£i */}
                 {images.length > 1 && (
                   <button
                     onClick={(e) => {
@@ -1459,3 +1485,6 @@ const ProductList = () => {
 };
 
 export default ProductList;
+
+
+
