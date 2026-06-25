@@ -74,7 +74,11 @@ export const StatisticProvider = ({ children }) => {
       setRevenueByMonthLoading(true);
       setRevenueByMonthError(null);
       const res = await statisticApi.getRevenueByMonth({ year: 2025 });
-      const data = res.data?.data ?? res.data ?? null;
+      // Sửa lỗi: Kiểm tra nếu res.data không phải là object thì coi như lỗi
+      if (typeof res.data !== 'object' || res.data === null) {
+        throw new Error('Invalid data format from server');
+      }
+      const data = res.data?.data ?? res.data;
       setRevenueByMonth(Array.isArray(data) ? data : []);
     } catch (err) {
       setRevenueByMonthError(

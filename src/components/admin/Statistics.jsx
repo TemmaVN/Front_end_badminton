@@ -103,6 +103,10 @@ function RevenueTab({ period }) {
 
       try {
         const r = await statisticApi.getRevenueByMonth({ year: 2026 });
+        // Sửa lỗi: Kiểm tra nếu dữ liệu trả về không phải object thì báo lỗi
+        if (typeof r.data !== "object" || r.data === null) {
+          throw new Error(r.data || "Invalid data format from server");
+        }
         const data = Array.isArray(r.data?.data)
           ? r.data.data
           : Array.isArray(r.data)
@@ -111,7 +115,9 @@ function RevenueTab({ period }) {
         setMonthly2026(data);
       } catch (err) {
         setError2026(
-          err.response?.data?.message || "Không thể tải dữ liệu năm 2026",
+          err.response?.data?.message ||
+            err.message ||
+            "Không thể tải dữ liệu năm 2026",
         );
         setMonthly2026([]);
       } finally {
@@ -1559,7 +1565,7 @@ const TABS = [
 
 export default function Statistics() {
   const [activeTab, setActiveTab] = useState("revenue");
-  const [period, setPeriod] = useState("2025");
+  const [period, setPeriod] = useState("2026");
   const { overview } = useStatistic();
 
   const ovData = overview?.data;
