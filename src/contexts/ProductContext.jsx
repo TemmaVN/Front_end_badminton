@@ -3,6 +3,7 @@ import React, {
     createContext,
     useContext,
     useState,
+    useRef,
     useCallback,
 } from 'react';
 import { productApi } from '../api';
@@ -21,20 +22,39 @@ export const ProductProvider = ({ children }) => {
     const [products, setProducts]   = useState([]);
     const [loading, setLoading]     = useState(false);
     const [error, setError]         = useState(null);
+    const [averagePrice, setAveragePrice] = useState(null);
     const [pagination, setPagination] = useState({
         totalCount: 0,
         totalPages: 0,
         currentPage: 1,
     });
+    // Lưu lại lần gọi cuối để goToPage biết gọi endpoint nào
+    const lastCallRef = useRef({ fn: null, params: {} });
 
     // ─── helper dùng nội bộ ───────────────────────────────────────────────────
     const setPaginationFromResponse = ({ totalCount, totalPages, page }) => {
-        setPagination({
-            totalCount,
-            totalPages,
-            currentPage: page,
-        });
+        setPagination({ totalCount, totalPages, currentPage: page });
     };
+
+    // ─── Generic admin filter — tất cả 8 filter functions dùng helper này ────
+    const doAdminFilter = useCallback(async (apiFn, params = {}) => {
+        setLoading(true); setError(null);
+        try {
+            const clean = Object.fromEntries(
+                Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined && v !== false)
+            );
+            lastCallRef.current = { fn: apiFn, params: clean };
+            const res = await apiFn(clean);
+            const data = res.data;
+            setProducts(data.items ?? []);
+            setAveragePrice(data.averagePrice ?? null);
+            setPaginationFromResponse({ totalCount: data.totalCount, totalPages: data.totalPages, page: data.page });
+            return data;
+        } catch (err) {
+            setError(err.response?.data?.message ?? err.message);
+            return null;
+        } finally { setLoading(false); }
+    }, []);
     const searchProducts = useCallback(async (params = {}) => {
         setLoading(true);
         setError(null);
@@ -72,32 +92,24 @@ export const ProductProvider = ({ children }) => {
         }
     }, []);
 
-    // ─── Tìm kiếm sản phẩm cho trang Admin (trả về brandName, categoryName) ───
-    const searchProductsAdmin = useCallback(async (params = {}) => {
-        setLoading(true);
-        setError(null);
-        try {
-            // Strip empty/null values so backend receives only meaningful filters
-            const clean = Object.fromEntries(
-                Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined)
-            );
-            const response = await productApi.getForAdmin(clean);
-            const data = response.data;
-            setProducts(data.items ?? []);
-            setPaginationFromResponse({
-                totalCount: data.totalCount,
-                totalPages: data.totalPages,
-                page: data.page,
-            });
-            return data;
-        } catch (err) {
-            const msg = err.response?.data?.message ?? err.message;
-            setError(msg);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    // ─── Base search ─────────────────────────────────────────────────────────
+    const searchProductsAdmin = useCallback((params = {}) =>
+        doAdminFilter(productApi.getForAdmin, params), [doAdminFilter]);
+
+    // ─── 7 filter functions — mỗi cái chỉ gọi đúng 1 endpoint ───────────────
+    const filterByPrice      = useCallback((params = {}) => doAdminFilter(productApi.filterByPrice,      params), [doAdminFilter]);
+    const filterByBrands     = useCallback((params = {}) => doAdminFilter(productApi.filterByBrands,     params), [doAdminFilter]);
+    const filterByCategories = useCallback((params = {}) => doAdminFilter(productApi.filterByCategories, params), [doAdminFilter]);
+    const filterByStock      = useCallback((params = {}) => doAdminFilter(productApi.filterByStock,      params), [doAdminFilter]);
+    const filterByDiscount   = useCallback((params = {}) => doAdminFilter(productApi.filterByDiscount,   params), [doAdminFilter]);
+    const filterByRating     = useCallback((params = {}) => doAdminFilter(productApi.filterByRating,     params), [doAdminFilter]);
+    const sortProducts       = useCallback((params = {}) => doAdminFilter(productApi.sortProducts,       params), [doAdminFilter]);
+
+    // ─── Phân trang — re-gọi đúng endpoint cuối cùng với page mới ────────────
+    const goToPage = useCallback((page) => {
+        const { fn, params } = lastCallRef.current;
+        if (fn) doAdminFilter(fn, { ...params, page });
+    }, [doAdminFilter]);
     const addProduct = useCallback(async (data) => {
         setLoading(true);
         setError(null);
@@ -237,12 +249,21 @@ export const ProductProvider = ({ children }) => {
         loading,
         error,
         pagination,
+        averagePrice,
 
         // actions
         getProductDetaildBySlug,
         searchProducts,
         searchProductsAdmin,
         fetchProductsBySlug,
+        filterByPrice,
+        filterByBrands,
+        filterByCategories,
+        filterByStock,
+        filterByDiscount,
+        filterByRating,
+        sortProducts,
+        goToPage,
         addProduct,
         updateProduct,
         deleteProduct,

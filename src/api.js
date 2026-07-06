@@ -102,6 +102,28 @@ export const productApi = {
     getForAdmin: ({ pageSize, ...rest } = {}) =>
         api.get('/Product/product-management', { params: { ...rest, pagesize: pageSize } }),
 
+    // ── Filter APIs — mỗi hàm chỉ gọi đúng 1 endpoint ───────────────────────
+    filterByPrice: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-price', { params: { ...rest, pagesize: pageSize } }),
+
+    filterByBrands: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-brands', { params: { ...rest, pagesize: pageSize } }),
+
+    filterByCategories: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-categories', { params: { ...rest, pagesize: pageSize } }),
+
+    filterByStock: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-stock', { params: { ...rest, pagesize: pageSize } }),
+
+    filterByDiscount: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-discount', { params: { ...rest, pagesize: pageSize } }),
+
+    filterByRating: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/filter-rating', { params: { ...rest, pagesize: pageSize } }),
+
+    sortProducts: ({ pageSize, ...rest } = {}) =>
+        api.get('/Product/product-management/sort', { params: { ...rest, pagesize: pageSize } }),
+
     getTopProducts: (params = {}) =>
         api.get('/admin/statistic/products/top', { params }),
 
@@ -172,6 +194,7 @@ export const metaDataApi = {
 // Category API
 export const categoryApi = {
     getAll: () => api.get('/Category'),
+    getProductCount: () => api.get('/Category/product-count'),
     create: (categoryName) => api.post('/Category', `"${categoryName}"`, {
         headers: { 'Content-Type': 'application/json' }
     }),

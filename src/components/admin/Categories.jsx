@@ -3,7 +3,7 @@ import { useCategory } from '../../contexts/CategoryContext'; // Đảm bảo đ
 import { Loader2, Box, ChevronRight, Plus , Edit2, Trash2 } from 'lucide-react';
 
 const Categories = () => {
-  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategory();
+  const { categories, productCounts, loading, addCategory, updateCategory, deleteCategory } = useCategory();
   const handleAddCategory = async () => {
     const name = prompt("Nhập tên danh mục mới:");
     if (!name || name.trim() === "") return;
@@ -111,9 +111,14 @@ const Categories = () => {
                   </h4>
                   
                   <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs font-mono text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md">
-                      /{cat.slug}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs font-mono text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-md">
+                        /{cat.slug}
+                      </span>
+                      <span className="text-xs font-semibold text-orange-600 bg-orange-50 dark:bg-orange-500/10 px-2 py-1 rounded-md">
+                        {productCounts[cat.categoryId] ?? 0} sản phẩm
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                         <button 
                           onClick={(e) => handleEdit(e, cat.categoryId, cat.categoryName)}

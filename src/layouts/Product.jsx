@@ -273,7 +273,7 @@ const Product = () => {
                   Có lỗi xảy ra. Vui lòng thử lại.
                 </div>
               ) : products.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 sm:grid-cols-4 gap-3">
                   {products.map((product, idx) => (
                     <ProductFrame_Minh
                       key={product.Id || idx}

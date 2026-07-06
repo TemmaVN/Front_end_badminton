@@ -153,6 +153,10 @@ const CartPage = () => {
         alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
         return;
       }
+      if (formData.phoneNumber.length !== 10 || formData.phoneNumber[0] !== '0') {
+        alert("vui lòng nhập đúng số điện thoại có 10 số và bắt đầu bằng số 0");
+        return;
+      }
       setStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {

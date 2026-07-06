@@ -10,21 +10,24 @@ export default defineConfig({
   server: {
         port: 3000,
         proxy: {
+            // Trỏ tới API Gateway (Backend_System/Nginx) ở cổng 8080.
+            // Gateway sẽ định tuyến tiếp tới flask_service / php_service / java_service.
+            // (Nếu chạy trực tiếp Flask_backend không qua gateway, đổi port thành 5000.)
             '/api': {
-                target: 'http://localhost:5106',
+                target: 'http://localhost:8080',
                 changeOrigin: true,
                 secure: false,
                 configure: (proxy, options) => {
                     proxy.on('error', (err, req, res) => {
                         console.log('Proxy error:', err.message);
                         res.writeHead(500, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ message: 'Backend not available. Make sure backend is running on port 5106' }));
+                        res.end(JSON.stringify({ message: 'Backend not available. Make sure API Gateway is running on port 8080' }));
                     });
                 }
             },
-            // Proxy ảnh upload — Vite không có wwwroot/, forward về backend
+            // Proxy ảnh/video upload — forward về gateway -> Flask phục vụ /uploads
             '/uploads': {
-                target: 'http://localhost:5106',
+                target: 'http://localhost:8080',
                 changeOrigin: true,
                 secure: false,
             }

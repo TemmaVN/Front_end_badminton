@@ -17,7 +17,10 @@ export const CategoryProvider = ({ children }) => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [pageCatagory, setPageCatagory] = useState([]);
-    const [pageBrand, setPageBrand] = useState('')
+    const [pageBrand, setPageBrand] = useState('');
+    // productCounts: { [categoryId]: productCount }
+    const [productCounts, setProductCounts] = useState({});
+
     // 1. Hàm lấy tất cả danh mục (GetAll)
     const refreshCategories = async () => {
         setLoading(true);
@@ -31,9 +34,24 @@ export const CategoryProvider = ({ children }) => {
         }
     };
 
+    // Lấy số lượng sản phẩm theo từng danh mục từ backend
+    const fetchProductCounts = async () => {
+        try {
+            const res = await categoryApi.getProductCount();
+            const map = {};
+            (res.data.data ?? []).forEach(item => {
+                map[item.categoryId] = item.productCount;
+            });
+            setProductCounts(map);
+        } catch {
+            // không ảnh hưởng UI chính nếu lỗi
+        }
+    };
+
     // Tự động load danh mục khi ứng dụng khởi chạy
     useEffect(() => {
         refreshCategories();
+        fetchProductCounts();
     }, []);
 
     // 2. Hàm thêm danh mục (Khớp với [FromBody] string của C#)
@@ -74,14 +92,16 @@ export const CategoryProvider = ({ children }) => {
 
     const value = {
         categories,
+        productCounts,
         pageCatagory,
         setPageCatagory,
         pageBrand,
         setPageBrand,
         loading,
         refreshCategories,
+        fetchProductCounts,
         addCategory,
-        deleteCategory, 
+        deleteCategory,
         updateCategory,
     };
 

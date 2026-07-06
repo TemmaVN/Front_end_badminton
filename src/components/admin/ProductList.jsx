@@ -13,7 +13,16 @@ const ProductList = () => {
         loading,
         error,
         pagination,
+        averagePrice,
         searchProductsAdmin,
+        filterByPrice,
+        filterByBrands,
+        filterByCategories,
+        filterByStock,
+        filterByDiscount,
+        filterByRating,
+        sortProducts,
+        goToPage,
         addProduct,
         updateProduct,
         deleteProduct,
@@ -47,14 +56,21 @@ const ProductList = () => {
         keyword: '',
         categoryId: '',
         brandId: '',
-        minPrice: '',
-        maxPrice: '',
         page: 1,
         pageSize: 10,
     });
 
     // Separate input state for price — debounced 600ms before hitting API
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+
+    // State cho bộ lọc nâng cao — UI đang ẩn, xem ADVANCED_FILTERS.md để bật
+    const [brandIds, setBrandIds] = useState([]);
+    const [categoryIds, setCategoryIds] = useState([]);
+    const [stockStatus, setStockStatus] = useState('');
+    const [hasDiscount, setHasDiscount] = useState(false);
+    const [minRating, setMinRating] = useState('');
+    const [sortBy, setSortBy] = useState('');
+    const [sortDesc, setSortDesc] = useState(true);
 
     const defaultForm = {
         productName: '',
@@ -79,23 +95,74 @@ const ProductList = () => {
         fetchBrands();
     }, []);
 
+    // ── Base search: keyword / categoryId / brandId / page ───────────────────
     useEffect(() => {
         searchProductsAdmin(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
 
-    // Debounce price inputs 600ms before triggering API call
+    // ── Filter: khoảng giá — debounce 600ms, gọi đúng endpoint filter-price ──
     useEffect(() => {
         const t = setTimeout(() => {
-            setFilters(prev => ({
-                ...prev,
-                minPrice: priceRange.min,
-                maxPrice: priceRange.max,
-                page: 1,
-            }));
+            filterByPrice({ minPrice: priceRange.min, maxPrice: priceRange.max, pageSize: filters.pageSize });
         }, 600);
         return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [priceRange.min, priceRange.max]);
+
+    // ── Filter: đa nhãn hiệu — gọi đúng endpoint filter-brands ─────────────
+    useEffect(() => {
+        if (brandIds.length > 0)
+            filterByBrands({ brandIds: brandIds.join(','), pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [brandIds]);
+
+    // ── Filter: đa danh mục — gọi đúng endpoint filter-categories ───────────
+    useEffect(() => {
+        if (categoryIds.length > 0)
+            filterByCategories({ categoryIds: categoryIds.join(','), pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [categoryIds]);
+
+    // ── Filter: tồn kho — gọi đúng endpoint filter-stock ────────────────────
+    useEffect(() => {
+        if (stockStatus)
+            filterByStock({ stockStatus, pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stockStatus]);
+
+    // ── Filter: SP đang KM — gọi đúng endpoint filter-discount ─────────────
+    useEffect(() => {
+        if (hasDiscount)
+            filterByDiscount({ pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [hasDiscount]);
+
+    // ── Filter: đánh giá — gọi đúng endpoint filter-rating ──────────────────
+    useEffect(() => {
+        if (minRating)
+            filterByRating({ minRating, pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [minRating]);
+
+    // ── Sort — gọi đúng endpoint sort ────────────────────────────────────────
+    useEffect(() => {
+        if (sortBy)
+            sortProducts({ sortBy, sortDesc, pageSize: filters.pageSize });
+        else
+            searchProductsAdmin({ ...filters, page: 1 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sortBy, sortDesc]);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -113,12 +180,14 @@ const ProductList = () => {
 
     const resetFilters = () => {
         setPriceRange({ min: '', max: '' });
-        setFilters({ keyword: '', categoryId: '', brandId: '', minPrice: '', maxPrice: '', page: 1, pageSize: 10 });
+        setBrandIds([]); setCategoryIds([]); setStockStatus('');
+        setHasDiscount(false); setMinRating(''); setSortBy(''); setSortDesc(true);
+        setFilters({ keyword: '', categoryId: '', brandId: '', page: 1, pageSize: 10 });
     };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
-            setFilters((prev) => ({ ...prev, page: newPage }));
+            goToPage(newPage);
         }
     };
 
@@ -354,7 +423,15 @@ const ProductList = () => {
     const formatPrice = (price) =>
         price ? price.toLocaleString('vi-VN') + ' ₫' : '—';
 
-    
+    // TODO [AVERAGE_PRICE]: Thêm JSX sau dòng "X sản phẩm" (~dòng 397 trong return):
+    // {averagePrice != null && (
+    //     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+    //         Giá TB trang này: <span className="font-semibold text-orange-500">{formatPrice(averagePrice)}</span>
+    //     </p>
+    // )}
+
+    console.log(products)
+
     return (
         <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
             <div className="mx-auto bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -446,70 +523,179 @@ const ProductList = () => {
                         </button>
                     </div>
 
-                    {/* Row 2: price range filter */}
+                    {/* ═══ [FILTER: Lọc giá] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #1 ═══ */}
+                    {/*
                     <div className="mt-3 flex flex-wrap items-center gap-3">
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">
-                            Lọc theo giá:
-                        </span>
-
-                        {/* Min price */}
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Lọc theo giá:</span>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">từ</span>
-                            <input
-                                type="number"
-                                min="0"
-                                value={priceRange.min}
+                            <input type="number" min="0" value={priceRange.min}
                                 onChange={e => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
                                 placeholder="0 ₫"
-                                className="pl-8 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
-                            />
+                                className="pl-8 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400" />
                         </div>
-
                         <span className="text-slate-400 text-sm shrink-0">—</span>
-
-                        {/* Max price */}
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">đến</span>
-                            <input
-                                type="number"
-                                min="0"
-                                value={priceRange.max}
+                            <input type="number" min="0" value={priceRange.max}
                                 onChange={e => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
                                 placeholder="∞ ₫"
-                                className="pl-10 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm text-slate-800 dark:text-white outline-none transition-all placeholder:text-slate-400"
-                            />
+                                className="pl-10 pr-3 py-2 w-32 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default focus:bg-white dark:focus:bg-slate-800 rounded-xl text-sm outline-none transition-all placeholder:text-slate-400" />
                         </div>
-
-                        {/* Preset chips */}
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {PRICE_PRESETS.map(p => {
                                 const active = priceRange.min === p.min && priceRange.max === p.max;
                                 return (
-                                    <button
-                                        key={p.label}
-                                        onClick={() => applyPricePreset(p.min, p.max)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                            active
-                                                ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400'
-                                        }`}
-                                    >
+                                    <button key={p.label} onClick={() => applyPricePreset(p.min, p.max)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${active ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-50 hover:text-orange-600'}`}>
                                         {p.label}
                                     </button>
                                 );
                             })}
                         </div>
-
-                        {/* Active indicator */}
                         {(priceRange.min || priceRange.max) && (
-                            <button
-                                onClick={() => setPriceRange({ min: '', max: '' })}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-500/30 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all"
-                            >
+                            <button onClick={() => setPriceRange({ min: '', max: '' })}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
                                 <X size={12} /> Xóa lọc giá
                             </button>
                         )}
                     </div>
+                    */}
+
+                    {/* ═══ [FILTER: Đa nhãn hiệu] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #3 ═══ */}
+                
+                    {/*<div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Nhãn hiệu:</span>
+                        <div className="relative group">
+                            <button className="py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs text-slate-700 dark:text-white transition-colors">
+                                {brandIds.length > 0 ? `${brandIds.length} đã chọn` : 'Tất cả'}
+                            </button>
+                            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 p-2 min-w-48 hidden group-focus-within:block">
+                                {brands.map(b => (
+                                    <label key={b.brandId} className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+                                        <input type="checkbox" checked={brandIds.includes(b.brandId)}
+                                            onChange={e => setBrandIds(prev => e.target.checked ? [...prev, b.brandId] : prev.filter(id => id !== b.brandId))}
+                                            className="accent-orange-500" />
+                                        {b.brandName}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        {brandIds.length > 0 && (
+                            <button onClick={() => setBrandIds([])}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
+                                <X size={12} /> Xóa
+                            </button>
+                        )}
+                    </div>*/}
+                    
+
+                    {/* ═══ [FILTER: Đa danh mục] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #4 ═══ */}
+{/*                     
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Danh mục:</span>
+                        <div className="relative group">
+                            <button className="py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs text-slate-700 dark:text-white transition-colors">
+                                {categoryIds.length > 0 ? `${categoryIds.length} đã chọn` : 'Tất cả'}
+                            </button>
+                            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-20 p-2 min-w-48 hidden group-focus-within:block">
+                                {categories.map(c => (
+                                    <label key={c.categoryId} className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer text-xs text-slate-700 dark:text-slate-300">
+                                        <input type="checkbox" checked={categoryIds.includes(c.categoryId)}
+                                            onChange={e => setCategoryIds(prev => e.target.checked ? [...prev, c.categoryId] : prev.filter(id => id !== c.categoryId))}
+                                            className="accent-orange-500" />
+                                        {c.categoryName}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        {categoryIds.length > 0 && (
+                            <button onClick={() => setCategoryIds([])}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
+                                <X size={12} /> Xóa
+                            </button>
+                        )}
+                    </div>
+                    */}
+
+                    {/* ═══ [FILTER: Tồn kho] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #5 ═══ */}
+                    {/*
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Tồn kho:</span>
+                        <select value={stockStatus} onChange={e => setStockStatus(e.target.value)}
+                            className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-xs text-slate-700 dark:text-white outline-none transition-all">
+                            <option value="">Tất cả</option>
+                            <option value="inStock">Còn hàng (&gt; 5)</option>
+                            <option value="lowStock">Sắp hết (1–5)</option>
+                            <option value="outOfStock">Hết hàng (0)</option>
+                        </select>
+                        {stockStatus && (
+                            <button onClick={() => setStockStatus('')}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
+                                <X size={12} /> Xóa
+                            </button>
+                        )}
+                    </div>
+                    */}
+
+                    {/* ═══ [FILTER: Chỉ SP đang KM] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #6 ═══ */}
+                    {/*
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer select-none py-2 px-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                            <input type="checkbox" checked={hasDiscount}
+                                onChange={e => setHasDiscount(e.target.checked)}
+                                className="accent-orange-500 w-3.5 h-3.5" />
+                            Chỉ SP đang khuyến mãi
+                        </label>
+                    </div>
+                    */}
+
+                    {/* ═══ [FILTER: Đánh giá ★] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #7 ═══ */}
+                    {/*
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Đánh giá:</span>
+                        <select value={minRating} onChange={e => setMinRating(e.target.value)}
+                            className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-xs text-slate-700 dark:text-white outline-none transition-all">
+                            <option value="">Tất cả</option>
+                            <option value="4">4★ trở lên</option>
+                            <option value="3">3★ trở lên</option>
+                            <option value="2">2★ trở lên</option>
+                        </select>
+                        {minRating && (
+                            <button onClick={() => setMinRating('')}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
+                                <X size={12} /> Xóa
+                            </button>
+                        )}
+                    </div>
+                    */}
+
+                    {/* ═══ [FILTER: Sắp xếp] ═══ bỏ cặp dưới để bật ═══ ADVANCED_FILTERS.md #8 ═══ */}
+                    {/*
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Sắp xếp:</span>
+                        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+                            className="py-2 px-3 bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-700 focus:border-orange-default rounded-xl text-xs text-slate-700 dark:text-white outline-none transition-all">
+                            <option value="">Mặc định (mới nhất)</option>
+                            <option value="price">Theo giá</option>
+                            <option value="name">Theo tên A–Z</option>
+                            <option value="stock">Theo tồn kho</option>
+                            <option value="sold">Theo đã bán</option>
+                        </select>
+                        {sortBy && (
+                            <button onClick={() => setSortDesc(d => !d)}
+                                className="py-2 px-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-medium transition-colors">
+                                {sortDesc ? '↓ Giảm dần' : '↑ Tăng dần'}
+                            </button>
+                        )}
+                        {sortBy && (
+                            <button onClick={() => { setSortBy(''); setSortDesc(true); }}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100 transition-all">
+                                <X size={12} /> Xóa
+                            </button>
+                        )}
+                    </div>
+                    */}
 
                 {/* ── Table ── */}
                 <div className="overflow-x-auto relative" style={{ minHeight: 300 }}>
@@ -527,6 +713,7 @@ const ProductList = () => {
                                 <th className="px-4 py-3">Danh mục</th>
                                 <th className="px-4 py-3 text-right">Giá gốc</th>
                                 <th className="px-4 py-3 text-right">Giá KM</th>
+                                <th className="px-4 py-3 text-right">chênh lệch giá</th>
                                 <th className="px-4 py-3 text-center">Biến thể</th>
                                 <th className="px-4 py-3 text-center">Tồn kho</th>
                                 <th className="px-4 py-3 text-center">Đã bán</th>
@@ -610,6 +797,14 @@ const ProductList = () => {
                                             {item.discountPrice || item.discountPercent > 0 ? (
                                                 <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
                                                     {formatPrice(item.discountPrice)}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
+                                            )}
+                                        </td><td className="px-4 py-3 text-right">
+                                            {item.discountPrice || item.discountPercent > 0 ? (
+                                                <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-sm">
+                                                    {formatPrice(item.delta)}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 dark:text-slate-500 text-xs">—</span>
